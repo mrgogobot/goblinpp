@@ -754,7 +754,7 @@ impl Evaluation {
                     return Err(GoblinError::artifact("write_json() output must use .json."));
                 }
                 let mut object = serde_json::Map::new();
-                for pair in values[1..].chunks_exact(2) {
+                for pair in values[1..].as_chunks::<2>().0 {
                     let key = pair[0].text(name)?.to_string();
                     if object.contains_key(&key) {
                         return Err(GoblinError::artifact(format!(

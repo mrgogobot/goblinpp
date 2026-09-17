@@ -1099,7 +1099,7 @@ fn parse_header(
             )));
         }
         let block = source.read(block_offset, BLOCK_BYTES)?;
-        for (card_index, card_bytes) in block.chunks_exact(CARD_BYTES).enumerate() {
+        for (card_index, card_bytes) in block.as_chunks::<CARD_BYTES>().0.iter().enumerate() {
             let card_offset = block_offset + (card_index * CARD_BYTES) as u64;
             if !card_bytes.is_ascii() {
                 return Err(GoblinError::data(format!(
