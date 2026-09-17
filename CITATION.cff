@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use Goblin++ in research, please cite this software."
+type: software
+title: "Goblin++"
+version: "0.1.0-alpha.8"
+authors:
+  - family-names: Hess
+    given-names: Malin
+abstract: >-
+  An evidence-first scientific programming language with a Rust interpreter,
+  audited run artifacts, and a Visual Studio Code extension.

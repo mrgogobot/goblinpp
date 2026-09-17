@@ -1,0 +1,267 @@
+{
+  "name": "goblinpp",
+  "displayName": "Goblin++",
+  "description": "Editor support for the Goblin++ Rust scientific language and custody workflow.",
+  "version": "0.1.3",
+  "publisher": "goblinpp-project",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "goblin++",
+    "science",
+    "provenance",
+    "units"
+  ],
+  "activationEvents": [
+    "onLanguage:goblinpp",
+    "onCommand:goblinpp.runFile",
+    "onCommand:goblinpp.runFileWithArguments",
+    "onCommand:goblinpp.runCompiledFile",
+    "onCommand:goblinpp.freezeFile",
+    "onCommand:goblinpp.reviseFile",
+    "onCommand:goblinpp.verifyRun",
+    "onCommand:goblinpp.statusFile",
+    "onCommand:goblinpp.lineageFile",
+    "onCommand:goblinpp.auditLedger",
+    "onCommand:goblinpp.doctor",
+    "onCommand:goblinpp.insertSymbol",
+    "onCommand:goblinpp.toggleIconView",
+    "onCommand:goblinpp.setIdentifierIcon",
+    "onCommand:goblinpp.checkFile",
+    "onCommand:goblinpp.toggleCheckOnSave",
+    "onCommand:goblinpp.openAuthoringTutorial",
+    "onCommand:goblinpp.openEditorGuide"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "goblinpp",
+        "aliases": [
+          "Goblin++",
+          "goblinpp"
+        ],
+        "extensions": [
+          ".gbl"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/goblinpp-light.svg",
+          "dark": "./icons/goblinpp-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "goblinpp",
+        "scopeName": "source.goblinpp",
+        "path": "./syntaxes/goblinpp.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "goblinpp",
+        "path": "./snippets/goblinpp.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "goblinpp.runFile",
+        "title": "Goblin++: Run Current File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "goblinpp.runFileWithArguments",
+        "title": "Goblin++: Run Current File With Arguments"
+      },
+      {
+        "command": "goblinpp.runCompiledFile",
+        "title": "Goblin++: Compile and Run Current File"
+      },
+      {
+        "command": "goblinpp.freezeFile",
+        "title": "Goblin++: Freeze Current File",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "goblinpp.reviseFile",
+        "title": "Goblin++: Create Child Revision"
+      },
+      {
+        "command": "goblinpp.verifyRun",
+        "title": "Goblin++: Verify Run Directory"
+      },
+      {
+        "command": "goblinpp.statusFile",
+        "title": "Goblin++: Show Current File Status",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "goblinpp.lineageFile",
+        "title": "Goblin++: Show Current File Lineage"
+      },
+      {
+        "command": "goblinpp.auditLedger",
+        "title": "Goblin++: Audit Workspace Ledger"
+      },
+      {
+        "command": "goblinpp.doctor",
+        "title": "Goblin++: Check Workspace"
+      },
+      {
+        "command": "goblinpp.insertSymbol",
+        "title": "Goblin++: Insert Scientific Symbol"
+      },
+      {
+        "command": "goblinpp.toggleIconView",
+        "title": "Goblin++: Toggle Icon View",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "goblinpp.setIdentifierIcon",
+        "title": "Goblin++: Set Icon for Identifier"
+      },
+      {
+        "command": "goblinpp.checkFile",
+        "title": "Goblin++: Check Current File",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "goblinpp.toggleCheckOnSave",
+        "title": "Goblin++: Toggle Check on Save"
+      },
+      {
+        "command": "goblinpp.openAuthoringTutorial",
+        "title": "Goblin++: Open Authoring Tutorial"
+      },
+      {
+        "command": "goblinpp.openEditorGuide",
+        "title": "Goblin++: Open Editor Guide"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "goblinpp.runFile",
+          "when": "editorLangId == goblinpp",
+          "group": "navigation@1"
+        },
+        {
+          "command": "goblinpp.statusFile",
+          "when": "editorLangId == goblinpp",
+          "group": "navigation@2"
+        },
+        {
+          "command": "goblinpp.checkFile",
+          "when": "editorLangId == goblinpp",
+          "group": "navigation@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "goblinpp.checkFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@0"
+        },
+        {
+          "command": "goblinpp.runFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@1"
+        },
+        {
+          "command": "goblinpp.runFileWithArguments",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@1.2"
+        },
+        {
+          "command": "goblinpp.runCompiledFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@1.5"
+        },
+        {
+          "command": "goblinpp.statusFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@2"
+        },
+        {
+          "command": "goblinpp.freezeFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@3"
+        },
+        {
+          "command": "goblinpp.reviseFile",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@4"
+        },
+        {
+          "command": "goblinpp.insertSymbol",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@5"
+        },
+        {
+          "command": "goblinpp.setIdentifierIcon",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@6"
+        },
+        {
+          "command": "goblinpp.toggleIconView",
+          "when": "editorLangId == goblinpp",
+          "group": "goblinpp@7"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "goblinpp.insertSymbol",
+        "key": "ctrl+alt+g",
+        "mac": "cmd+alt+g",
+        "when": "editorTextFocus && editorLangId == goblinpp"
+      }
+    ],
+    "configuration": {
+      "title": "Goblin++",
+      "properties": {
+        "goblinpp.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Goblin++ Rust executable. Empty checks a trusted workspace's bundled macOS arm64 build, ~/.local/bin/goblin++, then PATH."
+        },
+        "goblinpp.revealOutput": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reveal the Goblin++ output channel whenever a command runs."
+        },
+        "goblinpp.iconView.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Display optional mnemonic icons beside registered constants and explicitly mapped identifiers. Decorations never change source text."
+        },
+        "goblinpp.iconMappings": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          "description": "Explicit identifier-to-icon display mappings, for example {\"energy\": \"⚡\"}. Mappings are visual only and do not assign scientific meaning."
+        },
+        "goblinpp.diagnostics.onSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run a read-only Goblin++ machinery check after saving a .gbl file. Disabled by default; checks create no evidence and do not inspect custody."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node --check extension.js && node --check editor-core.js",
+    "test": "node --test test/*.test.js"
+  }
+}

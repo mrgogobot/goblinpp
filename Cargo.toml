@@ -1,0 +1,25 @@
+[package]
+name = "goblinpp"
+version = "0.1.0-alpha.8"
+edition = "2024"
+rust-version = "1.92"
+description = "Evidence-first scientific language engine"
+publish = false
+
+[[bin]]
+name = "goblinpp"
+path = "src/main.rs"
+
+[dependencies]
+chrono = { version = "0.4.42", default-features = false, features = ["clock", "serde"] }
+clap = { version = "4.5.53", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.145", features = ["preserve_order", "float_roundtrip"] }
+sha2 = "0.10.9"
+
+[dev-dependencies]
+tempfile = "3.23.0"
+
+[profile.release]
+lto = "thin"
+strip = "symbols"

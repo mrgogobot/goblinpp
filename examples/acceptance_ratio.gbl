@@ -1,0 +1,7 @@
+samples = 12
+accepted = 9
+fraction = accepted / samples
+
+print("accepted fraction = {fraction:.3f}")
+seal fraction
+

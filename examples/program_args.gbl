@@ -1,0 +1,7 @@
+# Run: goblin++ examples/program_args.gbl -- Ada
+print("argc = {argc}")
+program = argv(0)
+print("program = {program}")
+name = argv(1)
+print("Hello, {name}!")
+seal name

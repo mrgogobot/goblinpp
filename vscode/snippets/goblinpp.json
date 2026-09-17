@@ -1,0 +1,132 @@
+{
+  "Everyday program": {
+    "prefix": "everyday",
+    "body": [
+      "${1:value} = ${2:1}",
+      "print(\"${1:value} = {${1:value}}\")",
+      "write_text(\"${3:result.txt}\", \"${1:value} = {${1:value}}\")"
+    ],
+    "description": "Start a program without GO_PARANOID or seal; outputs remain run-confined and hashed."
+  },
+  "Paranoid program": {
+    "prefix": "paranoid",
+    "body": [
+      "GO_PARANOID",
+      "",
+      "${1:name} = ${2:1 kg}",
+      "print(\"${1:name} = {${1:name}}\")",
+      "seal ${1:name}"
+    ],
+    "description": "Start a paranoid-mode program with one sealed value."
+  },
+  "Assignment": {
+    "prefix": "let",
+    "body": "${1:name} = ${2:expression}",
+    "description": "Assign an expression to a name."
+  },
+  "Quantity": {
+    "prefix": "quantity",
+    "body": "${1:name} = ${2:1} ${3|kg,g,m,km,s,K,mol,J|}",
+    "description": "Assign a registered unit quantity."
+  },
+  "Print value": {
+    "prefix": "print",
+    "body": "print(\"${1:name} = {${1:name}}\")",
+    "description": "Print a named value using interpolation."
+  },
+  "Formatted output": {
+    "prefix": "printf",
+    "body": "printf(\"${1:value} = %.${2:3}f\", ${1:value})",
+    "description": "Print a numeric SI value with explicit precision."
+  },
+  "Seal artifact": {
+    "prefix": "seal",
+    "body": "seal ${1:name}",
+    "description": "Preserve the current value as a run artifact."
+  },
+  "Mass-energy example": {
+    "prefix": "energy",
+    "body": [
+      "mass = ${1:1 kg}",
+      "energy = mass * c^2",
+      "print(\"Energy = {energy}\")",
+      "seal energy"
+    ],
+    "description": "Calculate and optionally seal mass-energy."
+  },
+  "For range loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} in range(${2:0}, ${3:10}) {",
+      "    ${4:print(\"{i}\")}",
+      "}"
+    ],
+    "description": "Half-open integer loop with a shared 1,000,000-iteration ceiling."
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condition} {",
+      "    ${2:statement}",
+      "}"
+    ],
+    "description": "Boolean-condition loop with a shared iteration ceiling."
+  },
+  "If, else if, else": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "    ${2:statement}",
+      "} else if ${3:other_condition} {",
+      "    ${4:statement}",
+      "} else {",
+      "    ${5:statement}",
+      "}"
+    ],
+    "description": "Boolean conditions; only the selected branch executes."
+  },
+  "Switch cases": {
+    "prefix": "switch",
+    "body": [
+      "switch ${1:value} {",
+      "    case ${2:label} {",
+      "        ${3:statement}",
+      "    }",
+      "    default {",
+      "        ${4:statement}",
+      "    }",
+      "}"
+    ],
+    "description": "First exact matching case; no fallthrough."
+  },
+  "Ask for one line": {
+    "prefix": "input",
+    "body": "${1:name} = input(\"${2:Please enter your name: }\")",
+    "description": "Interactive text input; responses are preserved in the run evidence."
+  },
+  "Program argument": {
+    "prefix": "argv",
+    "body": "${1:value} = argv(${2:1})",
+    "description": "Read a zero-based program argument after the -- separator."
+  },
+  "Array and independent slice": {
+    "prefix": "array",
+    "body": ["${1:values} = [${2:1}, ${3:2}, ${4:3}]", "${5:part} = ${1:values}[${6:0}:${7:2}]", "print(\"slice = {${5:part}}\")"],
+    "description": "Create an array and an independent half-open slice."
+  },
+  "Append array item": {
+    "prefix": "append",
+    "body": "${1:values} = append(${1:values}, ${2:item})",
+    "description": "Assign a new copy with one appended item."
+  },
+  "FITS table mean": {
+    "prefix": "fitsmean",
+    "body": "${1:mean_z} = fits_column_mean(\"${2:file.fits}\", ${3:1}, \"${4:Z}\")",
+    "description": "Read a numeric FITS binary-table column mean."
+  },
+  "CSV result": {
+    "prefix": "writecsv",
+    "body": "write_csv(\"${1:summary.csv}\", 2, \"name\", \"value\", \"${2:result}\", ${3:value})",
+    "description": "Write a run-confined CSV result; GO_PARANOID is optional."
+  }
+}

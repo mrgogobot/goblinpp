@@ -1,0 +1,23 @@
+GO_PARANOID
+
+file = "sample.fits"
+rows = fits_rows(file, 1)
+mean_z = fits_column_mean(file, 1, "Z")
+minimum_z = fits_column_min(file, 1, "Z")
+maximum_z = fits_column_max(file, 1, "Z")
+
+write_text("summary.txt", "Goblin++ FITS summary", "rows = {rows}", "mean Z = {mean_z}", "minimum Z = {minimum_z}", "maximum Z = {maximum_z}")
+write_csv("summary.csv", 2, "metric", "value", "rows", rows, "mean_z", mean_z, "minimum_z", minimum_z, "maximum_z", maximum_z)
+write_tsv("summary.tsv", 2, "metric", "value", "rows", rows, "mean_z", mean_z)
+write_json("summary.json", "rows", rows, "mean_z", mean_z, "minimum_z", minimum_z, "maximum_z", maximum_z)
+
+plot_fits_histogram("redshift_histogram.svg", file, 1, "Z", 10, 1000, "Sample redshift distribution")
+plot_fits_histogram("redshift_histogram.png", file, 1, "Z", 10, 1000, "Sample redshift distribution")
+plot_fits_scatter("redshift_quality.png", file, 1, "Z", "QUALITY", 1000, "Redshift and quality")
+
+print("rows = {rows}")
+print("mean Z = {mean_z}")
+print("generated files are sealed in RUN_DIR/outputs")
+
+seal rows
+seal mean_z

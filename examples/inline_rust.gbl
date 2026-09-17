@@ -1,0 +1,14 @@
+GO_PARANOID
+
+mass = 2 kg
+result = mass * 3
+print("result = {result}")
+
+# This block executes only under native compilation after exact-hash approval.
+RUST_INLINE_BEGIN
+println!("inline Rust: reviewed native block executed");
+println!("inline Rust can observe {} Goblin variable(s)", goblin_env.len());
+RUST_INLINE_END
+
+seal result
+

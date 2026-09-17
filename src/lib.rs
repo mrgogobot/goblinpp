@@ -1,0 +1,19 @@
+pub mod ast;
+pub mod audit;
+pub mod compiler;
+pub mod constants;
+pub mod custody;
+pub mod error;
+pub mod evaluator;
+pub mod fits;
+pub mod hashing;
+pub mod inline_rust;
+pub mod interaction;
+pub mod ledger;
+pub mod lexer;
+pub mod output;
+pub mod parser;
+pub mod quantity;
+pub mod runtime;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");

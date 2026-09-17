@@ -1,0 +1,119 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Goblin++",
+  "scopeName": "source.goblinpp",
+  "patterns": [
+    {"include": "#inlineRust"},
+    {"include": "#comments"},
+    {"include": "#strings"},
+    {"include": "#directives"},
+    {"include": "#statements"},
+    {"include": "#booleans"},
+    {"include": "#functions"},
+    {"include": "#constants"},
+    {"include": "#quantities"},
+    {"include": "#numbers"},
+    {"include": "#assignment-targets"},
+    {"include": "#operators"},
+    {"include": "#identifiers"}
+  ],
+  "repository": {
+    "inlineRust": {
+      "patterns": [
+        {
+          "name": "meta.embedded.block.rust.goblinpp",
+          "begin": "^\\s*(RUST_INLINE_BEGIN)\\s*$",
+          "beginCaptures": {"1": {"name": "keyword.control.directive.goblinpp"}},
+          "end": "^\\s*(RUST_INLINE_END)\\s*$",
+          "endCaptures": {"1": {"name": "keyword.control.directive.goblinpp"}},
+          "contentName": "source.rust",
+          "patterns": [{"include": "source.rust"}]
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {"name": "comment.line.number-sign.goblinpp", "match": "#.*$"}
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.goblinpp",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {"name": "constant.character.escape.goblinpp", "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})"},
+            {"name": "variable.other.interpolation.goblinpp", "match": "\\{[A-Za-z_][A-Za-z0-9_]*(?::[^}]*)?\\}"}
+          ]
+        }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {"name": "keyword.control.directive.goblinpp", "match": "\\bGO_PARANOID\\b"}
+      ]
+    },
+    "statements": {
+      "patterns": [
+        {"name": "keyword.control.loop.goblinpp", "match": "\\b(?:for|in|while|range)\\b"},
+        {"name": "keyword.control.conditional.goblinpp", "match": "\\b(?:if|else|switch|case|default)\\b"},
+        {"name": "keyword.other.statement.goblinpp", "match": "\\bseal\\b"}
+      ]
+    },
+    "booleans": {
+      "patterns": [
+        {"name": "constant.language.boolean.goblinpp", "match": "\\b(?:true|false)\\b"},
+        {"name": "constant.language.arguments.goblinpp", "match": "\\bargc\\b"}
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {"name": "support.function.builtin.goblinpp", "match": "\\b(?:input|argv|len|append|print|printf|fits_hdu_count|fits_header|fits_axis|fits_count|fits_pixel|fits_mean|fits_rows|fits_columns|fits_column|fits_column_valid_count|fits_column_mean|fits_column_min|fits_column_max|write_text|write_csv|write_tsv|write_json|plot_fits_histogram|plot_fits_scatter)(?=\\s*\\()"}
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {"name": "constant.language.scientific.goblinpp", "match": "(?<![A-Za-z0-9_πħωΩΔΣλμσθ∇∂])(?:speed_of_light|planck_constant|gravitational_constant|boltzmann_constant|avogadro_constant|hbar|pi|k_B|N_A|c|h|G|π|ħ)(?![A-Za-z0-9_πħωΩΔΣλμσθ∇∂])"}
+      ]
+    },
+    "quantities": {
+      "patterns": [
+        {
+          "match": "((?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)([ \\t]+)(kg|km|mol|g|m|s|K|J)(?![A-Za-z0-9_πħωΩΔΣλμσθ∇∂])",
+          "captures": {
+            "1": {"name": "constant.numeric.goblinpp"},
+            "3": {"name": "support.type.unit.goblinpp"}
+          }
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {"name": "constant.numeric.goblinpp", "match": "(?<![A-Za-z0-9_])(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?"}
+      ]
+    },
+    "assignment-targets": {
+      "patterns": [
+        {"name": "variable.other.assignment.goblinpp", "match": "\\b[A-Za-z_πħωΩΔΣλμσθ∇∂][A-Za-z0-9_πħωΩΔΣλμσθ∇∂]*(?=\\s*=(?!=))"}
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {"name": "keyword.operator.comparison.goblinpp", "match": "<=|>=|!=|==|<|>|≤|≥|≠"},
+        {"name": "keyword.operator.arithmetic.goblinpp", "match": "[+\\-*/^²³]"},
+        {"name": "keyword.operator.assignment.goblinpp", "match": "="},
+        {"name": "punctuation.section.parens.goblinpp", "match": "[()]"},
+        {"name": "punctuation.section.array.goblinpp", "match": "[\\[\\]]"},
+        {"name": "punctuation.separator.slice.goblinpp", "match": ":"},
+        {"name": "punctuation.section.block.goblinpp", "match": "[{}]"},
+        {"name": "punctuation.separator.comma.goblinpp", "match": ","}
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {"name": "variable.other.goblinpp", "match": "[A-Za-z_πħωΩΔΣλμσθ∇∂][A-Za-z0-9_πħωΩΔΣλμσθ∇∂]*"}
+      ]
+    }
+  }
+}

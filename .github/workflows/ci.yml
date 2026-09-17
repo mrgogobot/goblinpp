@@ -1,0 +1,49 @@
+name: Source checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use current stable Rust
+        run: rustup update stable
+      - name: Install Rust components
+        run: rustup component add rustfmt clippy
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Test
+        run: cargo test --locked
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Build release executable
+        run: cargo build --locked --release
+
+  vscode:
+    name: VS Code extension tests
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use current stable Rust
+        run: rustup update stable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Build Rust test executable
+        run: cargo build --locked
+      - name: Test extension
+        working-directory: vscode
+        env:
+          GOBLINPP_BIN: ${{ github.workspace }}/target/debug/goblinpp
+        run: npm test
