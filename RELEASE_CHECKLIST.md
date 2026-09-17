@@ -1,19 +1,22 @@
 # Public-release checklist
 
-This folder is a **local source-repository draft**, not a published release.
-The checklist keeps decisions visible instead of silently making them for the
-author. The current Rust engine is `0.1.0-alpha.8`; the bundled editor extension
-source is `0.1.3`.
+This is a **pre-publication source-repository draft**, not a public release. It
+may be kept in a private GitHub repository while these gates are reviewed. A
+commit or private upload is not a Zenodo release. The checklist keeps decisions
+visible instead of silently making them for the author. The current Rust engine
+is `0.1.0-alpha.8`; the bundled editor extension source is `0.1.3`.
 
-## Before a public GitHub repository
+## Before making the GitHub repository public
 
 - [x] Separate source and deterministic test fixture from builds, run records,
   generated outputs, and user research data.
 - [x] Add a citation file naming Malin Hess. ORCID and DOI are intentionally
   absent until provided or minted.
 - [x] Add a non-publishing GitHub Actions workflow for tests and build checks.
-- [ ] Choose a software license and update both the root license file and
-  `vscode/package.json`. Until then, the editor package says `UNLICENSED`.
+- [x] Add MIT for software and CC BY 4.0 for original documentation prose and
+  diagrams, with explicit scope and matching Rust/VS Code package metadata.
+- [ ] Confirm Malin Hess is the correct copyright holder for all material
+  offered under these licenses, and identify any exceptions.
 - [ ] Review the repository file list and history for secrets, private data,
   third-party code, images, fonts, and permissions to redistribute them.
 - [ ] Decide repository visibility and confirm the GitHub account/repository
@@ -21,6 +24,9 @@ source is `0.1.3`.
   is a separate decision.
 - [ ] Establish a private security-reporting route and state supported versions.
 - [ ] Confirm contribution policy and any required AI-assistance disclosure.
+- [ ] Make the privacy warning prominent: `input()` responses, program arguments,
+  source, imported data evidence, and run logs may be preserved in plaintext.
+  `GO_PARANOID` and SHA-256 hashes do not encrypt them.
 
 ## Before calling an alpha release ready for researchers
 
@@ -28,6 +34,9 @@ source is `0.1.3`.
 - [ ] Recheck `cargo test --locked`, Rust formatting/linting, and extension
   tests on a clean checkout.
 - [ ] Reproduce the source archive and verify its SHA-256 on a clean machine.
+- [ ] Rebuild the VS Code extension package and inspect it for both MIT and
+  CC BY notices; previously distributed VSIX files are not changed by edits
+  to this source repository.
 - [ ] Review `docs/PORTING_MATRIX.md` and state unsupported language, FITS,
   custody, and compiler features in release notes. Do not claim parity with
   Python 0.0.7 while its normative-corpus and schema-migration gates remain open.
@@ -37,6 +46,19 @@ source is `0.1.3`.
   values and publish the test data/assumptions that can be redistributed.
 - [ ] Tag the exact version in Git; upload only reviewed binaries/assets and
   record their hashes. Do not replace a released tag or asset silently.
+
+## Valuable additions, not automatic public-alpha blockers
+
+- [ ] Design and test **optional file and directory encryption** as described
+  in [ENCRYPTION_PROPOSAL.md](docs/ENCRYPTION_PROPOSAL.md). Until implemented,
+  make no confidentiality claim for run directories or exported files. This
+  becomes a release blocker only if the first public release promises encrypted
+  storage or transfer.
+- [ ] Continue the pending Rust-port gates in
+  [PORTING_MATRIX.md](docs/PORTING_MATRIX.md): normative-corpus parity, schema
+  migrations, authenticated ledger authorship, interrupted-head recovery,
+  legacy adoption, and broader FITS semantics. These block a claim of stable
+  Python-reference replacement, not a candidly limited public alpha.
 
 ## Zenodo, after the GitHub release
 

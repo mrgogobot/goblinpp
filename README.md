@@ -23,8 +23,8 @@ This source repository includes the Rust engine, its tests and examples, and the
 VS Code extension in [`vscode/`](vscode/). It does **not** contain a prebuilt
 binary, personal run directories, or scientific input data beyond the small
 deterministic FITS test fixture. It is being prepared for an eventual public
-alpha release; a software license and publication destination have not yet been
-chosen. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) before publishing.
+alpha release; the remaining gates are in
+[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Build and install
 
@@ -215,3 +215,11 @@ Useful inspection commands are `check`, `fits-info`, `status`, `lineage`, `audit
 ## Release status
 
 This is an alpha foundation, not a declaration that the migration is complete. See [PORTING_MATRIX.md](docs/PORTING_MATRIX.md) and [SECURITY.md](docs/SECURITY.md) before scientific production use.
+
+## Licensing
+
+Goblin++ software, examples, test fixtures, and extension assets are licensed
+under [MIT](LICENSE). Original tutorial/documentation prose and diagrams are
+licensed under [CC BY 4.0](LICENSE-DOCS.md). Code examples inside the
+documentation remain MIT-licensed. The documentation license file gives the
+exact file scope; third-party dependencies keep their own licenses.

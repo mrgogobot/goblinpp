@@ -10,6 +10,10 @@ This source repository contains the extension code, not a packaged VSIX. The
 installation instructions below apply to a separately built and reviewed VSIX
 release.
 
+The extension software and icons are [MIT-licensed](LICENSE); its original
+tutorial/documentation prose and diagrams are
+[CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
+
 In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.3.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the alpha.8 executable in this order:

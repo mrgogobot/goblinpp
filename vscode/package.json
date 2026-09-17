@@ -4,7 +4,7 @@
   "description": "Editor support for the Goblin++ Rust scientific language and custody workflow.",
   "version": "0.1.3",
   "publisher": "goblinpp-project",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
   },
