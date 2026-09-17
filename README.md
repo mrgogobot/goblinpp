@@ -1,5 +1,7 @@
 # Goblin++ Rust Engine 0.1.0-alpha.8
 
+<img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
+
 Goblin++ is an evidence-first scientific language. This release begins the audited migration from the Python 0.0.7 reference implementation to a native Rust engine.
 
 The ordinary command interprets a saved `.gbl` file:
@@ -222,4 +224,6 @@ Goblin++ software, examples, test fixtures, and extension assets are licensed
 under [MIT](LICENSE). Original tutorial/documentation prose and diagrams are
 licensed under [CC BY 4.0](LICENSE-DOCS.md). Code examples inside the
 documentation remain MIT-licensed. The documentation license file gives the
-exact file scope; third-party dependencies keep their own licenses.
+exact file scope; third-party dependencies keep their own licenses. The
+[project logo](assets/goblinpp-logo.png) is separate branding, described in
+[BRANDING.md](BRANDING.md), and is not covered by either project license.

@@ -22,6 +22,9 @@ configuration, test fixtures, and VS Code icons are covered by [LICENSE](LICENSE
 unless a file states otherwise. The same MIT notice is included in the
 independently packaged VS Code extension as `vscode/LICENSE`.
 
+The project logo at `assets/goblinpp-logo.png` is separate branding, not
+licensed under MIT or CC BY 4.0. See [BRANDING.md](BRANDING.md).
+
 This notice licenses only material for which the named copyright holder has
 the rights to grant permission. Third-party libraries and any separately
 identified third-party material retain their own terms. User-provided research
