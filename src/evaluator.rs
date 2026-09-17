@@ -7,6 +7,7 @@ use crate::output::{
     self, GeneratedOutput, MAX_PLOT_POINTS, Sampling, ScatterRequest, delimited_bytes,
 };
 use crate::quantity::{DIMENSIONLESS, Quantity, format_dimension};
+use crate::text_runtime;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
@@ -71,6 +72,7 @@ impl Value {
 
 pub const MAX_LOOP_ITERATIONS: u64 = 1_000_000;
 pub const MAX_ARRAY_ITEMS: usize = 100_000;
+pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConstantUse {
@@ -111,6 +113,9 @@ pub struct Evaluation {
     loop_iterations: u64,
     base_dir: PathBuf,
     data: BTreeMap<PathBuf, LoadedData>,
+    functions: HashMap<String, (Vec<String>, Vec<Stmt>)>,
+    function_depth: usize,
+    return_value: Option<Value>,
 }
 
 impl Evaluation {
@@ -126,6 +131,9 @@ impl Evaluation {
             loop_iterations: 0,
             base_dir: base_dir.as_ref().to_path_buf(),
             data: BTreeMap::new(),
+            functions: HashMap::new(),
+            function_depth: 0,
+            return_value: None,
         }
     }
 
@@ -135,14 +143,34 @@ impl Evaluation {
     }
 
     pub fn eval_program(mut self, program: &Program) -> Result<Self> {
+        self.register_functions(program)?;
         for statement in &program.statements {
             self.eval_stmt(statement)?;
         }
         Ok(self)
     }
 
+    pub fn register_functions(&mut self, program: &Program) -> Result<()> {
+        for statement in &program.statements {
+            if let Stmt::Function { name, params, body } = statement
+                && self
+                    .functions
+                    .insert(name.clone(), (params.clone(), body.clone()))
+                    .is_some()
+            {
+                return Err(GoblinError::parse(format!("Duplicate g_func {name:?}.")));
+            }
+        }
+        Ok(())
+    }
+
     pub fn eval_stmt(&mut self, statement: &Stmt) -> Result<()> {
         match statement {
+            Stmt::Function { .. } => Ok(()),
+            Stmt::Return(expr) => {
+                self.return_value = Some(self.eval_expr(expr)?);
+                Ok(())
+            }
             Stmt::Directive(name) if name == "GO_PARANOID" => {
                 self.paranoid = true;
                 Ok(())
@@ -207,6 +235,9 @@ impl Evaluation {
                     );
                     for statement in body {
                         self.eval_stmt(statement)?;
+                        if self.return_value.is_some() {
+                            return Ok(());
+                        }
                     }
                     index += step;
                 }
@@ -226,6 +257,9 @@ impl Evaluation {
                 self.loop_tick()?;
                 for statement in body {
                     self.eval_stmt(statement)?;
+                    if self.return_value.is_some() {
+                        return Ok(());
+                    }
                 }
             },
             Stmt::If {
@@ -243,6 +277,9 @@ impl Evaluation {
                     if yes {
                         for statement in body {
                             self.eval_stmt(statement)?;
+                            if self.return_value.is_some() {
+                                return Ok(());
+                            }
                         }
                         return Ok(());
                     }
@@ -250,6 +287,9 @@ impl Evaluation {
                 if let Some(body) = else_body {
                     for statement in body {
                         self.eval_stmt(statement)?;
+                        if self.return_value.is_some() {
+                            return Ok(());
+                        }
                     }
                 }
                 Ok(())
@@ -265,6 +305,9 @@ impl Evaluation {
                     if compare_values("==", &selected, &candidate)? {
                         for statement in body {
                             self.eval_stmt(statement)?;
+                            if self.return_value.is_some() {
+                                return Ok(());
+                            }
                         }
                         return Ok(());
                     }
@@ -272,6 +315,9 @@ impl Evaluation {
                 if let Some(body) = default {
                     for statement in body {
                         self.eval_stmt(statement)?;
+                        if self.return_value.is_some() {
+                            return Ok(());
+                        }
                     }
                 }
                 Ok(())
@@ -396,8 +442,17 @@ impl Evaluation {
                 }
             }
             Expr::Binary { op, left, right } => {
-                let left = self.eval_expr(left)?.quantity("Arithmetic")?;
-                let right = self.eval_expr(right)?.quantity("Arithmetic")?;
+                let left = self.eval_expr(left)?;
+                let right = self.eval_expr(right)?;
+                if let (Value::Text(left), Value::Text(right)) = (&left, &right)
+                    && *op == '+'
+                {
+                    return text_runtime::concat(left, right)
+                        .map(Value::Text)
+                        .map_err(|message| GoblinError::new("G203", message));
+                }
+                let left = left.quantity("Arithmetic")?;
+                let right = right.quantity("Arithmetic")?;
                 let value = match op {
                     '+' => left.checked_add(right)?,
                     '-' => left.checked_sub(right)?,
@@ -433,10 +488,35 @@ impl Evaluation {
             "len" => {
                 require_args(name, args, 1)?;
                 let value = self.eval_expr(&args[0])?;
-                let Value::Array(items) = value else {
-                    return Err(GoblinError::new("G203", "len() requires an array."));
+                let length = match value {
+                    Value::Array(items) => items.len(),
+                    Value::Text(text) => text_runtime::length(&text),
+                    _ => return Err(GoblinError::new("G203", "len() requires an array or text.")),
                 };
-                Quantity::scalar(items.len() as f64).map(Value::Quantity)
+                Quantity::scalar(length as f64).map(Value::Quantity)
+            }
+            "to_text" => {
+                require_args(name, args, 1)?;
+                let value = self.eval_expr(&args[0])?;
+                if matches!(value, Value::Array(_)) {
+                    return Err(GoblinError::new(
+                        "G203",
+                        "to_text() does not render arrays; use str_join() for text arrays.",
+                    ));
+                }
+                text_runtime::bounded(value.render())
+                    .map(Value::Text)
+                    .map_err(|message| GoblinError::new("G203", message))
+            }
+            "parse_number" => {
+                require_args(name, args, 1)?;
+                let value = self.eval_expr(&args[0])?;
+                let value = value.text(name)?;
+                let number = text_runtime::parse_number(value).map_err(GoblinError::numeric)?;
+                Quantity::scalar(number).map(Value::Quantity)
+            }
+            "str_trim" | "str_contains" | "str_replace" | "str_split" | "str_join" => {
+                self.eval_string_call(name, args)
             }
             "append" => {
                 require_args(name, args, 2)?;
@@ -853,8 +933,108 @@ impl Evaluation {
                 self.add_output(artifact)?;
                 Ok(Value::Text(output_name))
             }
-            _ => Err(unknown(name)),
+            _ => self.eval_user_function(name, args),
         }
+    }
+
+    fn eval_string_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        let expected = match name {
+            "str_trim" => 1,
+            "str_contains" | "str_split" | "str_join" => 2,
+            "str_replace" => 3,
+            _ => return Err(unknown(name)),
+        };
+        require_args(name, args, expected)?;
+        let values = self.eval_args(args)?;
+        let result = match name {
+            "str_trim" => Value::Text(
+                text_runtime::bounded(values[0].text(name)?.trim().to_string())
+                    .map_err(|message| GoblinError::new("G203", message))?,
+            ),
+            "str_contains" => Value::Bool(values[0].text(name)?.contains(values[1].text(name)?)),
+            "str_replace" => Value::Text(
+                text_runtime::replace(
+                    values[0].text(name)?,
+                    values[1].text(name)?,
+                    values[2].text(name)?,
+                )
+                .map_err(|message| GoblinError::new("G203", message))?,
+            ),
+            "str_split" => Value::Array(
+                text_runtime::split(values[0].text(name)?, values[1].text(name)?)
+                    .map_err(|message| GoblinError::new("G203", message))?
+                    .into_iter()
+                    .map(Value::Text)
+                    .collect(),
+            ),
+            "str_join" => {
+                let separator = values[0].text(name)?;
+                let Value::Array(items) = &values[1] else {
+                    return Err(GoblinError::new(
+                        "G203",
+                        "str_join() requires an array of text.",
+                    ));
+                };
+                let parts = items
+                    .iter()
+                    .map(|item| item.text(name).map(str::to_string))
+                    .collect::<Result<Vec<_>>>()?;
+                Value::Text(
+                    text_runtime::join(separator, &parts)
+                        .map_err(|message| GoblinError::new("G203", message))?,
+                )
+            }
+            _ => unreachable!(),
+        };
+        Ok(result)
+    }
+
+    fn eval_user_function(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        let (params, body) = self
+            .functions
+            .get(name)
+            .cloned()
+            .ok_or_else(|| unknown(name))?;
+        if args.len() != params.len() {
+            return Err(GoblinError::new(
+                "G203",
+                format!(
+                    "g_func {name} expects {} argument(s), got {}.",
+                    params.len(),
+                    args.len()
+                ),
+            ));
+        }
+        if self.function_depth >= MAX_FUNCTION_DEPTH {
+            return Err(GoblinError::new(
+                "G203",
+                format!("g_func call depth exceeded {MAX_FUNCTION_DEPTH}."),
+            ));
+        }
+        let values = args
+            .iter()
+            .map(|arg| self.eval_expr(arg))
+            .collect::<Result<Vec<_>>>()?;
+        let local = params.into_iter().zip(values).collect();
+        let previous_env = std::mem::replace(&mut self.env, local);
+        let previous_return = self.return_value.take();
+        self.function_depth += 1;
+        let result = (|| {
+            for statement in &body {
+                self.eval_stmt(statement)?;
+                if let Some(value) = self.return_value.take() {
+                    return Ok(value);
+                }
+            }
+            Err(GoblinError::new(
+                "G203",
+                format!("g_func {name} reached the end without return."),
+            ))
+        })();
+        self.function_depth -= 1;
+        self.env = previous_env;
+        self.return_value = previous_return;
+        result
     }
 
     fn export_cell(&self, value: &Value) -> Result<String> {

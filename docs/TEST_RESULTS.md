@@ -1,6 +1,33 @@
-# Alpha.8 acceptance results
+# Alpha.10 acceptance results
 
-Current alpha.8 gates (macOS arm64, Rust 1.92.0):
+Current alpha.10 local source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked`: 98 passed, 0 failed, including six new `g_strings` tests and one explicit Python-reference-divergence test;
+- `cargo clippy --locked --all-targets -- -D warnings`, formatting, and `git diff --check`: pass;
+- `cargo build --locked --release`: pass; binary reports `goblin++ 0.1.0-alpha.10`;
+- VS Code 0.1.5 tests against the built alpha.10 CLI: 16 passed, 0 failed, including a compiled text-operation smoke test;
+- `examples/strings.gbl` read-only check: `CHECK_STATUS=PASS`;
+- interpreted/native text operations, checked conversion of supplied input, Unicode-scalar length, source freeze, sealed values, and independent run verification: pass;
+- invalid numeric text, precision-dangerous plain integers, empty separators, mixed types, and text-size/part limits: explicit failures tested.
+
+Text `+` is an intentional alpha.10 extension: Python 0.0.7 rejected it with `G000`. The retained reference corpus still passes, but exact semantic parity is not claimed for this case. These are local checks, not a public release or cross-platform reproduction.
+
+## Previous stage: Alpha.9 acceptance results
+
+Alpha.9 source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked`: 91 passed, 0 failed, including seven new `g_func` tests;
+- `cargo clippy --locked --all-targets -- -D warnings`: pass;
+- `cargo fmt --all` and `git diff --check`: pass;
+- VS Code 0.1.4 tests against the built alpha.9 CLI: 16 passed, 0 failed;
+- interpreted and compiled function calls, nested calls, early return, forward declarations, local array copies, confined interpreted output, frozen source, sealed result, and independent run verification: pass;
+- missing `return`, wrong arity, recursion limit, unknown symbols, invalid declarations, and compiled FITS-call refusal inside a function: explicit failures tested.
+
+These are local source-check results, not a public release, a clean-checkout reproduction, or a cross-platform result. Python 0.0.7 remains the normative reference while the porting gates are open.
+
+## Previous stage: Alpha.8 acceptance results
+
+Alpha.8 gates (macOS arm64, Rust 1.92.0):
 
 - `cargo test --offline --locked`: 84 passed, 0 failed (80 interaction-stage and regression tests plus four array tests);
 - `cargo clippy --offline --locked --all-targets -- -D warnings`: pass;

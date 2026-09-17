@@ -1,6 +1,6 @@
 # Goblin++ VS Code editor guide
 
-This guide targets the Rust engine 0.1.0-alpha.8 and extension 0.1.3.
+This guide targets the Rust engine 0.1.0-alpha.10 and extension 0.1.5.
 
 ## 1. Open a trusted folder
 
@@ -12,7 +12,7 @@ If the Goblin++ command already works in a terminal, the extension may find it a
 
 ## 3. Edit
 
-Completions and colors cover assignments, `for ... in range(...)`, `while`, `if`/`else if`/`else`, `switch`/`case`/`default`, Booleans, comparisons, arrays, FITS functions, text/table/plot outputs, and optional `GO_PARANOID` and `seal`. Bracket pairs auto-close. Snippets include `everyday`, `paranoid`, `for`, `while`, `if`, `switch`, `array`, `append`, `input`, `argv`, `fitsmean`, and `writecsv`.
+Completions and colors cover assignments, `for ... in range(...)`, `while`, `if`/`else if`/`else`, `switch`/`case`/`default`, `g_func`/`return`, `g_strings` calls, Booleans, comparisons, arrays, FITS functions, text/table/plot outputs, and optional `GO_PARANOID` and `seal`. Bracket pairs auto-close. Snippets include `everyday`, `paranoid`, `for`, `while`, `if`, `switch`, `g_func`, `parse_number`, `str_split`, `array`, `append`, `input`, `argv`, `fitsmean`, and `writecsv`.
 
 Suggestions are aids, not proof that a scientific formula is correct. FITS metadata, column names, and units still need human interpretation. The Rust parser and evaluator are authoritative.
 

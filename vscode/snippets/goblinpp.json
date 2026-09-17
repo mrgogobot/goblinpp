@@ -99,6 +99,28 @@
     ],
     "description": "First exact matching case; no fallthrough."
   },
+  "G funk function": {
+    "prefix": "g_func",
+    "body": [
+      "g_func ${1:name}(${2:value}) {",
+      "    return ${3:value}",
+      "}"
+    ],
+    "description": "Define a local-scope function with an explicit return."
+  },
+  "Parse a checked number": {
+    "prefix": "parse_number",
+    "body": "${1:value} = parse_number(${2:text})",
+    "description": "Convert finite, unitless decimal text to a quantity; invalid text fails."
+  },
+  "Split and join text": {
+    "prefix": "str_split",
+    "body": [
+      "${1:parts} = str_split(${2:text}, ${3:\",\"})",
+      "${4:joined} = str_join(${3:\",\"}, ${1:parts})"
+    ],
+    "description": "Split text into an array and join its text parts."
+  },
   "Ask for one line": {
     "prefix": "input",
     "body": "${1:name} = input(\"${2:Please enter your name: }\")",

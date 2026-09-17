@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.8 CLI check, run, and verify contracts", {
+test("actual alpha.10 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.8 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.8/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.10/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -51,6 +51,14 @@ test("actual alpha.8 CLI check, run, and verify contracts", {
   const branchRun = invoke(core.goblinArgs("run", branched));
   assert.equal(branchRun.status, 0);
   assert.match(branchRun.stdout, /code = 1/);
+
+  const strings = path.join(root, "strings.gbl");
+  fs.writeFileSync(strings, 'name = str_trim("  Ada  ")\nvalue = parse_number("2.5") * 2\nprint("Hello, " + name + "; value = " + to_text(value))\n');
+  const stringCheck = invoke(core.goblinArgs("check", strings, ["--json"]));
+  assert.equal(stringCheck.status, 0);
+  const stringRun = invoke(core.goblinArgs("run", strings, ["--compile"]));
+  assert.equal(stringRun.status, 0, stringRun.stderr);
+  assert.match(stringRun.stdout, /Hello, Ada; value = 5/);
 
   const bad = path.join(root, "bad.gbl");
   fs.writeFileSync(bad, "for i in range(3) {\n x = i\n");

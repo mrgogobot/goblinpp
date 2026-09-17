@@ -119,6 +119,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     .cloned()
                     .collect(),
             };
+            evaluation.register_functions(&safe_program)?;
             for statement in &safe_program.statements {
                 evaluation.eval_stmt(statement)?;
             }
@@ -177,6 +178,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             receipt["execution"]["compiler"]["native_result_manifest_sha256"] =
                 Value::String(sha256_file(&native_results)?);
         } else {
+            evaluation.register_functions(&current.program)?;
             for statement in &current.program.statements {
                 evaluation.eval_stmt(statement)?;
             }

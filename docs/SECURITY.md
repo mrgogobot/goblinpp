@@ -1,5 +1,21 @@
 # Security and trust boundaries
 
+## Confidentiality of run evidence
+
+Goblin++ preserves source and run logs. Depending on what a program does, its
+run directory and evidence store can also contain unredacted `input()` prompts
+and responses, program arguments, imported FITS bytes, sealed values, and
+generated files. These records are not encrypted. Avoid passwords, access
+tokens, personal information, or confidential research data unless you have
+reviewed the storage location and operating-system access controls. Removing a
+secret from the live source does not erase copies already preserved in run
+evidence or backups.
+
+`GO_PARANOID`, hashes, freeze receipts, and the custody ledger detect some
+changes; none provides confidentiality. See
+[Input, arguments, arrays, and slices](INTERACTION_AND_ARRAYS.md) for the exact
+interaction evidence behavior.
+
 ## Everyday and paranoid evidence
 
 Everyday runs still preserve the starting source, stdout, stderr, a hashed receipt, generated and explicitly sealed artifacts, relevant imports, and normally a checksum-ledger event. If a paranoid run fails its own receipt/evidence check, it records a machinery failure and does not register that unverified run in the ledger. Output-path confinement, frozen-source checks, and exact-hash inline-Rust authorization are not disabled when `GO_PARANOID` is omitted.

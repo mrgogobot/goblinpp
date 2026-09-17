@@ -1,0 +1,11 @@
+GO_PARANOID
+
+# g_func defines a reusable calculation. Arguments and local variables are copies.
+g_func energy(mass) {
+    return mass * c^2
+}
+
+mass = 1 kg
+result = energy(mass)
+print("Energy = {result}")
+seal result

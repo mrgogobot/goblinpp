@@ -8,7 +8,7 @@ goblin++ examples/program_args.gbl -- Ada
 goblin++ run examples/program_args.gbl -- Ada
 ```
 
-`input` and `argv` return text, not numbers. There is no numeric conversion in this stage. Each prompt and response is capped at 65,536 bytes; a run allows at most 1,024 prompts and 256 arguments (including `argv(0)`). `check` never reads standard input; if it reaches `input`, it reports that input is required. The VS Code Run command shows an input box. Run with Arguments asks for a JSON array, for example `["--name", "Ada"]`.
+`input` and `argv` return text, not numbers. Use `parse_number(text)` for an explicit, checked conversion to a finite dimensionless quantity; see [STRINGS.md](STRINGS.md). Each prompt and response is capped at 65,536 bytes; a run allows at most 1,024 prompts and 256 arguments (including `argv(0)`). `check` never reads standard input; if it reaches `input`, it reports that input is required. The VS Code Run command shows an input box. Run with Arguments asks for a JSON array, for example `["--name", "Ada"]`.
 
 **Privacy:** prompt text, responses, and arguments are preserved unredacted in `interaction.json` inside the run directory and hash-linked to the receipt. Do not use `input` or command-line arguments for passwords, tokens, or other secrets. `verify` checks the preserved evidence; `diff` reports whether interaction evidence matches. This is auditability, not confidentiality.
 

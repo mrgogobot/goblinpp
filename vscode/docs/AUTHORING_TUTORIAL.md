@@ -1,6 +1,6 @@
 # Write your first Goblin++ programs
 
-This short tutorial uses the Rust engine 0.1.0-alpha.8. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
+This short tutorial uses the Rust engine 0.1.0-alpha.10. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
 
 ## 1. Begin with an everyday calculation
 
@@ -31,6 +31,21 @@ print("total = {total}")
 
 `range(1, 6)` visits 1 through 5: its stop is excluded. `while condition { ... }` also works when the condition is Boolean. The interpreter and compiler share a one-million-loop-body-iteration limit; it catches a runaway loop but is not a security sandbox.
 
+You can also name a reusable calculation. Type `g_func` in the editor for a starter snippet:
+
+```goblin
+g_func fraction_of(accepted, samples) {
+    return accepted / samples
+}
+
+fraction = fraction_of(9, 12)
+print("fraction = {fraction:.3f}")
+```
+
+Arguments are local copies. A function must explicitly `return` on the path taken; place `seal fraction` in the caller if you want a separate typed artifact. See the engine's `docs/FUNCTIONS.md` for limits and compiled-mode boundaries.
+
+Text from `input()` or `argv()` is not automatically numeric. Use `parse_number(raw)` when a finite unitless decimal is intended; invalid text produces an auditable failure. Text `+`, `len(text)`, and the `str_...` built-ins cover everyday string work. See the engine's `docs/STRINGS.md` before using text conversions in scientific calculations.
+
 ## 3. Make a decision
 
 ```goblin
@@ -51,7 +66,7 @@ print("verdict = {verdict}; code = {code}")
 
 ## 4. Read a scientific file
 
-Place the alpha.8 `sample.fits` beside your `.gbl` file. Its second HDU is a small binary table:
+Place the bundled `sample.fits` beside your `.gbl` file. Its second HDU is a small binary table:
 
 ```goblin
 file = "sample.fits"
@@ -75,4 +90,4 @@ Use **Goblin++: Verify Run Directory** on the `RUN_DIR` reported by a run. Freez
 
 ## Current boundaries
 
-FITS and generated-output calls work in the interpreter, not yet in compiled runs. Inline Rust requires a separately reviewed exact hash and has your account's full OS authority. Collections and user-defined functions remain future language work. No editor color or completion is a substitute for checking the data and testing the claim. Data first; goblins last.
+FITS and generated-output calls work in the interpreter, not yet in compiled runs (including inside `g_func`). Inline Rust requires a separately reviewed exact hash and has your account's full OS authority. One-dimensional arrays and `g_func` functions are available; nested collections remain future work. No editor color or completion is a substitute for checking the data and testing the claim. Data first; goblins last.

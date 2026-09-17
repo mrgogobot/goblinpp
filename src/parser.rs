@@ -5,6 +5,63 @@ use crate::hashing::sha256_bytes;
 use crate::inline_rust::{ExtractedSource, InlineRustBlock, extract};
 use crate::lexer::{Token, TokenKind, lex};
 use crate::quantity::is_unit;
+use std::collections::HashSet;
+
+pub fn reserved_function_name(name: &str) -> bool {
+    matches!(
+        name,
+        "g_func"
+            | "return"
+            | "GO_PARANOID"
+            | "seal"
+            | "for"
+            | "while"
+            | "range"
+            | "in"
+            | "if"
+            | "else"
+            | "switch"
+            | "case"
+            | "default"
+            | "true"
+            | "false"
+            | "argc"
+            | "argv"
+            | "input"
+            | "print"
+            | "printf"
+            | "len"
+            | "append"
+            | "to_text"
+            | "parse_number"
+            | "str_trim"
+            | "str_contains"
+            | "str_replace"
+            | "str_split"
+            | "str_join"
+            | "fits_header"
+            | "fits_axis"
+            | "fits_count"
+            | "fits_pixel"
+            | "fits_mean"
+            | "fits_hdu_count"
+            | "fits_rows"
+            | "fits_columns"
+            | "fits_column"
+            | "fits_column_valid_count"
+            | "fits_column_mean"
+            | "fits_column_min"
+            | "fits_column_max"
+            | "write_text"
+            | "write_csv"
+            | "write_tsv"
+            | "write_json"
+            | "plot_fits_histogram"
+            | "plot_fits_scatter"
+    ) || name.starts_with("__goblin_")
+        || resolve(name).is_some()
+        || is_unit(name)
+}
 
 #[derive(Debug, Clone)]
 pub struct ParsedSource {
@@ -72,11 +129,16 @@ pub fn parse_source(source: &str) -> Result<ParsedSource> {
 struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
+    in_function: bool,
 }
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, cursor: 0 }
+        Self {
+            tokens,
+            cursor: 0,
+            in_function: false,
+        }
     }
     fn current(&self) -> &Token {
         &self.tokens[self.cursor]
@@ -88,9 +150,16 @@ impl Parser {
     }
 
     fn parse(mut self) -> Result<Program> {
-        Ok(Program {
-            statements: self.statements(false)?,
-        })
+        let statements = self.statements(false)?;
+        let mut names = HashSet::new();
+        for statement in &statements {
+            if let Stmt::Function { name, .. } = statement
+                && !names.insert(name)
+            {
+                return Err(GoblinError::parse(format!("Duplicate g_func {name:?}.")));
+            }
+        }
+        Ok(Program { statements })
     }
 
     fn statements(&mut self, in_block: bool) -> Result<Vec<Stmt>> {
@@ -131,6 +200,50 @@ impl Parser {
     }
 
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
+        if self.ident_is("g_func") {
+            if in_block {
+                return Err(GoblinError::parse("g_func declarations must be top-level."));
+            }
+            self.advance();
+            let name = self.expect_ident()?;
+            if reserved_function_name(&name) {
+                return Err(GoblinError::parse(format!(
+                    "{name:?} cannot name a g_func."
+                )));
+            }
+            self.expect_operator('(')?;
+            let mut params = Vec::new();
+            if !self.operator_is(')') {
+                loop {
+                    let param = self.expect_ident()?;
+                    if reserved_function_name(&param) || params.contains(&param) {
+                        return Err(GoblinError::parse(format!(
+                            "Invalid or duplicate g_func parameter {param:?}."
+                        )));
+                    }
+                    params.push(param);
+                    if params.len() > 32 {
+                        return Err(GoblinError::parse("g_func accepts at most 32 parameters."));
+                    }
+                    if !self.accept_operator(',') {
+                        break;
+                    }
+                }
+            }
+            self.expect_operator(')')?;
+            self.expect_operator('{')?;
+            self.in_function = true;
+            let body = self.statements(true)?;
+            self.in_function = false;
+            return Ok(Stmt::Function { name, params, body });
+        }
+        if self.ident_is("return") {
+            if !self.in_function {
+                return Err(GoblinError::parse("return is only valid inside g_func."));
+            }
+            self.advance();
+            return Ok(Stmt::Return(self.expression()?));
+        }
         if self.ident_is("for") {
             self.advance();
             let variable = self.expect_ident()?;
@@ -262,6 +375,11 @@ impl Parser {
             return Ok(Stmt::Directive("GO_PARANOID".into()));
         }
         if self.ident_is("seal") {
+            if self.in_function {
+                return Err(GoblinError::parse(
+                    "seal must be outside g_func; seal the returned value in the caller.",
+                ));
+            }
             self.advance();
             return Ok(Stmt::Seal(self.expect_ident()?));
         }

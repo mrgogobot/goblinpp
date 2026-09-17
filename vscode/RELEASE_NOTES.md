@@ -1,4 +1,12 @@
-# VS Code extension 0.1.3
+# VS Code extension 0.1.5
+
+Updated for Rust 0.1.0-alpha.10. Added `g_strings` builtin highlighting, completions, and snippets for checked text-to-number conversion and split/join. Text `+` and `len(text)` work in the engine; the extension remains advisory.
+
+## Previous release: 0.1.4
+
+Updated for Rust 0.1.0-alpha.9. Added `g_func` and `return` highlighting, completion help, and a function snippet. The editor remains advisory; runtime semantics and custody decisions belong to the engine.
+
+## Previous release: 0.1.3
 
 Updated for Rust 0.1.0-alpha.8. Added `input()` prompt boxes, Run With Arguments, and highlighting/completions/snippets for copy-value arrays, `len`, and `append`. Interaction responses are stored in plaintext run evidence; the editor does not make them secret. The extension remains an editor aid; the CLI owns syntax and custody decisions.
 

@@ -178,7 +178,7 @@ fn evaluates_the_python_007_normative_success_corpus() {
 }
 
 #[test]
-fn errors_match_the_python_007_normative_codes() {
+fn retained_errors_match_the_python_007_normative_codes() {
     let cases = [
         ("x = missing\n", "G101"),
         ("mystery()\n", "G101"),
@@ -187,7 +187,6 @@ fn errors_match_the_python_007_normative_codes() {
         ("x = 1 m - 1 K\n", "G201"),
         ("x = 2^0.5\n", "G201"),
         ("x = 2^(1 s)\n", "G201"),
-        ("x = \"a\" + \"b\"\n", "G000"),
         ("x = -\"a\"\n", "G000"),
         ("printf()\n", "G000"),
         ("printf(1)\n", "G000"),
@@ -206,4 +205,13 @@ fn errors_match_the_python_007_normative_codes() {
             .unwrap_err();
         assert_eq!(error.code, code, "wrong error code for {source:?}: {error}");
     }
+}
+
+#[test]
+fn text_addition_is_an_explicit_rust_alpha_extension_to_python_007() {
+    // Python 0.0.7 rejected this expression with G000. Alpha.10 intentionally
+    // accepts it; keep the divergence visible rather than claiming parity.
+    let parsed = parse_source("x = \"a\" + \"b\"\nseal x\n").unwrap();
+    let result = Evaluation::new(".").eval_program(&parsed.program).unwrap();
+    assert_eq!(result.sealed["x"].render(), "ab");
 }

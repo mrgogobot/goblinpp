@@ -4,7 +4,7 @@ This is a **pre-publication source-repository draft**, not a public release. It
 may be kept in a private GitHub repository while these gates are reviewed. A
 commit or private upload is not a Zenodo release. The checklist keeps decisions
 visible instead of silently making them for the author. The current Rust engine
-is `0.1.0-alpha.8`; the bundled editor extension source is `0.1.3`.
+is `0.1.0-alpha.10`; the bundled editor extension source is `0.1.5`.
 
 ## Before making the GitHub repository public
 
@@ -15,16 +15,19 @@ is `0.1.0-alpha.8`; the bundled editor extension source is `0.1.3`.
 - [x] Add a non-publishing GitHub Actions workflow for tests and build checks.
 - [x] Add MIT for software and CC BY 4.0 for original documentation prose and
   diagrams, with explicit scope and matching Rust/VS Code package metadata.
-- [ ] Confirm Malin Hess is the correct copyright holder for all material
-  offered under these licenses, and identify any exceptions.
-- [ ] Review the repository file list and history for secrets, private data,
-  third-party code, images, fonts, and permissions to redistribute them.
+- [x] Confirm Malin Hess is the named rights holder for original project
+  material. The GPT-generated project logo is separate branding under
+  [BRANDING.md](BRANDING.md); dependency crates retain their own licenses.
+- [x] Review the tracked file list and local Git history for obvious secrets,
+  private data, third-party source/assets, and redistribution concerns. No
+  personal run data or obvious secret was found in this snapshot; repeat the
+  review if new material is added before publication.
 - [ ] Decide repository visibility and confirm the GitHub account/repository
   name. A private repository is a reversible first upload; public visibility
   is a separate decision.
 - [ ] Establish a private security-reporting route and state supported versions.
 - [ ] Confirm contribution policy and any required AI-assistance disclosure.
-- [ ] Make the privacy warning prominent: `input()` responses, program arguments,
+- [x] Make the privacy warning prominent: `input()` responses, program arguments,
   source, imported data evidence, and run logs may be preserved in plaintext.
   `GO_PARANOID` and SHA-256 hashes do not encrypt them.
 
@@ -33,6 +36,9 @@ is `0.1.0-alpha.8`; the bundled editor extension source is `0.1.3`.
 - [ ] Run the workflow on GitHub, including macOS and Linux; fix any failures.
 - [ ] Recheck `cargo test --locked`, Rust formatting/linting, and extension
   tests on a clean checkout.
+- [ ] Finish the [dependency-license review](docs/DEPENDENCY_LICENSE_AUDIT.md)
+  and include required third-party notices with any distributed binary or
+  extension package. A manifest-level inventory is not a final notice bundle.
 - [ ] Reproduce the source archive and verify its SHA-256 on a clean machine.
 - [ ] Rebuild the VS Code extension package and inspect it for both MIT and
   CC BY notices; previously distributed VSIX files are not changed by edits

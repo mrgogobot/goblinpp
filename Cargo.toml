@@ -1,6 +1,6 @@
 [package]
 name = "goblinpp"
-version = "0.1.0-alpha.8"
+version = "0.1.0-alpha.10"
 edition = "2024"
 rust-version = "1.92"
 description = "Evidence-first scientific language engine"

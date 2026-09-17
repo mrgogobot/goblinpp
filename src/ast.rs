@@ -46,6 +46,12 @@ pub enum Expr {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Directive(String),
+    Function {
+        name: String,
+        params: Vec<String>,
+        body: Vec<Stmt>,
+    },
+    Return(Expr),
     Assign {
         name: String,
         expr: Expr,
@@ -141,6 +147,13 @@ impl Stmt {
     pub fn canonical(&self) -> Value {
         match self {
             Stmt::Directive(name) => json!(["directive", name]),
+            Stmt::Function { name, params, body } => json!([
+                "g_func",
+                name,
+                params,
+                body.iter().map(Stmt::canonical).collect::<Vec<_>>()
+            ]),
+            Stmt::Return(expr) => json!(["return", expr.canonical()]),
             Stmt::Assign { name, expr } => json!(["assign", name, expr.canonical()]),
             Stmt::IndexAssign { name, index, expr } => {
                 json!(["index_assign", name, index.canonical(), expr.canonical()])

@@ -1,8 +1,15 @@
-# Goblin++ Rust Engine 0.1.0-alpha.8
+# Goblin++ Rust Engine 0.1.0-alpha.10
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
 Goblin++ is an evidence-first scientific language. This release begins the audited migration from the Python 0.0.7 reference implementation to a native Rust engine.
+
+> **Privacy warning:** Run evidence can preserve source code, `input()` prompts
+> and responses, command-line arguments, imported FITS data, generated files,
+> and stdout/stderr in plaintext. Do not use passwords, tokens, or confidential
+> research data without reviewing where that evidence is stored and who can
+> access it. `GO_PARANOID` and SHA-256 protect integrity, not confidentiality.
+> See [Security and trust boundaries](docs/SECURITY.md).
 
 The ordinary command interprets a saved `.gbl` file:
 
@@ -103,9 +110,38 @@ print("verdict = {verdict}; code = {code}")
 
 `range` uses a half-open stop and accepts one, two, or three dimensionless integer arguments. Comparisons return `true` or `false`; `while` and `if` require Boolean conditions. `switch` uses exact, dimension-aware equality, first match, and no fallthrough. Nested loops share a one-million-iteration run limit, and exceeding it creates a preserved, verifiable failure. See [CONTROL_FLOW.md](docs/CONTROL_FLOW.md) and `examples/branching.gbl`.
 
+## G funk: user-defined functions
+
+Declare a function with `g_func`, then call it by name. `return` supplies its value:
+
+```goblin
+g_func energy(mass) {
+    return mass * c^2
+}
+
+result = energy(1 kg)
+print("Energy = {result}")
+seal result
+```
+
+Functions work in the interpreter and native compiler. They may be declared after their call site. Parameters and local assignments stay inside the function; array arguments are independent copies. Every reached path must return a value. Recursion is limited to 16 active calls. Keep `GO_PARANOID`, `seal`, and authorized inline Rust at top level; seal the returned result in the caller. Interpreted functions may read FITS and write run-confined outputs, but native compilation still refuses those built-ins. See [FUNCTIONS.md](docs/FUNCTIONS.md) and `examples/functions.gbl`.
+
 ## Interaction and arrays
 
 `input("prompt")` reads text; `argc` and `argv(i)` expose command-line arguments after `--`. Interaction evidence is preserved, so never enter secrets. Arrays support `[]`, indexing, indexed assignment, half-open slicing, `len`, and copy-returning `append`. Slices are **independent copies**, not Go-style shared views. See [INTERACTION_AND_ARRAYS.md](docs/INTERACTION_AND_ARRAYS.md), `examples/greeting.gbl`, `examples/program_args.gbl`, and `examples/arrays.gbl`.
+
+## Text operations: g_strings without a new mode
+
+Text values now support `+` for concatenation and `len(text)` for Unicode-scalar length. `parse_number(text)` explicitly converts finite, unitless decimal input; `to_text(value)` renders a value for labels. `str_trim`, `str_contains`, `str_replace`, `str_split`, and `str_join` cover everyday text work in both execution modes:
+
+```goblin
+name = str_trim("  Ada  ")
+message = "Hello, " + name
+answer = parse_number("2.5") * 2
+print("{message}; answer = {answer}")
+```
+
+This is not a new `g_strings` type: it is a small, explicit set of operations on existing text values. `parse_number` does not parse units or provide exact large integers. See [STRINGS.md](docs/STRINGS.md) and `examples/strings.gbl` for the full contract.
 
 ## Native scientific data import
 
