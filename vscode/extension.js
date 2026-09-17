@@ -464,7 +464,7 @@ function activate(context) {
 
   const lexiconPath = path.join(context.extensionPath, "spec", "lexicon.v0.json");
   const lexicon = JSON.parse(fs.readFileSync(lexiconPath, "utf8"));
-  const runtimeVocabularyPath = path.join(context.extensionPath, "spec", "rust-alpha10-editor.json");
+  const runtimeVocabularyPath = path.join(context.extensionPath, "spec", "rust-alpha11-editor.json");
   const runtimeVocabulary = JSON.parse(fs.readFileSync(runtimeVocabularyPath, "utf8"));
   extensionLexicon = lexicon;
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);

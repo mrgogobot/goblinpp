@@ -47,8 +47,47 @@ Neither inspection mode creates a run receipt. A normal `.gbl` execution does.
 | `fits_column_mean(file, hdu, name)` | Compensated mean of non-null numeric elements |
 | `fits_column_min(file, hdu, name)` | Minimum non-null numeric element |
 | `fits_column_max(file, hdu, name)` | Maximum non-null numeric element |
+| `fits_select_stats(file, hdu, selection, lower, upper, value[, weight])` | Selected row counts, sum of weights, and mean over scalar numeric columns |
 
 A direct read of a null cell returns `G601`; aggregate statistics skip integer `TNULL` values and floating-point NaNs. Column matching is ASCII case-insensitive. A repeated numeric column requires the fifth `element` argument for a direct cell read, while statistics include every element.
+
+## Filtered and weighted table summary
+
+`fits_select_stats` scans the complete table in bounded chunks (at most 8 MiB
+per row/chunk), without sampling or modifying the FITS file. Its selection,
+value, and optional weight columns must each be supported *scalar numeric*
+columns. The lower bound is inclusive and the upper bound exclusive:
+`lower <= selection < upper`. Bounds must be finite, dimensionless numbers with
+`lower < upper`. FITS `TSCAL`/`TZERO` are applied to physical values; integer
+`TNULL` and floating NaN are treated as missing, following the FITS storage
+rules. A missing selection value cannot match. A selected row with a missing
+value or weight is counted as selected but not used. Every non-missing weight
+in a selected row must be strictly positive; zero or negative weights fail
+explicitly. No usable rows is an error rather than a fabricated mean.
+
+The returned array has four dimensionless values:
+`[selected_rows, used_rows, weight_sum, mean]`. Without a weight column, each
+usable row has weight 1 and `mean` is the ordinary selected mean. With a weight
+column, `mean = sum(value * weight) / sum(weight)`; sums use compensated
+accumulation, and any non-finite product or sum is refused.
+
+```goblin
+GO_PARANOID
+stats = fits_select_stats("sample.fits", 1, "Z", 0, 3, "Z", "QUALITY")
+selected = stats[0]
+used = stats[1]
+weighted_mean = stats[3]
+print("selected = {selected}; used = {used}; weighted mean = {weighted_mean}")
+seal stats
+```
+
+The exact interval, columns, and weights are never inferred from the catalogue:
+choose them for your scientific question. The run receipt records the source,
+input hash, and a structured access description; `seal stats` preserves the
+result as an independently checked artifact. This initial operation does not
+apply survey-specific quality cuts, uncertainties, random catalogues, or FITS
+`TUNIT` conversion. FITS calls remain interpreter-only: `--compile` refuses
+them rather than silently switching engines. See `examples/fits_selection.gbl`.
 
 ## Catalogue example
 

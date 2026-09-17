@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.10 status | Evidence or boundary |
+| Capability | Alpha.11 status | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | `for range`, `while`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, Boolean values, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -28,18 +28,19 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | FITS image import | New, implemented | Pure Rust primary/image HDUs, explicit indexes, bounded-memory reads |
 | FITS HDU/header discovery | New, implemented | Hashed or explicitly un-hashed `fits-info`; JSON and human output |
 | FITS binary tables | New, implemented | Fixed-width logical/text/integer/real columns, repeats, nulls, scaling, statistics |
+| Filtered/weighted FITS table summary | New, implemented in working tree | `fits_select_stats` streams scalar numeric rows with explicit half-open bounds, optional positive weights, selected/used row counts, and sealed/verifiable output; no implicit survey cuts or unit conversion |
 | Large FITS evidence | New, implemented | Streaming SHA-256 and one checksum-addressed stored copy, hard-linked per run |
 | FITS ASCII tables/compression/special columns | Pending | Discoverable metadata; unsupported values are explicitly refused |
 | FITS calls in compiled programs | Pending | Compiler refuses; interpreter is native Rust |
 | Output calls in compiled programs | Pending | Compiler refuses; interpreter output remains native Rust |
-| Bulk table export and FITS writing | Pending | Requires explicit filtering, schema, unit, and provenance contracts |
+| Bulk table export and FITS writing | Pending | Requires explicit output schema, unit, and provenance contracts; the summary operation does not export rows |
 | User-defined functions | Implemented in working tree | `g_func`, parameters, explicit `return`, local copy-value scope, forward calls and 16-call limit; interpreter/native parity tested |
 | Nested collections | Pending | Arrays remain one-dimensional |
 | Ed25519 ledger authorship | Pending | Alpha reports `CHECKSUM_ONLY` honestly |
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.5 invokes the Rust CLI and adds `g_func`/`g_strings` authoring hints; its hints are advisory |
+| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.6 invokes the Rust CLI and adds `g_func`/`g_strings`/FITS-selection authoring hints; its hints are advisory |
 
 ## Promotion gates
 

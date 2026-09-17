@@ -1,4 +1,10 @@
-# VS Code extension 0.1.5
+# VS Code extension 0.1.6
+
+Updated for Rust 0.1.0-alpha.11. Added `fits_select_stats` highlighting,
+completion help, and a snippet for explicit filtered/weighted FITS summaries.
+This is editor source only until a reviewed VSIX is packaged.
+
+## Previous release: 0.1.5
 
 Updated for Rust 0.1.0-alpha.10. Added `g_strings` builtin highlighting, completions, and snippets for checked text-to-number conversion and split/join. Text `+` and `len(text)` work in the engine; the extension remains advisory.
 

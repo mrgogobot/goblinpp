@@ -1,6 +1,6 @@
 # Write your first Goblin++ programs
 
-This short tutorial uses the Rust engine 0.1.0-alpha.10. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
+This short tutorial uses the Rust engine 0.1.0-alpha.11. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
 
 ## 1. Begin with an everyday calculation
 
@@ -81,6 +81,12 @@ write_json("summary.json", "rows", rows, "mean_z", mean_z)
 ```
 
 HDU indexes start at zero. Goblin++ hashes the input in a run; the file is read-only. `Z` is a column name, not a guaranteed cosmological interpretation. For an unfamiliar file, inspect its HDUs and columns first with `goblin++ fits-info FILE --quick`; quick inspection is explicitly **unhashed**, not run evidence.
+
+For a full-table, explicitly bounded and optionally weighted summary, see
+`examples/fits_selection.gbl` and the engine's `docs/FITS.md`. The bundled
+three-row fixture teaches syntax; it is not a DESI science result. The editor's
+`fitsselect` snippet is only a starting point: you must choose justified
+columns, interval, and weights for your own catalogue.
 
 ## 5. Decide what to preserve
 

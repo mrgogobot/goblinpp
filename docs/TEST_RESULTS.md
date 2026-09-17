@@ -1,4 +1,27 @@
-# Alpha.10 acceptance results
+# Alpha.11 acceptance results
+
+Current alpha.11 local source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked`: 101 passed, 0 failed; three new integration tests cover
+  scaled FITS selection, missing cells, optional positive weights, a scan
+  crossing the 8 MiB chunk boundary, verifiable negative paths, and native
+  compilation refusal for FITS calls;
+- `cargo clippy --locked --all-targets -- -D warnings`,
+  `cargo fmt --all -- --check`, and `git diff --check`: pass;
+- `cargo build --locked --release`: pass; binary reports
+  `goblin++ 0.1.0-alpha.11`;
+- VS Code extension 0.1.6 tests against that binary: 16 passed, 0 failed,
+  including a real `fits_select_stats` check/run/verify;
+- isolated `examples/fits_selection.gbl` check and paranoid run: pass;
+  selected rows 2, used rows 2, weight sum 10, weighted mean Z 1.6125;
+  independent `verify`: pass.
+
+The bundled three-row FITS fixture tests functionality, not a DESI science
+claim. Real-catalogue cuts, weights, and results still need independent
+scientific validation. This is a local check, not a public release, clean
+checkout reproduction, or cross-platform result.
+
+## Previous stage: Alpha.10 acceptance results
 
 Current alpha.10 local source-check gates (macOS arm64, Rust 1.92.0):
 

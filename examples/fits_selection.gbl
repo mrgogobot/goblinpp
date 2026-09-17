@@ -1,0 +1,17 @@
+GO_PARANOID
+
+# Demonstration on the bundled three-row fixture, not a scientific DESI result.
+# The selection interval is [lower, upper); weights must be positive.
+file = "sample.fits"
+stats = fits_select_stats(file, 1, "Z", 0, 3, "Z", "QUALITY")
+
+selected_rows = stats[0]
+used_rows = stats[1]
+weight_sum = stats[2]
+weighted_mean_z = stats[3]
+
+print("selected rows = {selected_rows}")
+print("used rows = {used_rows}")
+print("sum of weights = {weight_sum}")
+print("weighted mean Z = {weighted_mean_z}")
+seal stats

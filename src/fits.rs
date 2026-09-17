@@ -251,6 +251,14 @@ pub struct ColumnStats {
     pub maximum: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SelectedColumnStats {
+    pub selected_rows: usize,
+    pub used_rows: usize,
+    pub weight_sum: f64,
+    pub mean: f64,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct NumericSample {
     pub values: Vec<f64>,
@@ -541,6 +549,114 @@ impl FitsFile {
             mean: sum / valid as f64,
             minimum,
             maximum,
+        })
+    }
+
+    pub fn selected_column_stats(
+        &self,
+        hdu: usize,
+        selection_name: &str,
+        lower: f64,
+        upper: f64,
+        value_name: &str,
+        weight_name: Option<&str>,
+    ) -> Result<SelectedColumnStats> {
+        if !lower.is_finite() || !upper.is_finite() || lower >= upper {
+            return Err(GoblinError::data(
+                "FITS selection requires finite bounds with lower < upper.",
+            ));
+        }
+        let table = self.binary_table(hdu)?;
+        let selection = numeric_scalar_column(table, hdu, selection_name)?;
+        let value = numeric_scalar_column(table, hdu, value_name)?;
+        let weight = weight_name
+            .map(|name| numeric_scalar_column(table, hdu, name))
+            .transpose()?;
+        let rows = table.rows.unwrap_or(0);
+        let row_bytes = table.row_bytes.unwrap_or(0);
+        const MAX_CHUNK_BYTES: usize = 8 * 1024 * 1024;
+        if row_bytes == 0 || row_bytes > MAX_CHUNK_BYTES {
+            return Err(GoblinError::data(
+                "FITS selected statistics require a nonempty table row of at most 8 MiB.",
+            ));
+        }
+        let rows_per_chunk = (MAX_CHUNK_BYTES / row_bytes).max(1);
+        let mut selected_rows = 0_usize;
+        let mut used_rows = 0_usize;
+        let mut weight_sum = 0.0;
+        let mut weight_correction = 0.0;
+        let mut weighted_sum = 0.0;
+        let mut weighted_correction = 0.0;
+        let mut first_row = 0_usize;
+        while first_row < rows {
+            let chunk_rows = (rows - first_row).min(rows_per_chunk);
+            let chunk_offset = first_row
+                .checked_mul(row_bytes)
+                .and_then(|offset| table.data_offset.checked_add(offset as u64))
+                .ok_or_else(|| GoblinError::data("FITS table chunk offset overflows."))?;
+            let chunk = self.source.read(
+                chunk_offset,
+                chunk_rows
+                    .checked_mul(row_bytes)
+                    .ok_or_else(|| GoblinError::data("FITS table chunk size overflows."))?,
+            )?;
+            for local_row in 0..chunk_rows {
+                let row = first_row + local_row;
+                let row_data = &chunk[local_row * row_bytes..(local_row + 1) * row_bytes];
+                let selected = numeric_row_value(row_data, selection, row)?;
+                let Some(selected) = selected else { continue };
+                if selected < lower || selected >= upper {
+                    continue;
+                }
+                selected_rows += 1;
+                let row_weight = match weight {
+                    Some(column) => numeric_row_value(row_data, column, row)?,
+                    None => Some(1.0),
+                };
+                if let Some(row_weight) = row_weight
+                    && row_weight <= 0.0
+                {
+                    return Err(GoblinError::data(format!(
+                        "FITS HDU {hdu} selected row {row} has a non-positive weight."
+                    )));
+                }
+                let row_value = numeric_row_value(row_data, value, row)?;
+                let (Some(row_weight), Some(row_value)) = (row_weight, row_value) else {
+                    continue;
+                };
+                let contribution = row_weight * row_value;
+                if !contribution.is_finite() {
+                    return Err(GoblinError::data(format!(
+                        "FITS HDU {hdu} selected row {row} weighted value overflows."
+                    )));
+                }
+                kahan_add(&mut weight_sum, &mut weight_correction, row_weight);
+                kahan_add(&mut weighted_sum, &mut weighted_correction, contribution);
+                if !weight_sum.is_finite() || !weighted_sum.is_finite() {
+                    return Err(GoblinError::data(
+                        "FITS selected statistics accumulated a non-finite sum.",
+                    ));
+                }
+                used_rows += 1;
+            }
+            first_row += chunk_rows;
+        }
+        if used_rows == 0 {
+            return Err(GoblinError::data(format!(
+                "FITS HDU {hdu} selection has no rows with valid values and weights."
+            )));
+        }
+        let mean = weighted_sum / weight_sum;
+        if !mean.is_finite() {
+            return Err(GoblinError::data(
+                "FITS selected statistics produced a non-finite mean.",
+            ));
+        }
+        Ok(SelectedColumnStats {
+            selected_rows,
+            used_rows,
+            weight_sum,
+            mean,
         })
     }
 
@@ -1057,11 +1173,21 @@ fn numeric_scalar_column<'a>(
         || !matches!(column.code, 'B' | 'I' | 'J' | 'K' | 'E' | 'D')
     {
         return Err(GoblinError::data(format!(
-            "FITS plotting requires scalar real numeric columns; HDU {hdu} column {} has TFORM={}.",
+            "FITS analysis requires scalar real numeric columns; HDU {hdu} column {} has TFORM={}.",
             column.public.name, column.public.format
         )));
     }
     Ok(column)
+}
+
+fn numeric_row_value(row_data: &[u8], column: &ColumnLayout, row: usize) -> Result<Option<f64>> {
+    let start = column.public.byte_offset;
+    let end = start + column.element_width;
+    match decode_table_value(&row_data[start..end], column, row)? {
+        ColumnValue::Number(value) => Ok(Some(value)),
+        ColumnValue::Null => Ok(None),
+        _ => unreachable!("numeric scalar columns only"),
+    }
 }
 
 fn even_row_indexes(rows: usize, requested_points: usize) -> Vec<usize> {

@@ -146,6 +146,14 @@
     "body": "${1:mean_z} = fits_column_mean(\"${2:file.fits}\", ${3:1}, \"${4:Z}\")",
     "description": "Read a numeric FITS binary-table column mean."
   },
+  "FITS selected statistics": {
+    "prefix": "fitsselect",
+    "body": [
+      "${1:stats} = fits_select_stats(\"${2:file.fits}\", ${3:1}, \"${4:Z}\", ${5:0.4}, ${6:0.6}, \"${7:Z}\", \"${8:WEIGHT}\")",
+      "${9:mean} = ${1:stats}[3]"
+    ],
+    "description": "Full-table half-open selection with optional positive weights. Result is [selected, used, weight sum, mean]."
+  },
   "CSV result": {
     "prefix": "writecsv",
     "body": "write_csv(\"${1:summary.csv}\", 2, \"name\", \"value\", \"${2:result}\", ${3:value})",

@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.10
+# Goblin++ Rust Engine 0.1.0-alpha.11
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -130,6 +130,11 @@ Functions work in the interpreter and native compiler. They may be declared afte
 
 `input("prompt")` reads text; `argc` and `argv(i)` expose command-line arguments after `--`. Interaction evidence is preserved, so never enter secrets. Arrays support `[]`, indexing, indexed assignment, half-open slicing, `len`, and copy-returning `append`. Slices are **independent copies**, not Go-style shared views. See [INTERACTION_AND_ARRAYS.md](docs/INTERACTION_AND_ARRAYS.md), `examples/greeting.gbl`, `examples/program_args.gbl`, and `examples/arrays.gbl`.
 
+```goblin
+greeting = input("Please enter your name:")
+print("Hello, {greeting}!")
+```
+
 ## Text operations: g_strings without a new mode
 
 Text values now support `+` for concatenation and `len(text)` for Unicode-scalar length. `parse_number(text)` explicitly converts finite, unitless decimal input; `to_text(value)` renders a value for labels. `str_trim`, `str_contains`, `str_replace`, `str_split`, and `str_join` cover everyday text work in both execution modes:
@@ -166,6 +171,7 @@ mean_z = fits_column_mean("catalogue.fits", 1, "Z")
 minimum_z = fits_column_min("catalogue.fits", 1, "Z")
 maximum_z = fits_column_max("catalogue.fits", 1, "Z")
 valid_z = fits_column_valid_count("catalogue.fits", 1, "Z")
+stats = fits_select_stats("catalogue.fits", 1, "Z", 0.4, 0.6, "Z", "WEIGHT")
 ```
 
 Existing primary-image calls remain valid. Each also accepts an explicit HDU:
@@ -178,6 +184,12 @@ mean = fits_mean("observation.fits", 0)
 ```
 
 Image values support `BITPIX` 8, 16, 32, 64, -32, and -64. `BSCALE`, `BZERO`, and integer `BLANK` are honored. Binary-table access supports `L`, `B`, `I`, `J`, `K`, `A`, `E`, and `D` fixed-width columns, including repeats, `TSCAL`, `TZERO`, and integer `TNULL`. Numeric statistics skip null integers and floating-point NaNs and use compensated summation.
+
+`fits_select_stats` adds a bounded, full-table summary with an explicit
+half-open numeric selection and optional positive weights. Its four-element
+result reports selected rows, usable rows, sum of weights, and weighted mean;
+it does not choose survey cuts or weights for you. See [FITS.md](docs/FITS.md)
+and `examples/fits_selection.gbl` before using it for scientific work.
 
 Inputs are opened read-only and processed with bounded memory. A run streams the entire input through SHA-256 and preserves a second verified copy in `.goblin/imports/SHA256.fits`; run directories hard-link that checksum-addressed object when the filesystem permits, avoiding one full duplicate per run. The bundled `examples/sample.fits` is deterministic and reproducible with `tools/generate_sample_fits.rs`.
 

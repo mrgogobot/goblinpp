@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.10",
+  "runtime": "goblin++ 0.1.0-alpha.11",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
     {"spelling": "GO_PARANOID", "kind": "statement", "detail": "Optional stricter evidence mode: postflight source observation and receipt self-check; not a sandbox."},
@@ -49,6 +49,7 @@
     {"spelling": "fits_column_mean", "kind": "function", "detail": "Mean of supported non-null numeric FITS column values."},
     {"spelling": "fits_column_min", "kind": "function", "detail": "Minimum of supported non-null numeric FITS column values."},
     {"spelling": "fits_column_max", "kind": "function", "detail": "Maximum of supported non-null numeric FITS column values."},
+    {"spelling": "fits_select_stats", "kind": "function", "detail": "Scan a half-open numeric FITS selection; returns [selected rows, used rows, weight sum, mean]. Optional weights must be positive.", "snippet": "fits_select_stats(\"${1:file.fits}\", ${2:1}, \"${3:Z}\", ${4:0.4}, ${5:0.6}, \"${6:Z}\", \"${7:WEIGHT}\")"},
     {"spelling": "write_text", "kind": "function", "detail": "Write .txt or .md under RUN_DIR/outputs; GO_PARANOID and seal are optional.", "snippet": "write_text(\"${1:summary.txt}\", \"${2:result = {value}}\")"},
     {"spelling": "write_csv", "kind": "function", "detail": "Write a bounded CSV under RUN_DIR/outputs; first row is the header.", "snippet": "write_csv(\"${1:summary.csv}\", ${2:2}, \"${3:name}\", \"${4:value}\", \"${5:result}\", ${6:value})"},
     {"spelling": "write_tsv", "kind": "function", "detail": "Write a bounded TSV under RUN_DIR/outputs; first row is the header."},

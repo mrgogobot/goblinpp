@@ -1,4 +1,16 @@
-# 0.1.0-alpha.8
+# 0.1.0-alpha.11
+
+Added `fits_select_stats` for a bounded, full-table scalar-numeric FITS
+selection and optional positive weights. The half-open interval and column
+names are explicit; selected and usable row counts are returned alongside the
+weight sum and mean. FITS null/scaling rules apply, non-positive weights and
+non-finite accumulation fail, and run receipts record selection parameters.
+The bundled three-row fixture is a functionality test, not a scientific DESI
+result. FITS calls remain interpreter-only. Everyday text operations and
+prompted `input()` were already implemented and are now called out explicitly
+in the public-release checklist.
+
+## Previous stage: 0.1.0-alpha.8
 
 Added one-dimensional homogeneous arrays, zero-based indexing and indexed assignment, half-open slices, `len`, and `append` to both Rust execution engines. Array assignment, slicing, and append use independent value copies. Array seals, native parity manifests, canonical hashes, freeze refusal, and negative paths are tested. The 0.1.0-alpha.7 interaction work is included: `input`, read-only `argc`, `argv`, `--` program arguments, preserved interaction evidence, and an editor prompt bridge. Arrays are capped at 100,000 elements; nested arrays and numeric conversion of input text are not yet supported.
 

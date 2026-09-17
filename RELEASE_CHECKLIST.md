@@ -4,7 +4,7 @@ This is a **pre-publication source-repository draft**, not a public release. It
 may be kept in a private GitHub repository while these gates are reviewed. A
 commit or private upload is not a Zenodo release. The checklist keeps decisions
 visible instead of silently making them for the author. The current Rust engine
-is `0.1.0-alpha.10`; the bundled editor extension source is `0.1.5`.
+is `0.1.0-alpha.11`; the bundled editor extension source is `0.1.6`.
 
 ## Before making the GitHub repository public
 
@@ -30,6 +30,13 @@ is `0.1.0-alpha.10`; the bundled editor extension source is `0.1.5`.
 - [x] Make the privacy warning prominent: `input()` responses, program arguments,
   source, imported data evidence, and run logs may be preserved in plaintext.
   `GO_PARANOID` and SHA-256 hashes do not encrypt them.
+- [x] Keep everyday text and prompted input in the language-support gates:
+  `input("Please enter your name:")`, text concatenation, `len(text)`,
+  `str_trim`/`str_contains`/`str_replace`/`str_split`/`str_join`, `to_text`, and
+  checked `parse_number`. Interpreter/compiler and preserved-interaction tests
+  are in `tests/interaction.rs` and `tests/g_strings.rs`; these operations are
+  implemented, not deferred to a future release. Input remains plaintext
+  evidence, not a password prompt.
 
 ## Before calling an alpha release ready for researchers
 

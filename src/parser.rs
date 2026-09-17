@@ -52,6 +52,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "fits_column_mean"
             | "fits_column_min"
             | "fits_column_max"
+            | "fits_select_stats"
             | "write_text"
             | "write_csv"
             | "write_tsv"

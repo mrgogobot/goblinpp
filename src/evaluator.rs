@@ -732,6 +732,54 @@ impl Evaluation {
                 };
                 Quantity::scalar(value).map(Value::Quantity)
             }
+            "fits_select_stats" => {
+                require_args_one_of(name, args, &[6, 7])?;
+                let values = self.eval_args(args)?;
+                let path = values[0].text(name)?.to_string();
+                let hdu = integer_scalar(&values[1], name)? as usize;
+                let selection = values[2].text(name)?.to_string();
+                let lower = values[3].quantity(name)?;
+                let upper = values[4].quantity(name)?;
+                if lower.dimension != DIMENSIONLESS || upper.dimension != DIMENSIONLESS {
+                    return Err(GoblinError::data(
+                        "fits_select_stats() bounds must be dimensionless.",
+                    ));
+                }
+                let value_column = values[5].text(name)?.to_string();
+                let weight_column = values
+                    .get(6)
+                    .map(|value| value.text(name).map(str::to_string))
+                    .transpose()?;
+                let access = serde_json::json!({
+                    "operation": name,
+                    "hdu": hdu,
+                    "selection_column": selection,
+                    "lower_inclusive": lower.value_si,
+                    "upper_exclusive": upper.value_si,
+                    "value_column": value_column,
+                    "weight_column": weight_column,
+                })
+                .to_string();
+                let fits = self.load_fits(&path, access)?;
+                let stats = fits.selected_column_stats(
+                    hdu,
+                    &selection,
+                    lower.value_si,
+                    upper.value_si,
+                    &value_column,
+                    weight_column.as_deref(),
+                )?;
+                [
+                    stats.selected_rows as f64,
+                    stats.used_rows as f64,
+                    stats.weight_sum,
+                    stats.mean,
+                ]
+                .into_iter()
+                .map(|value| Quantity::scalar(value).map(Value::Quantity))
+                .collect::<Result<Vec<_>>>()
+                .map(Value::Array)
+            }
             "write_text" => {
                 if args.len() < 2 {
                     return Err(GoblinError::parse(format!(

@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.10 CLI check, run, and verify contracts", {
+test("actual alpha.11 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.10 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.10/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.11/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -59,6 +59,20 @@ test("actual alpha.10 CLI check, run, and verify contracts", {
   const stringRun = invoke(core.goblinArgs("run", strings, ["--compile"]));
   assert.equal(stringRun.status, 0, stringRun.stderr);
   assert.match(stringRun.stdout, /Hello, Ada; value = 5/);
+
+  fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "sample.fits"), path.join(root, "sample.fits"));
+  const selection = path.join(root, "selection.gbl");
+  fs.writeFileSync(selection, 'stats = fits_select_stats("sample.fits", 1, "Z", 0, 3, "Z", "QUALITY")\nmean = stats[3]\nprint("weighted mean = {mean}")\nseal stats\n');
+  const selectionCheck = invoke(core.goblinArgs("check", selection, ["--json"]));
+  assert.equal(selectionCheck.status, 0, selectionCheck.stderr);
+  const selectionRun = invoke(core.goblinArgs("run", selection));
+  assert.equal(selectionRun.status, 0, selectionRun.stderr);
+  assert.match(selectionRun.stdout, /weighted mean = 1\.6125/);
+  const selectionRunDir = /^RUN_DIR=(.+)$/m.exec(selectionRun.stdout)?.[1];
+  assert(selectionRunDir);
+  const selectionVerify = invoke(core.goblinArgs("verify", selectionRunDir));
+  assert.equal(selectionVerify.status, 0);
+  assert.match(selectionVerify.stdout, /VERIFICATION_STATUS=PASS/);
 
   const bad = path.join(root, "bad.gbl");
   fs.writeFileSync(bad, "for i in range(3) {\n x = i\n");
