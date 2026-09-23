@@ -11,6 +11,7 @@ print("{name} has {count} characters")
 
 raw = " 2.5 "
 number = parse_number(raw)
+count = parse_integer("42")
 answer = number * 2
 print("answer = {answer}")
 ```
@@ -28,7 +29,10 @@ The `g_strings` built-ins are:
 | `str_join(separator, text_array)` | Text assembled from a one-dimensional array of text |
 | `to_text(value)` | Human-readable text rendering |
 | `parse_number(text)` | Dimensionless finite floating-point quantity |
+| `parse_integer(text)` | Dimensionless exactly representable integer quantity |
 
 `parse_number` trims surrounding whitespace and accepts ASCII decimal syntax with an optional sign, decimal point, and exponent, such as `-3`, `.25`, or `+1.2e3`. It rejects units, embedded whitespace, `NaN`, infinity, overflow, and a nonzero value that underflows to zero. Plain integer spellings outside ±(2^53−1) are refused rather than silently rounded. Decimal/scientific values still have normal `f64` precision limits. There is **no distinct exact integer type** yet; do not use `parse_number` for large catalogue identifiers. Invalid conversion produces a preserved run failure, never a guessed value. Scientific units must be written explicitly in Goblin++ expressions, not smuggled through text conversion.
 
-New text-producing operations are limited to 1,048,576 UTF-8 bytes per result; split/join support at most 100,000 parts. Both interpreter and native-compiled execution use the same core text implementation and are covered by parity and receipt-verification tests. Source literals, input, arguments, and output evidence retain their existing limits and privacy rules. `input()` and `argv()` still return text; call `parse_number(...)` only when a unitless numeric value is actually intended.
+`parse_integer` accepts only optional `+` or `-` followed by ASCII decimal digits. It refuses decimal points, exponents, units, separators, and values outside ±(2^53−1). The result is still stored as a dimensionless `f64` quantity; this function provides checked syntax and range, not an arbitrary-precision integer type.
+
+New text-producing operations are limited to 1,048,576 UTF-8 bytes per result; split/join support at most 100,000 parts. Both interpreter and native-compiled execution use the same core text implementation and are covered by parity and receipt-verification tests. Source literals, input, arguments, and output evidence retain their existing limits and privacy rules. `input()` and `argv()` still return text; choose `parse_number(...)` or the stricter `parse_integer(...)` explicitly.

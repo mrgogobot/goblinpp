@@ -37,6 +37,12 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    Logical {
+        op: String,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    Not(Box<Expr>),
     Call {
         name: String,
         args: Vec<Expr>,
@@ -70,6 +76,13 @@ pub enum Stmt {
         step: Expr,
         body: Vec<Stmt>,
     },
+    ForEach {
+        variable: String,
+        iterable: Expr,
+        body: Vec<Stmt>,
+    },
+    Break,
+    Continue,
     While {
         condition: Expr,
         body: Vec<Stmt>,
@@ -131,6 +144,10 @@ impl Expr {
             Expr::Compare { op, left, right } => {
                 json!(["compare", op, left.canonical(), right.canonical()])
             }
+            Expr::Logical { op, left, right } => {
+                json!(["logical", op, left.canonical(), right.canonical()])
+            }
+            Expr::Not(expr) => json!(["not", expr.canonical()]),
             Expr::Call { name, args } => {
                 let canonical_name = if name == "printf" { "print" } else { name };
                 json!([
@@ -174,6 +191,18 @@ impl Stmt {
                 step.canonical(),
                 body.iter().map(Stmt::canonical).collect::<Vec<_>>()
             ]),
+            Stmt::ForEach {
+                variable,
+                iterable,
+                body,
+            } => json!([
+                "for_each",
+                variable,
+                iterable.canonical(),
+                body.iter().map(Stmt::canonical).collect::<Vec<_>>()
+            ]),
+            Stmt::Break => json!(["break"]),
+            Stmt::Continue => json!(["continue"]),
             Stmt::While { condition, body } => json!([
                 "while",
                 condition.canonical(),

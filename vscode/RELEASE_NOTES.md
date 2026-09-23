@@ -1,4 +1,11 @@
-# VS Code extension 0.1.6
+# VS Code extension 0.1.7
+
+Updated for Rust 0.1.0-alpha.12. Added highlighting, completion help, and
+snippets for direct array iteration, `break`, `continue`, short-circuit
+`and`/`or`/`not`, integer remainder, and `parse_integer`. Runtime semantics
+remain authoritative in the Goblin++ engine.
+
+## Previous release: 0.1.6
 
 Updated for Rust 0.1.0-alpha.11. Added `fits_select_stats` highlighting,
 completion help, and a snippet for explicit filtered/weighted FITS summaries.

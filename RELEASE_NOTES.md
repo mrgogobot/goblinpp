@@ -1,4 +1,19 @@
-# 0.1.0-alpha.11
+# 0.1.0-alpha.12
+
+Everyday-language usability stage. Added short-circuit Boolean `and`, `or`,
+and `not`; nearest-loop `break` and `continue`; direct iteration over an
+independent one-dimensional array value; checked integer `%`; and
+`parse_integer(text)`. All additions run in both the Rust interpreter and
+native compiler, retain the shared loop budget, produce new canonical AST
+forms without changing older program hashes, and have positive and negative
+acceptance tests. The VS Code extension source is updated for the new syntax.
+
+The integer facilities deliberately remain within exactly representable
+`f64` integers (±(2^53−1)); this is not an arbitrary-precision integer type.
+Direct iteration does not stream FITS rows. Compiled FITS/output parity and a
+module system remain later, separately reviewable milestones.
+
+## Previous stage: 0.1.0-alpha.11
 
 Added `fits_select_stats` for a bounded, full-table scalar-numeric FITS
 selection and optional positive weights. The half-open interval and column

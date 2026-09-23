@@ -1,6 +1,6 @@
 # Write your first Goblin++ programs
 
-This short tutorial uses the Rust engine 0.1.0-alpha.11. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
+This short tutorial uses the Rust engine 0.1.0-alpha.12. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
 
 ## 1. Begin with an everyday calculation
 
@@ -44,7 +44,7 @@ print("fraction = {fraction:.3f}")
 
 Arguments are local copies. A function must explicitly `return` on the path taken; place `seal fraction` in the caller if you want a separate typed artifact. See the engine's `docs/FUNCTIONS.md` for limits and compiled-mode boundaries.
 
-Text from `input()` or `argv()` is not automatically numeric. Use `parse_number(raw)` when a finite unitless decimal is intended; invalid text produces an auditable failure. Text `+`, `len(text)`, and the `str_...` built-ins cover everyday string work. See the engine's `docs/STRINGS.md` before using text conversions in scientific calculations.
+Text from `input()` or `argv()` is not automatically numeric. Use `parse_number(raw)` for a finite unitless decimal or `parse_integer(raw)` for checked decimal integer syntax; invalid text produces an auditable failure. Text `+`, `len(text)`, and the `str_...` built-ins cover everyday string work. See the engine's `docs/STRINGS.md` before using text conversions in scientific calculations.
 
 ## 3. Make a decision
 

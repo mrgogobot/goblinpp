@@ -1,7 +1,7 @@
 // Included verbatim in generated Rust programs. `Value` is the generated value type.
 fn goblin_string_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
     let expected = match name {
-        "to_text" | "parse_number" | "str_trim" => 1,
+        "to_text" | "parse_number" | "parse_integer" | "str_trim" => 1,
         "str_contains" | "str_split" | "str_join" => 2,
         "str_replace" => 3,
         _ => return Err(format!("UNKNOWN SYMBOL: {name}")),
@@ -24,6 +24,10 @@ fn goblin_string_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
             Value::Text(goblin_text::bounded(value.render())?)
         }
         "parse_number" => Value::scalar(goblin_text::parse_number(&expect_text(
+            values.next().unwrap(),
+            name,
+        )?)?)?,
+        "parse_integer" => Value::scalar(goblin_text::parse_integer(&expect_text(
             values.next().unwrap(),
             name,
         )?)?)?,

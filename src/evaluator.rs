@@ -118,6 +118,14 @@ pub struct Evaluation {
     return_value: Option<Value>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ExecFlow {
+    Normal,
+    Break,
+    Continue,
+    Return,
+}
+
 impl Evaluation {
     pub fn new(base_dir: impl AsRef<Path>) -> Self {
         Self {
@@ -165,21 +173,37 @@ impl Evaluation {
     }
 
     pub fn eval_stmt(&mut self, statement: &Stmt) -> Result<()> {
+        self.eval_stmt_flow(statement).map(|_| ())
+    }
+
+    fn eval_block(&mut self, statements: &[Stmt]) -> Result<ExecFlow> {
+        for statement in statements {
+            let flow = self.eval_stmt_flow(statement)?;
+            if flow != ExecFlow::Normal {
+                return Ok(flow);
+            }
+        }
+        Ok(ExecFlow::Normal)
+    }
+
+    fn eval_stmt_flow(&mut self, statement: &Stmt) -> Result<ExecFlow> {
         match statement {
-            Stmt::Function { .. } => Ok(()),
+            Stmt::Function { .. } => Ok(ExecFlow::Normal),
             Stmt::Return(expr) => {
                 self.return_value = Some(self.eval_expr(expr)?);
-                Ok(())
+                Ok(ExecFlow::Return)
             }
+            Stmt::Break => Ok(ExecFlow::Break),
+            Stmt::Continue => Ok(ExecFlow::Continue),
             Stmt::Directive(name) if name == "GO_PARANOID" => {
                 self.paranoid = true;
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::Directive(name) => Err(GoblinError::parse(format!("Unknown directive: {name}"))),
             Stmt::Assign { name, expr } => {
                 let value = self.eval_expr(expr)?;
                 self.env.insert(name.clone(), value);
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::IndexAssign { name, index, expr } => {
                 let index = array_index(&self.eval_expr(index)?, "array assignment")?;
@@ -202,16 +226,16 @@ impl Evaluation {
                 }
                 require_same_array_type(&items[0], &value)?;
                 items[index] = value;
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::Expression(expr) => {
                 self.eval_expr(expr)?;
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::Seal(name) => {
                 let value = self.env.get(name).cloned().ok_or_else(|| unknown(name))?;
                 self.sealed.insert(name.clone(), value);
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::For {
                 variable,
@@ -233,15 +257,41 @@ impl Evaluation {
                         variable.clone(),
                         Value::Quantity(Quantity::scalar(index as f64)?),
                     );
-                    for statement in body {
-                        self.eval_stmt(statement)?;
-                        if self.return_value.is_some() {
-                            return Ok(());
+                    match self.eval_block(body)? {
+                        ExecFlow::Normal => {}
+                        ExecFlow::Continue => {
+                            index += step;
+                            continue;
                         }
+                        ExecFlow::Break => break,
+                        ExecFlow::Return => return Ok(ExecFlow::Return),
                     }
                     index += step;
                 }
-                Ok(())
+                Ok(ExecFlow::Normal)
+            }
+            Stmt::ForEach {
+                variable,
+                iterable,
+                body,
+            } => {
+                let value = self.eval_expr(iterable)?;
+                let Value::Array(items) = value else {
+                    return Err(GoblinError::new(
+                        "G203",
+                        "Direct for iteration requires an array.",
+                    ));
+                };
+                for item in items {
+                    self.loop_tick()?;
+                    self.env.insert(variable.clone(), item);
+                    match self.eval_block(body)? {
+                        ExecFlow::Normal | ExecFlow::Continue => {}
+                        ExecFlow::Break => break,
+                        ExecFlow::Return => return Ok(ExecFlow::Return),
+                    }
+                }
+                Ok(ExecFlow::Normal)
             }
             Stmt::While { condition, body } => loop {
                 let condition = self.eval_expr(condition)?;
@@ -252,14 +302,13 @@ impl Evaluation {
                     ));
                 };
                 if !continue_loop {
-                    return Ok(());
+                    return Ok(ExecFlow::Normal);
                 }
                 self.loop_tick()?;
-                for statement in body {
-                    self.eval_stmt(statement)?;
-                    if self.return_value.is_some() {
-                        return Ok(());
-                    }
+                match self.eval_block(body)? {
+                    ExecFlow::Normal | ExecFlow::Continue => {}
+                    ExecFlow::Break => return Ok(ExecFlow::Normal),
+                    ExecFlow::Return => return Ok(ExecFlow::Return),
                 }
             },
             Stmt::If {
@@ -275,24 +324,13 @@ impl Evaluation {
                         ));
                     };
                     if yes {
-                        for statement in body {
-                            self.eval_stmt(statement)?;
-                            if self.return_value.is_some() {
-                                return Ok(());
-                            }
-                        }
-                        return Ok(());
+                        return self.eval_block(body);
                     }
                 }
                 if let Some(body) = else_body {
-                    for statement in body {
-                        self.eval_stmt(statement)?;
-                        if self.return_value.is_some() {
-                            return Ok(());
-                        }
-                    }
+                    return self.eval_block(body);
                 }
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::Switch {
                 selector,
@@ -303,24 +341,13 @@ impl Evaluation {
                 for (label, body) in cases {
                     let candidate = self.eval_expr(label)?;
                     if compare_values("==", &selected, &candidate)? {
-                        for statement in body {
-                            self.eval_stmt(statement)?;
-                            if self.return_value.is_some() {
-                                return Ok(());
-                            }
-                        }
-                        return Ok(());
+                        return self.eval_block(body);
                     }
                 }
                 if let Some(body) = default {
-                    for statement in body {
-                        self.eval_stmt(statement)?;
-                        if self.return_value.is_some() {
-                            return Ok(());
-                        }
-                    }
+                    return self.eval_block(body);
                 }
-                Ok(())
+                Ok(ExecFlow::Normal)
             }
             Stmt::InlineRust { sha256, .. } => Err(GoblinError::protocol(
                 "INLINE_RUST_REQUIRES_NATIVE_COMPILATION",
@@ -458,6 +485,14 @@ impl Evaluation {
                     '-' => left.checked_sub(right)?,
                     '*' => left.checked_mul(right)?,
                     '/' => left.checked_div(right)?,
+                    '%' => {
+                        let left = checked_integer(&left, "remainder left operand")?;
+                        let right = checked_integer(&right, "remainder right operand")?;
+                        if right == 0 {
+                            return Err(GoblinError::numeric("Remainder by zero."));
+                        }
+                        Quantity::scalar((left % right) as f64)?
+                    }
                     '^' => {
                         if right.dimension != DIMENSIONLESS
                             || right.value_si.fract() != 0.0
@@ -479,6 +514,20 @@ impl Evaluation {
                 let right = self.eval_expr(right)?;
                 Ok(Value::Bool(compare_values(op, &left, &right)?))
             }
+            Expr::Logical { op, left, right } => {
+                let left = boolean_value(self.eval_expr(left)?, op)?;
+                match (op.as_str(), left) {
+                    ("and", false) => Ok(Value::Bool(false)),
+                    ("or", true) => Ok(Value::Bool(true)),
+                    ("and", true) | ("or", false) => {
+                        Ok(Value::Bool(boolean_value(self.eval_expr(right)?, op)?))
+                    }
+                    _ => Err(GoblinError::parse(format!(
+                        "Unknown logical operator {op}."
+                    ))),
+                }
+            }
+            Expr::Not(expr) => Ok(Value::Bool(!boolean_value(self.eval_expr(expr)?, "not")?)),
             Expr::Call { name, args } => self.eval_call(name, args),
         }
     }
@@ -513,6 +562,13 @@ impl Evaluation {
                 let value = self.eval_expr(&args[0])?;
                 let value = value.text(name)?;
                 let number = text_runtime::parse_number(value).map_err(GoblinError::numeric)?;
+                Quantity::scalar(number).map(Value::Quantity)
+            }
+            "parse_integer" => {
+                require_args(name, args, 1)?;
+                let value = self.eval_expr(&args[0])?;
+                let value = value.text(name)?;
+                let number = text_runtime::parse_integer(value).map_err(GoblinError::numeric)?;
                 Quantity::scalar(number).map(Value::Quantity)
             }
             "str_trim" | "str_contains" | "str_replace" | "str_split" | "str_join" => {
@@ -1069,9 +1125,19 @@ impl Evaluation {
         self.function_depth += 1;
         let result = (|| {
             for statement in &body {
-                self.eval_stmt(statement)?;
-                if let Some(value) = self.return_value.take() {
-                    return Ok(value);
+                match self.eval_stmt_flow(statement)? {
+                    ExecFlow::Return => {
+                        return self.return_value.take().ok_or_else(|| {
+                            GoblinError::new("G203", "g_func return value was not preserved.")
+                        });
+                    }
+                    ExecFlow::Normal => {}
+                    ExecFlow::Break | ExecFlow::Continue => {
+                        return Err(GoblinError::new(
+                            "G203",
+                            "Loop control escaped its containing loop.",
+                        ));
+                    }
                 }
             }
             Err(GoblinError::new(
@@ -1295,6 +1361,29 @@ fn loop_integer(value: &Value, context: &str) -> Result<i64> {
         ));
     }
     Ok(quantity.value_si as i64)
+}
+
+fn checked_integer(quantity: &Quantity, context: &str) -> Result<i64> {
+    const MAX_SAFE: f64 = 9_007_199_254_740_991.0;
+    if quantity.dimension != DIMENSIONLESS
+        || quantity.value_si.fract() != 0.0
+        || quantity.value_si.abs() > MAX_SAFE
+    {
+        return Err(GoblinError::numeric(format!(
+            "{context} must be a dimensionless, exactly representable integer."
+        )));
+    }
+    Ok(quantity.value_si as i64)
+}
+
+fn boolean_value(value: Value, context: &str) -> Result<bool> {
+    match value {
+        Value::Bool(value) => Ok(value),
+        _ => Err(GoblinError::new(
+            "G203",
+            format!("{context} requires true or false operands."),
+        )),
+    }
 }
 
 fn compare_values(op: &str, left: &Value, right: &Value) -> Result<bool> {

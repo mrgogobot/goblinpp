@@ -23,6 +23,11 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "switch"
             | "case"
             | "default"
+            | "and"
+            | "or"
+            | "not"
+            | "break"
+            | "continue"
             | "true"
             | "false"
             | "argc"
@@ -34,6 +39,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "append"
             | "to_text"
             | "parse_number"
+            | "parse_integer"
             | "str_trim"
             | "str_contains"
             | "str_replace"
@@ -131,6 +137,7 @@ struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
     in_function: bool,
+    loop_depth: usize,
 }
 
 impl Parser {
@@ -139,6 +146,7 @@ impl Parser {
             tokens,
             cursor: 0,
             in_function: false,
+            loop_depth: 0,
         }
     }
     fn current(&self) -> &Token {
@@ -245,50 +253,84 @@ impl Parser {
             self.advance();
             return Ok(Stmt::Return(self.expression()?));
         }
+        if self.ident_is("break") || self.ident_is("continue") {
+            if self.loop_depth == 0 {
+                return Err(GoblinError::parse(
+                    "break and continue are only valid inside a loop.",
+                ));
+            }
+            let is_break = self.ident_is("break");
+            self.advance();
+            return Ok(if is_break {
+                Stmt::Break
+            } else {
+                Stmt::Continue
+            });
+        }
         if self.ident_is("for") {
             self.advance();
             let variable = self.expect_ident()?;
-            if matches!(
-                variable.as_str(),
-                "true" | "false" | "for" | "while" | "range" | "in" | "argc"
-            ) || resolve(&variable).is_some()
-            {
+            if reserved_function_name(&variable) {
                 return Err(GoblinError::parse(format!(
                     "{variable:?} cannot be a loop variable."
                 )));
             }
             self.expect_keyword("in")?;
-            self.expect_keyword("range")?;
-            self.expect_operator('(')?;
-            let first = self.expression()?;
-            let (start, stop, step) = if self.accept_operator(',') {
-                let second = self.expression()?;
-                let step = if self.accept_operator(',') {
-                    self.expression()?
+            if self.ident_is("range")
+                && self
+                    .tokens
+                    .get(self.cursor + 1)
+                    .is_some_and(|token| matches!(token.kind, TokenKind::Operator('(')))
+            {
+                self.advance();
+                self.expect_operator('(')?;
+                let first = self.expression()?;
+                let (start, stop, step) = if self.accept_operator(',') {
+                    let second = self.expression()?;
+                    let step = if self.accept_operator(',') {
+                        self.expression()?
+                    } else {
+                        Expr::Number(1.0)
+                    };
+                    (first, second, step)
                 } else {
-                    Expr::Number(1.0)
+                    (Expr::Number(0.0), first, Expr::Number(1.0))
                 };
-                (first, second, step)
+                self.expect_operator(')')?;
+                self.expect_operator('{')?;
+                self.loop_depth += 1;
+                let body = self.statements(true);
+                self.loop_depth -= 1;
+                return Ok(Stmt::For {
+                    variable,
+                    start,
+                    stop,
+                    step,
+                    body: body?,
+                });
             } else {
-                (Expr::Number(0.0), first, Expr::Number(1.0))
-            };
-            self.expect_operator(')')?;
-            self.expect_operator('{')?;
-            return Ok(Stmt::For {
-                variable,
-                start,
-                stop,
-                step,
-                body: self.statements(true)?,
-            });
+                let iterable = self.expression()?;
+                self.expect_operator('{')?;
+                self.loop_depth += 1;
+                let body = self.statements(true);
+                self.loop_depth -= 1;
+                return Ok(Stmt::ForEach {
+                    variable,
+                    iterable,
+                    body: body?,
+                });
+            }
         }
         if self.ident_is("while") {
             self.advance();
             let condition = self.expression()?;
             self.expect_operator('{')?;
+            self.loop_depth += 1;
+            let body = self.statements(true);
+            self.loop_depth -= 1;
             return Ok(Stmt::While {
                 condition,
-                body: self.statements(true)?,
+                body: body?,
             });
         }
         if self.ident_is("if") {
@@ -437,6 +479,45 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr> {
+        self.logical_or()
+    }
+
+    fn logical_or(&mut self) -> Result<Expr> {
+        let mut node = self.logical_and()?;
+        while self.ident_is("or") {
+            self.advance();
+            node = Expr::Logical {
+                op: "or".into(),
+                left: Box::new(node),
+                right: Box::new(self.logical_and()?),
+            };
+        }
+        Ok(node)
+    }
+
+    fn logical_and(&mut self) -> Result<Expr> {
+        let mut node = self.logical_not()?;
+        while self.ident_is("and") {
+            self.advance();
+            node = Expr::Logical {
+                op: "and".into(),
+                left: Box::new(node),
+                right: Box::new(self.logical_not()?),
+            };
+        }
+        Ok(node)
+    }
+
+    fn logical_not(&mut self) -> Result<Expr> {
+        if self.ident_is("not") {
+            self.advance();
+            Ok(Expr::Not(Box::new(self.logical_not()?)))
+        } else {
+            self.comparison()
+        }
+    }
+
+    fn comparison(&mut self) -> Result<Expr> {
         let left = self.additive()?;
         if let TokenKind::Compare(op) = &self.current().kind {
             let op = op.clone();
@@ -467,7 +548,7 @@ impl Parser {
     fn multiplicative(&mut self) -> Result<Expr> {
         let mut node = self.power()?;
         loop {
-            if self.operator_is('*') || self.operator_is('/') {
+            if self.operator_is('*') || self.operator_is('/') || self.operator_is('%') {
                 let op = self.expect_any_operator()?;
                 node = Expr::Binary {
                     op,
@@ -476,8 +557,9 @@ impl Parser {
                 };
             } else if matches!(
                 self.current().kind,
-                TokenKind::Number(_) | TokenKind::Ident(_) | TokenKind::Operator('(')
-            ) {
+                TokenKind::Number(_) | TokenKind::Operator('(')
+            ) || matches!(&self.current().kind, TokenKind::Ident(name) if name != "and" && name != "or")
+            {
                 node = Expr::Binary {
                     op: '*',
                     left: Box::new(node),

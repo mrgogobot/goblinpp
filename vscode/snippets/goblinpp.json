@@ -63,6 +63,25 @@
     ],
     "description": "Half-open integer loop with a shared 1,000,000-iteration ceiling."
   },
+  "For each array value": {
+    "prefix": "foreach",
+    "body": [
+      "for ${1:value} in ${2:values} {",
+      "    ${3:print(\"{${1:value}}\")}",
+      "}"
+    ],
+    "description": "Iterate an independent one-dimensional array value."
+  },
+  "Break loop": {
+    "prefix": "break",
+    "body": "break",
+    "description": "Exit the nearest loop."
+  },
+  "Continue loop": {
+    "prefix": "continue",
+    "body": "continue",
+    "description": "Start the nearest loop's next iteration."
+  },
   "While loop": {
     "prefix": "while",
     "body": [
@@ -112,6 +131,11 @@
     "prefix": "parse_number",
     "body": "${1:value} = parse_number(${2:text})",
     "description": "Convert finite, unitless decimal text to a quantity; invalid text fails."
+  },
+  "Parse a checked integer": {
+    "prefix": "parse_integer",
+    "body": "${1:value} = parse_integer(${2:text})",
+    "description": "Convert decimal integer text within the exact f64 range; invalid text fails."
   },
   "Split and join text": {
     "prefix": "str_split",

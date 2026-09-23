@@ -111,6 +111,8 @@ fn reject_uncompilable_data_calls(program: &Program) -> Result<()> {
             }
             Expr::Binary { left, right, .. } => visit(left) || visit(right),
             Expr::Compare { left, right, .. } => visit(left) || visit(right),
+            Expr::Logical { left, right, .. } => visit(left) || visit(right),
+            Expr::Not(expr) => visit(expr),
             _ => false,
         }
     }
@@ -127,6 +129,7 @@ fn reject_uncompilable_data_calls(program: &Program) -> Result<()> {
                 body,
                 ..
             } => visit(start) || visit(stop) || visit(step) || body.iter().any(visit_stmt),
+            Stmt::ForEach { iterable, body, .. } => visit(iterable) || body.iter().any(visit_stmt),
             Stmt::While { condition, body } => visit(condition) || body.iter().any(visit_stmt),
             Stmt::If {
                 branches,
@@ -239,6 +242,12 @@ fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
         '*' => Value::q(a * b, std::array::from_fn(|i| ad[i] + bd[i])),
         '/' if b == 0.0 => Err("DIVISION BY ZERO".into()),
         '/' => Value::q(a / b, std::array::from_fn(|i| ad[i] - bd[i])),
+        '%' => {{
+            let left = checked_integer(a, ad, "remainder left operand")?;
+            let right = checked_integer(b, bd, "remainder right operand")?;
+            if right == 0 {{ return Err("Remainder by zero.".into()); }}
+            Value::scalar((left % right) as f64)
+        }},
         '^' if bd != ZERO || b.fract() != 0.0 || b < i32::MIN as f64 || b > i32::MAX as f64 => Err("Exponent must be an integer scalar.".into()),
         '^' => Value::q(a.powi(b as i32), ad.map(|item| item * b as i32)),
         _ => Err(format!("Unknown operator {{op}}")),
@@ -272,6 +281,11 @@ fn switch_equal(left: &Value, right: &Value) -> Result<bool, String> {{
 fn range_integer(value: Value, context: &str) -> Result<i64, String> {{
     const MAX_SAFE: f64 = 9_007_199_254_740_991.0;
     let (number, dim) = as_q(value)?;
+    if dim != ZERO || number.fract() != 0.0 || number.abs() > MAX_SAFE {{ return Err(format!("{{context}} must be a dimensionless, exactly representable integer.")); }}
+    Ok(number as i64)
+}}
+fn checked_integer(number: f64, dim: Dim, context: &str) -> Result<i64, String> {{
+    const MAX_SAFE: f64 = 9_007_199_254_740_991.0;
     if dim != ZERO || number.fract() != 0.0 || number.abs() > MAX_SAFE {{ return Err(format!("{{context}} must be a dimensionless, exactly representable integer.")); }}
     Ok(number as i64)
 }}
@@ -491,6 +505,8 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
         match statement {
             Stmt::Function { .. } => {}
             Stmt::Return(expr) => body.push_str(&format!("    return {};\n", generate_expr(expr)?)),
+            Stmt::Break => body.push_str("    break;\n"),
+            Stmt::Continue => body.push_str("    continue;\n"),
             Stmt::Directive(_) => {
                 body.push_str("    // GO_PARANOID: enforced by the launcher and receipt policy.\n")
             }
@@ -562,8 +578,27 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                 body.push_str(&format!(
                     "    goblin_env.insert({variable:?}.into(), Value::scalar(index as f64)?);\n"
                 ));
+                body.push_str("    index += step;\n");
                 body.push_str(&generate_statements(loop_body, blocks)?);
-                body.push_str("    index += step;\n    }\n    }\n");
+                body.push_str("    }\n    }\n");
+            }
+            Stmt::ForEach {
+                variable,
+                iterable,
+                body: loop_body,
+            } => {
+                body.push_str("    {\n");
+                body.push_str(&format!(
+                    "    let iterable = ({})?;\n",
+                    generate_expr(iterable)?
+                ));
+                body.push_str("    let Value::Array(items) = iterable else { return Err(\"Direct for iteration requires an array.\".into()); };\n");
+                body.push_str("    for item in items {\n    loop_tick(&mut goblin_loop_steps)?;\n");
+                body.push_str(&format!(
+                    "    goblin_env.insert({variable:?}.into(), item);\n"
+                ));
+                body.push_str(&generate_statements(loop_body, blocks)?);
+                body.push_str("    }\n    }\n");
             }
             Stmt::While {
                 condition,
@@ -713,6 +748,23 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             generate_expr(left)?,
             generate_expr(right)?
         ),
+        Expr::Logical { op, left, right } => {
+            let left = generate_expr(left)?;
+            let right = generate_expr(right)?;
+            match op.as_str() {
+                "and" => format!(
+                    "(if !as_bool(({left})?, \"and\")? {{ Ok::<Value, String>(Value::Bool(false)) }} else {{ Ok::<Value, String>(Value::Bool(as_bool(({right})?, \"and\")?)) }})"
+                ),
+                "or" => format!(
+                    "(if as_bool(({left})?, \"or\")? {{ Ok::<Value, String>(Value::Bool(true)) }} else {{ Ok::<Value, String>(Value::Bool(as_bool(({right})?, \"or\")?)) }})"
+                ),
+                _ => return Err(GoblinError::compile("Unknown logical operator.")),
+            }
+        }
+        Expr::Not(expr) => format!(
+            "Ok::<Value, String>(Value::Bool(!as_bool(({})?, \"not\")?))",
+            generate_expr(expr)?
+        ),
         Expr::Call { name, args } if name == "argv" => {
             if args.len() != 1 {
                 return Err(GoblinError::compile("argv() requires one index."));
@@ -732,6 +784,7 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                 name.as_str(),
                 "to_text"
                     | "parse_number"
+                    | "parse_integer"
                     | "str_trim"
                     | "str_contains"
                     | "str_replace"

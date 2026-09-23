@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.11 CLI check, run, and verify contracts", {
+test("actual alpha.12 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.11 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.11/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.12/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -59,6 +59,12 @@ test("actual alpha.11 CLI check, run, and verify contracts", {
   const stringRun = invoke(core.goblinArgs("run", strings, ["--compile"]));
   assert.equal(stringRun.status, 0, stringRun.stderr);
   assert.match(stringRun.stdout, /Hello, Ada; value = 5/);
+
+  const everyday12 = path.join(root, "everyday-alpha12.gbl");
+  fs.writeFileSync(everyday12, 'values = [1, 2, 3, 4]\nsum = 0\nfor value in values {\n if value % 2 != 0 { continue }\n sum = sum + value\n}\nok = sum == parse_integer("6") and not false\nprint("sum = {sum}; ok = {ok}")\n');
+  const everyday12Run = invoke(core.goblinArgs("run", everyday12, ["--compile"]));
+  assert.equal(everyday12Run.status, 0, everyday12Run.stderr);
+  assert.match(everyday12Run.stdout, /sum = 6; ok = true/);
 
   fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "sample.fits"), path.join(root, "sample.fits"));
   const selection = path.join(root, "selection.gbl");

@@ -1,6 +1,6 @@
-# Control flow in Goblin++ 0.1.0-alpha.6
+# Control flow in Goblin++ 0.1.0-alpha.12
 
-Goblin++ supports `for`, `while`, `if`/`else if`/`else`, and `switch`/`case`/`default` in interpreter and compiled mode. The examples here are executable `.gbl`, not Python or inline Rust.
+Goblin++ supports range and direct-array `for`, `while`, `break`, `continue`, `if`/`else if`/`else`, `switch`/`case`/`default`, and short-circuit Boolean logic in interpreter and compiled mode. The examples here are executable `.gbl`, not Python or inline Rust.
 
 ```goblin
 GO_PARANOID
@@ -17,6 +17,19 @@ Braces delimit the body; each statement still ends at a newline. Nested loops ar
 
 `range(stop)` starts at zero. `range(start, stop)` uses a step of one. `range(start, stop, step)` allows a nonzero positive or negative step. The stop is exclusive. Arguments are evaluated once when the loop starts and must be dimensionless, exactly representable integers in the range ±(2^53−1). A zero step and unit-bearing or fractional bounds fail explicitly.
 
+Arrays can be traversed directly. The iterable is evaluated once as an independent value, so edits to the original array during the loop do not change which items are visited:
+
+```goblin
+sum = 0
+for value in [1, 2, 3, 4, 5] {
+    if value % 2 == 0 { continue }
+    if value > 3 { break }
+    sum = sum + value
+}
+```
+
+`continue` starts the next iteration of the nearest loop; `break` exits the nearest loop. Both are rejected outside a loop. `%` requires exactly representable, dimensionless integer operands, refuses zero on the right, and follows the dividend's sign (`-7 % 3` is `-1`).
+
 ```goblin
 remaining = 3
 while remaining > 0 {
@@ -28,6 +41,8 @@ seal finished
 ```
 
 Comparisons `==`, `!=`, `<`, `<=`, `>`, and `>=` produce `true` or `false`. Numeric comparisons require matching dimensions. Text and Boolean values support equality and inequality, not ordering. A `while` condition must be Boolean; numeric truthiness is deliberately not inferred.
+
+`and`, `or`, and `not` also require Boolean operands. `and` and `or` short-circuit: the right side is evaluated only when needed. Precedence, from lower to higher, is `or`, `and`, `not`, comparisons, arithmetic. Parentheses remain the clearest choice in dense scientific conditions.
 
 ```goblin
 score = 9
@@ -53,4 +68,4 @@ All loop-body executions, including nested loops, share a limit of 1,000,000 per
 
 `GO_PARANOID` and inline Rust blocks remain top-level constructs. Source freezing hashes the exact source bytes and canonical AST. Sealed values, including Booleans, are checked for interpreter/native parity in compiled runs. Existing pre-branch source hashes remain unchanged. Interpreted branches may call FITS and output functions; native compilation still refuses those calls anywhere in the program, including unreachable branches.
 
-Current boundaries: there is no `break`, `continue`, list or table iteration, or `and`/`or`/`not` yet. User-defined `g_func` functions are documented in [FUNCTIONS.md](FUNCTIONS.md). `for` currently iterates integer ranges, not FITS rows directly. Large scientific catalogue analyses should continue to use the built-in streaming FITS aggregates until explicit row filtering and weighted-statistics semantics are added; a loop alone does not create a defensible survey-selection correction.
+Current boundary: direct `for` traverses in-memory one-dimensional arrays, not FITS rows or nested collections. User-defined `g_func` functions are documented in [FUNCTIONS.md](FUNCTIONS.md). Large scientific catalogue analyses should continue to use the built-in streaming FITS aggregates; a loop alone does not create a defensible survey-selection correction.

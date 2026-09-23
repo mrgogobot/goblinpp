@@ -8,7 +8,7 @@ goblin++ examples/program_args.gbl -- Ada
 goblin++ run examples/program_args.gbl -- Ada
 ```
 
-`input` and `argv` return text, not numbers. Use `parse_number(text)` for an explicit, checked conversion to a finite dimensionless quantity; see [STRINGS.md](STRINGS.md). Each prompt and response is capped at 65,536 bytes; a run allows at most 1,024 prompts and 256 arguments (including `argv(0)`). `check` never reads standard input; if it reaches `input`, it reports that input is required. The VS Code Run command shows an input box. Run with Arguments asks for a JSON array, for example `["--name", "Ada"]`.
+`input` and `argv` return text, not numbers. Use `parse_number(text)` for a checked finite decimal or `parse_integer(text)` when integer syntax and exact range are required; see [STRINGS.md](STRINGS.md). Each prompt and response is capped at 65,536 bytes; a run allows at most 1,024 prompts and 256 arguments (including `argv(0)`). `check` never reads standard input; if it reaches `input`, it reports that input is required. The VS Code Run command shows an input box. Run with Arguments asks for a JSON array, for example `["--name", "Ada"]`.
 
 **Privacy:** prompt text, responses, and arguments are preserved unredacted in `interaction.json` inside the run directory and hash-linked to the receipt. Do not use `input` or command-line arguments for passwords, tokens, or other secrets. `verify` checks the preserved evidence; `diff` reports whether interaction evidence matches. This is auditability, not confidentiality.
 
@@ -21,10 +21,10 @@ part = values[1:3]     # [2 kg, 3 kg]; stop is exclusive
 part[0] = 20 kg        # values[1] stays 2 kg
 extended = append(values, 5 kg)  # returns a new array
 count = len(values)    # 4
-for i in range(len(values)) {
-    print(values[i])
+for value in values {
+    print(value)
 }
 seal values
 ```
 
-Indexes are zero-based, exact, non-negative dimensionless integers. Slices allow omitted bounds (`values[:]`, `values[:2]`, `values[2:]`), and `start:stop` is half-open. Out-of-range and reversed bounds fail explicitly. Assignment, slicing, and `append` use **independent copies**: there is no Go-style shared backing array. This choice prevents a derived scientific subset from silently changing its source. `seal` snapshots an array as a typed, hashed artifact. Interpreter and compiled execution are tested for the same array results.
+Indexes are zero-based, exact, non-negative dimensionless integers. Slices allow omitted bounds (`values[:]`, `values[:2]`, `values[2:]`), and `start:stop` is half-open. Out-of-range and reversed bounds fail explicitly. Assignment, slicing, `append`, and the iterable captured by direct `for` use **independent copies**: there is no Go-style shared backing array. This choice prevents a derived scientific subset from silently changing its source. `seal` snapshots an array as a typed, hashed artifact. Interpreter and compiled execution are tested for the same array results.

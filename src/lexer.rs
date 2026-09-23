@@ -147,7 +147,8 @@ pub fn lex(source: &str) -> Result<Vec<Token>> {
                 });
                 cursor += width;
             }
-            '=' | '+' | '-' | '*' | '/' | '^' | '(' | ')' | '[' | ']' | ':' | ',' | '{' | '}' => {
+            '=' | '+' | '-' | '*' | '/' | '%' | '^' | '(' | ')' | '[' | ']' | ':' | ',' | '{'
+            | '}' => {
                 tokens.push(Token {
                     kind: TokenKind::Operator(ch),
                     position: cursor,

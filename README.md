@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.11
+# Goblin++ Rust Engine 0.1.0-alpha.12
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -81,13 +81,20 @@ In addition to baseline evidence, paranoid runs observe and preserve the source 
 
 ## Everyday control flow
 
-`for`, `while`, `if`/`else if`/`else`, and `switch`/`case`/`default` are Goblin++ syntax in both interpreter and compiled mode; no Python or inline Rust is needed:
+`for`, `while`, `break`, `continue`, `if`/`else if`/`else`, and `switch`/`case`/`default` are Goblin++ syntax in both interpreter and compiled mode; no Python or inline Rust is needed. Boolean expressions use short-circuit `and`, `or`, and `not`:
 
 ```goblin
 GO_PARANOID
 total = 0
 for i in range(1, 6) {
+    if i % 2 == 0 {
+        continue
+    }
     total = total + i
+}
+for value in [2, 4, 6] {
+    if value > 4 { break }
+    total = total + value
 }
 remaining = 3
 while remaining > 0 {
@@ -96,7 +103,7 @@ while remaining > 0 {
 print("total = {total}")
 seal total
 
-if total > 10 {
+if total > 10 and not total == 99 {
     verdict = "high"
 } else {
     verdict = "low"
@@ -108,7 +115,7 @@ switch verdict {
 print("verdict = {verdict}; code = {code}")
 ```
 
-`range` uses a half-open stop and accepts one, two, or three dimensionless integer arguments. Comparisons return `true` or `false`; `while` and `if` require Boolean conditions. `switch` uses exact, dimension-aware equality, first match, and no fallthrough. Nested loops share a one-million-iteration run limit, and exceeding it creates a preserved, verifiable failure. See [CONTROL_FLOW.md](docs/CONTROL_FLOW.md) and `examples/branching.gbl`.
+`range` uses a half-open stop and accepts one, two, or three dimensionless integer arguments. `for value in array` iterates an independent array value. `%` is checked integer remainder and follows the dividend's sign. Comparisons and Boolean operators never infer numeric truthiness. `switch` uses exact, dimension-aware equality, first match, and no fallthrough. Nested loops share a one-million-iteration run limit, and exceeding it creates a preserved, verifiable failure. See [CONTROL_FLOW.md](docs/CONTROL_FLOW.md) and `examples/everyday_alpha12.gbl`.
 
 ## G funk: user-defined functions
 
@@ -128,7 +135,7 @@ Functions work in the interpreter and native compiler. They may be declared afte
 
 ## Interaction and arrays
 
-`input("prompt")` reads text; `argc` and `argv(i)` expose command-line arguments after `--`. Interaction evidence is preserved, so never enter secrets. Arrays support `[]`, indexing, indexed assignment, half-open slicing, `len`, and copy-returning `append`. Slices are **independent copies**, not Go-style shared views. See [INTERACTION_AND_ARRAYS.md](docs/INTERACTION_AND_ARRAYS.md), `examples/greeting.gbl`, `examples/program_args.gbl`, and `examples/arrays.gbl`.
+`input("prompt")` reads text; `argc` and `argv(i)` expose command-line arguments after `--`. Interaction evidence is preserved, so never enter secrets. Arrays support `[]`, indexing, indexed assignment, half-open slicing, `len`, copy-returning `append`, and direct `for value in array` iteration. Slices and iteration values are **independent copies**, not Go-style shared views. See [INTERACTION_AND_ARRAYS.md](docs/INTERACTION_AND_ARRAYS.md), `examples/greeting.gbl`, `examples/program_args.gbl`, and `examples/arrays.gbl`.
 
 ```goblin
 greeting = input("Please enter your name:")
@@ -137,16 +144,17 @@ print("Hello, {greeting}!")
 
 ## Text operations: g_strings without a new mode
 
-Text values now support `+` for concatenation and `len(text)` for Unicode-scalar length. `parse_number(text)` explicitly converts finite, unitless decimal input; `to_text(value)` renders a value for labels. `str_trim`, `str_contains`, `str_replace`, `str_split`, and `str_join` cover everyday text work in both execution modes:
+Text values now support `+` for concatenation and `len(text)` for Unicode-scalar length. `parse_number(text)` explicitly converts finite, unitless decimal input; `parse_integer(text)` accepts only signed or unsigned decimal integers within the exact `f64` range. `to_text(value)` renders a value for labels. `str_trim`, `str_contains`, `str_replace`, `str_split`, and `str_join` cover everyday text work in both execution modes:
 
 ```goblin
 name = str_trim("  Ada  ")
 message = "Hello, " + name
 answer = parse_number("2.5") * 2
+count = parse_integer("42")
 print("{message}; answer = {answer}")
 ```
 
-This is not a new `g_strings` type: it is a small, explicit set of operations on existing text values. `parse_number` does not parse units or provide exact large integers. See [STRINGS.md](docs/STRINGS.md) and `examples/strings.gbl` for the full contract.
+This is not a new `g_strings` type: it is a small, explicit set of operations on existing text values. Neither parser accepts units or integers beyond ±(2^53−1). See [STRINGS.md](docs/STRINGS.md) and `examples/strings.gbl` for the full contract.
 
 ## Native scientific data import
 

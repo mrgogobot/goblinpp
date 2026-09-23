@@ -4,14 +4,15 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.11 status | Evidence or boundary |
+| Capability | Alpha.12 status | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
-| Everyday control flow | Extended, implemented | `for range`, `while`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, Boolean values, nested control flow, interpreter/compiler parity and loop ceiling |
-| Input and arguments | Extended, implemented | `input`, `argc`, `argv`, `--` separator, preserved plaintext interaction evidence; explicit checked `parse_number` conversion |
-| Text operations (`g_strings`) | New, implemented | Text `+`, `len(text)` in Unicode scalar values, `to_text`, `parse_number`, `str_trim`, `str_contains`, `str_replace`, `str_split`, `str_join`; interpreter/native parity and bounded results. Python 0.0.7 rejected text `+` with G000; this is an explicit language extension, not reference parity. |
-| One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
+| Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
+| Input and arguments | Extended, implemented | `input`, `argc`, `argv`, `--` separator, preserved plaintext interaction evidence; explicit checked `parse_number` and `parse_integer` conversion |
+| Text operations (`g_strings`) | New, implemented | Text `+`, `len(text)` in Unicode scalar values, `to_text`, `parse_number`, `parse_integer`, `str_trim`, `str_contains`, `str_replace`, `str_split`, `str_join`; interpreter/native parity and bounded results. Python 0.0.7 rejected text `+` with G000; this is an explicit language extension, not reference parity. |
+| One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices and iteration values, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
 | Dimensional quantities | Implemented | Five base dimensions; mismatch and numeric-domain failures tested |
+| Checked integer remainder | New, implemented | `%` requires safe dimensionless integers, rejects zero divisor, and has interpreter/compiler parity |
 | Constants and units | Implemented | Python 0.0.7 registry values and aliases |
 | Output, interpolation, sealing | Extended, implemented | `print`, formats, sealed variables, audited TXT/Markdown/CSV/TSV/JSON files |
 | Deterministic plotting | New, implemented | Sampled FITS histogram/scatter in SVG/PNG with sampling metadata and digest verification |
@@ -40,7 +41,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.6 invokes the Rust CLI and adds `g_func`/`g_strings`/FITS-selection authoring hints; its hints are advisory |
+| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.7 invokes the Rust CLI and adds alpha.12 control-flow, integer and existing scientific authoring hints; its hints are advisory |
 
 ## Promotion gates
 

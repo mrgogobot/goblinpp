@@ -118,6 +118,26 @@ pub fn parse_number(value: &str) -> Result<f64, String> {
     Ok(number)
 }
 
+pub fn parse_integer(value: &str) -> Result<f64, String> {
+    const MAX_EXACT_INTEGER: i128 = 9_007_199_254_740_991;
+    let value = value.trim();
+    let bytes = value.as_bytes();
+    let digits = bytes
+        .strip_prefix(b"+")
+        .or_else(|| bytes.strip_prefix(b"-"))
+        .unwrap_or(bytes);
+    if value.len() > 32 || digits.is_empty() || !digits.iter().all(u8::is_ascii_digit) {
+        return Err("parse_integer() requires signed or unsigned decimal integer text.".into());
+    }
+    let integer: i128 = value
+        .parse()
+        .map_err(|_| "parse_integer() integer is outside the exact range.".to_string())?;
+    if !(-MAX_EXACT_INTEGER..=MAX_EXACT_INTEGER).contains(&integer) {
+        return Err("parse_integer() integer is outside the exact range.".into());
+    }
+    Ok(integer as f64)
+}
+
 fn decimal_syntax(value: &str) -> bool {
     let bytes = value.as_bytes();
     let mut pos = 0;
