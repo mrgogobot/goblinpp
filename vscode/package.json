@@ -5,6 +5,11 @@
   "version": "0.1.7",
   "publisher": "goblinpp-project",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrgogobot/goblinpp.git",
+    "directory": "vscode"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
