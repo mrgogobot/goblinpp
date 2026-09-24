@@ -285,6 +285,9 @@ Goblin++ software, examples, test fixtures, and extension assets are licensed
 under [MIT](LICENSE). Original tutorial/documentation prose and diagrams are
 licensed under [CC BY 4.0](LICENSE-DOCS.md). Code examples inside the
 documentation remain MIT-licensed. The documentation license file gives the
-exact file scope; third-party dependencies keep their own licenses. The
+exact file scope; third-party dependencies keep their own licenses. The exact
+locked macOS arm64 binary dependency inventory, upstream license files, and
+Rust standard-library notices are preserved in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The
 [project logo](assets/goblinpp-logo.png) is separate branding, described in
 [BRANDING.md](BRANDING.md), and is not covered by either project license.

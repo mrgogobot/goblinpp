@@ -13,6 +13,18 @@ The integer facilities deliberately remain within exactly representable
 Direct iteration does not stream FITS rows. Compiled FITS/output parity and a
 module system remain later, separately reviewable milestones.
 
+### Packaging and third-party notices
+
+The macOS arm64 binary archive includes `THIRD_PARTY_NOTICES.md` and the
+`third-party/` notice bundle generated from the exact locked normal dependency
+tree and active Rust standard-library documentation. The bundle preserves the
+upstream license files for all 40 external packages in that target tree,
+including the additional Unicode terms used by `unicode-ident`, together with
+the Rust library copyright and license files. The collector is reproducible
+offline with `tools/collect_third_party_notices.py`. This evidence is
+target-specific and must be regenerated when the lockfile, Rust toolchain,
+target, features, or packaging changes.
+
 ## Previous stage: 0.1.0-alpha.11
 
 Added `fits_select_stats` for a bounded, full-table scalar-numeric FITS

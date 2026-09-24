@@ -43,9 +43,12 @@ is `0.1.0-alpha.12`; the bundled editor extension source is `0.1.7`.
 - [ ] Run the workflow on GitHub, including macOS and Linux; fix any failures.
 - [ ] Recheck `cargo test --locked`, Rust formatting/linting, and extension
   tests on a clean checkout.
-- [ ] Finish the [dependency-license review](docs/DEPENDENCY_LICENSE_AUDIT.md)
-  and include required third-party notices with any distributed binary or
-  extension package. A manifest-level inventory is not a final notice bundle.
+- [x] Finish the macOS arm64 [dependency-license review](docs/DEPENDENCY_LICENSE_AUDIT.md)
+  and include the exact locked crate notices and Rust standard-library notices
+  in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `third-party/`.
+  Regenerate this target-specific bundle whenever dependencies, toolchain,
+  features, target, or packaging change. The extension has no npm dependencies
+  and its VSIX contains both project license files.
 - [ ] Reproduce the source archive and verify its SHA-256 on a clean machine.
 - [ ] Rebuild the VS Code extension package and inspect it for both MIT and
   CC BY notices; previously distributed VSIX files are not changed by edits
