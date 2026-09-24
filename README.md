@@ -11,6 +11,11 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 > access it. `GO_PARANOID` and SHA-256 protect integrity, not confidentiality.
 > See [Security and trust boundaries](docs/SECURITY.md).
 
+## Downloads and documentation
+
+- [Goblin++ Alpha.12 Day-One Tutorial](docs/tutorial/Goblin++_Alpha12_Day-One_Tutorial.pdf)
+- [Install the VS Code extension](vscode/README.md)
+
 The ordinary command interprets a saved `.gbl` file:
 
 ```console
