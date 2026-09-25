@@ -132,6 +132,16 @@
     "body": "${1:value} = parse_number(${2:text})",
     "description": "Convert finite, unitless decimal text to a quantity; invalid text fails."
   },
+  "Scientific square root": {
+    "prefix": "sqrt",
+    "body": "${1:root} = sqrt(${2:value})",
+    "description": "Real square root with checked domain and even unit exponents."
+  },
+  "Scientific hypotenuse": {
+    "prefix": "hypot",
+    "body": "${1:length} = hypot(${2:x}, ${3:y})",
+    "description": "Hypotenuse of two quantities with matching dimensions."
+  },
   "Parse a checked integer": {
     "prefix": "parse_integer",
     "body": "${1:value} = parse_integer(${2:text})",

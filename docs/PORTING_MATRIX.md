@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.12 status | Evidence or boundary |
+| Capability | Alpha.13 status | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -12,6 +12,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Text operations (`g_strings`) | New, implemented | Text `+`, `len(text)` in Unicode scalar values, `to_text`, `parse_number`, `parse_integer`, `str_trim`, `str_contains`, `str_replace`, `str_split`, `str_join`; interpreter/native parity and bounded results. Python 0.0.7 rejected text `+` with G000; this is an explicit language extension, not reference parity. |
 | One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices and iteration values, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
 | Dimensional quantities | Implemented | Five base dimensions; mismatch and numeric-domain failures tested |
+| Scientific mathematics | New, implemented | Dimension-aware `abs`, `sqrt`, extrema and `hypot`; checked dimensionless rounding, exponential, logarithmic and trigonometric functions; interpreter/compiler parity and preserved failures |
 | Checked integer remainder | New, implemented | `%` requires safe dimensionless integers, rejects zero divisor, and has interpreter/compiler parity |
 | Constants and units | Implemented | Python 0.0.7 registry values and aliases |
 | Output, interpolation, sealing | Extended, implemented | `print`, formats, sealed variables, audited TXT/Markdown/CSV/TSV/JSON files |
@@ -41,7 +42,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.7 invokes the Rust CLI and adds alpha.12 control-flow, integer and existing scientific authoring hints; its hints are advisory |
+| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.8 invokes the Rust CLI and adds alpha.13 scientific-math authoring hints; its hints are advisory |
 
 ## Promotion gates
 

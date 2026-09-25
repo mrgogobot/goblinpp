@@ -70,7 +70,7 @@
     },
     "functions": {
       "patterns": [
-        {"name": "support.function.builtin.goblinpp", "match": "\\b(?:input|argv|len|append|to_text|parse_number|parse_integer|str_trim|str_contains|str_replace|str_split|str_join|print|printf|fits_hdu_count|fits_header|fits_axis|fits_count|fits_pixel|fits_mean|fits_rows|fits_columns|fits_column|fits_column_valid_count|fits_column_mean|fits_column_min|fits_column_max|fits_select_stats|write_text|write_csv|write_tsv|write_json|plot_fits_histogram|plot_fits_scatter)(?=\\s*\\()"}
+        {"name": "support.function.builtin.goblinpp", "match": "\\b(?:input|argv|len|append|to_text|parse_number|parse_integer|str_trim|str_contains|str_replace|str_split|str_join|print|printf|abs|sqrt|min|max|floor|ceil|round|exp|ln|log10|sin|cos|tan|asin|acos|atan|atan2|hypot|fits_hdu_count|fits_header|fits_axis|fits_count|fits_pixel|fits_mean|fits_rows|fits_columns|fits_column|fits_column_valid_count|fits_column_mean|fits_column_min|fits_column_max|fits_select_stats|write_text|write_csv|write_tsv|write_json|plot_fits_histogram|plot_fits_scatter)(?=\\s*\\()"}
       ]
     },
     "constants": {

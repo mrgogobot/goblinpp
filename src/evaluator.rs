@@ -574,6 +574,10 @@ impl Evaluation {
             "str_trim" | "str_contains" | "str_replace" | "str_split" | "str_join" => {
                 self.eval_string_call(name, args)
             }
+            "abs" | "sqrt" | "min" | "max" | "floor" | "ceil" | "round" | "exp" | "ln"
+            | "log10" | "sin" | "cos" | "tan" | "asin" | "acos" | "atan" | "atan2" | "hypot" => {
+                self.eval_math_call(name, args)
+            }
             "append" => {
                 require_args(name, args, 2)?;
                 let array = self.eval_expr(&args[0])?;
@@ -1091,6 +1095,124 @@ impl Evaluation {
             _ => unreachable!(),
         };
         Ok(result)
+    }
+
+    fn eval_math_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        let minimum = if matches!(name, "min" | "max") { 2 } else { 0 };
+        if minimum != 0 && args.len() < minimum {
+            return Err(GoblinError::parse(format!(
+                "{name}() expects at least {minimum} arguments, got {}.",
+                args.len()
+            )));
+        }
+        let expected = if matches!(name, "atan2" | "hypot") {
+            2
+        } else if minimum == 0 {
+            1
+        } else {
+            args.len()
+        };
+        if args.len() != expected {
+            return Err(GoblinError::parse(format!(
+                "{name}() expects {expected} argument(s), got {}.",
+                args.len()
+            )));
+        }
+        let values = self
+            .eval_args(args)?
+            .into_iter()
+            .map(|value| value.quantity(name))
+            .collect::<Result<Vec<_>>>()?;
+
+        let first = values[0];
+        let dimensionless = |value: Quantity| -> Result<f64> {
+            if value.dimension != DIMENSIONLESS {
+                return Err(GoblinError::dimension(format!(
+                    "{name}() requires a dimensionless input, got {}.",
+                    format_dimension(value.dimension)
+                )));
+            }
+            Ok(value.value_si)
+        };
+        let scalar = |value: f64| Quantity::scalar(value).map(Value::Quantity);
+        let same_dimensions = || -> Result<()> {
+            if values
+                .iter()
+                .any(|value| value.dimension != first.dimension)
+            {
+                return Err(GoblinError::dimension(format!(
+                    "{name}() requires matching dimensions."
+                )));
+            }
+            Ok(())
+        };
+
+        match name {
+            "abs" => Quantity::new(first.value_si.abs(), first.dimension).map(Value::Quantity),
+            "sqrt" => first.checked_sqrt().map(Value::Quantity),
+            "min" | "max" => {
+                same_dimensions()?;
+                let selected = values[1..].iter().fold(first.value_si, |current, value| {
+                    if name == "min" {
+                        current.min(value.value_si)
+                    } else {
+                        current.max(value.value_si)
+                    }
+                });
+                Quantity::new(selected, first.dimension).map(Value::Quantity)
+            }
+            "floor" => scalar(dimensionless(first)?.floor()),
+            "ceil" => scalar(dimensionless(first)?.ceil()),
+            "round" => scalar(dimensionless(first)?.round()),
+            "exp" => scalar(dimensionless(first)?.exp()),
+            "ln" | "log10" => {
+                let value = dimensionless(first)?;
+                if value <= 0.0 {
+                    return Err(GoblinError::numeric(format!(
+                        "LOGARITHM DOMAIN ERROR\n\n{name}() requires a value greater than zero."
+                    )));
+                }
+                scalar(if name == "ln" {
+                    value.ln()
+                } else {
+                    value.log10()
+                })
+            }
+            "sin" => scalar(dimensionless(first)?.sin()),
+            "cos" => scalar(dimensionless(first)?.cos()),
+            "tan" => scalar(dimensionless(first)?.tan()),
+            "asin" | "acos" => {
+                let value = dimensionless(first)?;
+                if !(-1.0..=1.0).contains(&value) {
+                    return Err(GoblinError::numeric(format!(
+                        "INVERSE TRIGONOMETRIC DOMAIN ERROR\n\n{name}() requires a value from -1 through 1."
+                    )));
+                }
+                scalar(if name == "asin" {
+                    value.asin()
+                } else {
+                    value.acos()
+                })
+            }
+            "atan" => scalar(dimensionless(first)?.atan()),
+            "atan2" => {
+                same_dimensions()?;
+                let y = first.value_si;
+                let x = values[1].value_si;
+                if y == 0.0 && x == 0.0 {
+                    return Err(GoblinError::numeric(
+                        "ATAN2 DOMAIN ERROR\n\natan2(0, 0) has no defined direction.",
+                    ));
+                }
+                scalar(y.atan2(x))
+            }
+            "hypot" => {
+                same_dimensions()?;
+                Quantity::new(first.value_si.hypot(values[1].value_si), first.dimension)
+                    .map(Value::Quantity)
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn eval_user_function(&mut self, name: &str, args: &[Expr]) -> Result<Value> {

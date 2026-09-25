@@ -143,7 +143,7 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 79);
+    assert.equal(items.length, 97);
     assert(items.some((item) => item.label === "π" && item.kind === 3));
     assert(items.some((item) => item.label === "km" && item.kind === 4));
     assert(items.some((item) => item.label === "fits_mean" && item.kind === 2));
@@ -153,6 +153,8 @@ test("extension activates and registers commands and language providers", async 
     assert.match(items.find((item) => item.label === "g_func").insertText.value, /return/);
     assert.match(items.find((item) => item.label === "parse_number").insertText.value, /text/);
     assert.match(items.find((item) => item.label === "parse_integer").insertText.value, /text/);
+    assert.match(items.find((item) => item.label === "sqrt").insertText.value, /value/);
+    assert.match(items.find((item) => item.label === "hypot").insertText.value, /x/);
     assert.match(items.find((item) => item.label === "input").insertText.value, /Prompt/);
     assert(commands.has("goblinpp.runCompiledFile"));
 

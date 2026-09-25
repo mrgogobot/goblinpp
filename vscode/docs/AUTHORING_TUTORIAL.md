@@ -1,6 +1,6 @@
 # Write your first Goblin++ programs
 
-This short tutorial uses the Rust engine 0.1.0-alpha.12. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
+This short tutorial uses the Rust engine 0.1.0-alpha.13. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
 
 ## 1. Begin with an everyday calculation
 

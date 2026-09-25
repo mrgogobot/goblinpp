@@ -1,6 +1,6 @@
-# Goblin++ for Visual Studio Code 0.1.7
+# Goblin++ for Visual Studio Code 0.1.8
 
-Editor support for the Goblin++ Rust engine **0.1.0-alpha.12**. This extension keeps the existing `goblinpp-project.goblinpp` identity, so it updates the earlier VS Code extension rather than creating a second language mode.
+Editor support for the Goblin++ Rust engine **0.1.0-alpha.13**. This extension keeps the existing `goblinpp-project.goblinpp` identity, so it updates the earlier VS Code extension rather than creating a second language mode.
 
 It provides `.gbl` recognition, file icons, syntax highlighting, completions, hover help, snippets, document symbols, an optional non-semantic Icon View, and explicit commands for run, compiled run, check, verify, freeze, revision, status, lineage, ledger audit, and doctor. The vocabulary covers loops, branches, `g_func`/`return`, `g_strings` text operations, arrays, interaction, Booleans, FITS readers, generated-output functions, and optional `GO_PARANOID`/`seal` directives. The bundled 0.0.7 lexicon is retained only for constant aliases and units; the Rust addendum is an editor aid, not a new normative language specification.
 
@@ -14,9 +14,9 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.7.vsix` once that package has been built and reviewed. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.8.vsix` once that package has been built and reviewed. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
-The extension looks for the alpha.12 executable in this order:
+The extension looks for the alpha.13 executable in this order:
 
 1. `goblinpp.executablePath`, if you set it;
 2. a macOS arm64 `dist/macos-arm64/goblin++` in the trusted workspace;
@@ -44,6 +44,11 @@ The `if` and `switch` snippets produce real Goblin++ blocks. Conditions must be 
 Run prompts from `input()` appear in a VS Code input box; responses are preserved as plaintext run evidence, so do not enter secrets. **Run Current File With Arguments** asks for a JSON array of arguments. Arrays have completions and snippets for `len`, `append`, and independent slices; see the engine's `docs/INTERACTION_AND_ARRAYS.md`.
 
 Text completions cover `parse_number`, `parse_integer`, `to_text`, `str_trim`, `str_contains`, `str_replace`, `str_split`, and `str_join`. Control-flow help covers direct array iteration, `break`/`continue`, `and`/`or`/`not`, and `%`. Ordinary text `+` and `len(text)` work in the engine. See `docs/STRINGS.md` for exact Unicode, numeric, and size-limit semantics.
+
+Scientific-math completions cover `abs`, `sqrt`, `min`, `max`, rounding,
+exponential/logarithmic functions, trigonometry, `atan2`, and `hypot`. The
+engine—not the editor—enforces their domain and dimension rules; see the
+engine's `docs/MATH.md`.
 
 ## Trust boundaries
 

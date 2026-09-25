@@ -1,4 +1,4 @@
-# Control flow in Goblin++ 0.1.0-alpha.12
+# Control flow in Goblin++ 0.1.0-alpha.13
 
 Goblin++ supports range and direct-array `for`, `while`, `break`, `continue`, `if`/`else if`/`else`, `switch`/`case`/`default`, and short-circuit Boolean logic in interpreter and compiled mode. The examples here are executable `.gbl`, not Python or inline Rust.
 

@@ -1,6 +1,6 @@
 # Dependency-license review: macOS arm64 Alpha.12
 
-Snapshot: `Cargo.lock` at Goblin++ 0.1.0-alpha.12, reviewed on 2026-09-24.
+Snapshot: `Cargo.lock` at Goblin++ 0.1.0-alpha.13, reviewed on 2026-09-25.
 This is an evidence record for the macOS arm64 alpha binary, not legal advice
 or a claim about future targets.
 

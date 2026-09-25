@@ -1,4 +1,19 @@
-# 0.1.0-alpha.12
+# 0.1.0-alpha.13
+
+Added dimension-aware scientific mathematics to both the Rust interpreter and
+native compiler: `abs`, `sqrt`, variadic `min`/`max`, `floor`, `ceil`,
+`round`, `exp`, `ln`, `log10`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`,
+`atan2`, and `hypot`. Square root accepts only non-negative quantities with
+even unit exponents. Dimension-sensitive functions require compatible units;
+transcendental and rounding functions require dimensionless values. Domain,
+dimension, arity, overflow, and interpreter/compiler agreement paths are
+covered by preserved and independently verifiable tests.
+
+The VS Code editor source now highlights, completes, and documents these
+built-ins. This stage deliberately does not add implicit angle units,
+fractional dimensions, complex numbers, or silent NaN/infinity propagation.
+
+## Previous stage: 0.1.0-alpha.12
 
 Everyday-language usability stage. Added short-circuit Boolean `and`, `or`,
 and `not`; nearest-loop `break` and `continue`; direct iteration over an

@@ -1,10 +1,10 @@
 # Public-release checklist
 
-This is a **pre-publication source-repository draft**, not a public release. It
-may be kept in a private GitHub repository while these gates are reviewed. A
-commit or private upload is not a Zenodo release. The checklist keeps decisions
-visible instead of silently making them for the author. The current Rust engine
-is `0.1.0-alpha.12`; the bundled editor extension source is `0.1.7`.
+This is the reusable checklist for changes after the public alpha.12 release.
+A commit is not a new release, and each new version still needs its own review,
+tag, assets, and preservation record. The checklist keeps decisions visible
+instead of silently making them for the author. The current working Rust engine
+is `0.1.0-alpha.13`; the bundled editor extension source is `0.1.8`.
 
 ## Before making the GitHub repository public
 

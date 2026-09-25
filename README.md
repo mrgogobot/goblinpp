@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.12
+# Goblin++ Rust Engine 0.1.0-alpha.13
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -36,8 +36,8 @@ The first form runs the native artifact and preserves the generated Rust, compil
 This source repository includes the Rust engine, its tests and examples, and the
 VS Code extension in [`vscode/`](vscode/). It does **not** contain a prebuilt
 binary, personal run directories, or scientific input data beyond the small
-deterministic FITS test fixture. It is being prepared for an eventual public
-alpha release; the remaining gates are in
+deterministic FITS test fixture. The first public alpha is preserved on GitHub
+and Zenodo; active development continues here. The remaining promotion gates are in
 [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Build and install
@@ -121,6 +121,27 @@ print("verdict = {verdict}; code = {code}")
 ```
 
 `range` uses a half-open stop and accepts one, two, or three dimensionless integer arguments. `for value in array` iterates an independent array value. `%` is checked integer remainder and follows the dividend's sign. Comparisons and Boolean operators never infer numeric truthiness. `switch` uses exact, dimension-aware equality, first match, and no fallthrough. Nested loops share a one-million-iteration run limit, and exceeding it creates a preserved, verifiable failure. See [CONTROL_FLOW.md](docs/CONTROL_FLOW.md) and `examples/everyday_alpha12.gbl`.
+
+## Scientific mathematics
+
+Core mathematical functions work identically in the interpreter and native
+compiler:
+
+```goblin
+root = sqrt(81)
+distance = hypot(3 m, 4 m)
+smallest = min(3 kg, 1 kg, 2 kg)
+signal = sin(pi / 2)
+decades = log10(1000)
+```
+
+`abs`, `min`, `max`, and `hypot` preserve compatible dimensions. `sqrt`
+accepts only non-negative values whose unit exponents are all even, so
+`sqrt((3 m)^2)` is `3 m` while `sqrt(3 m)` is refused. `floor`, `ceil`,
+`round`, `exp`, `ln`, `log10`, and the trigonometric functions require
+dimensionless inputs. Trigonometric inputs and inverse results are radians.
+Invalid domains and non-finite results become explicit, preserved failures.
+See [MATH.md](docs/MATH.md) and `examples/scientific_math.gbl`.
 
 ## G funk: user-defined functions
 

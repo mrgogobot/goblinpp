@@ -133,6 +133,21 @@ impl Quantity {
         )
     }
 
+    pub fn checked_sqrt(self) -> Result<Self> {
+        if self.value_si < 0.0 {
+            return Err(GoblinError::numeric(
+                "SQUARE ROOT DOMAIN ERROR\n\nsqrt() requires a non-negative value.",
+            ));
+        }
+        if self.dimension.iter().any(|power| power % 2 != 0) {
+            return Err(GoblinError::dimension(format!(
+                "SQUARE ROOT DIMENSION ERROR\n\nsqrt() requires even unit exponents, got {}.",
+                format_dimension(self.dimension)
+            )));
+        }
+        Self::new(self.value_si.sqrt(), self.dimension.map(|power| power / 2))
+    }
+
     fn require_same_dimension(self, rhs: Self) -> Result<()> {
         if self.dimension != rhs.dimension {
             return Err(GoblinError::dimension(format!(

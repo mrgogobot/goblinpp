@@ -1,4 +1,10 @@
-# VS Code extension 0.1.7
+# VS Code extension 0.1.8
+
+Updated for Rust 0.1.0-alpha.13. Added highlighting, completion help, and
+snippets for the dimension-aware scientific-math built-ins, including `sqrt`,
+trigonometry, logarithms, extrema, rounding, `atan2`, and `hypot`.
+
+## Previous release: 0.1.7
 
 Updated for Rust 0.1.0-alpha.12. Added highlighting, completion help, and
 snippets for direct array iteration, `break`, `continue`, short-circuit

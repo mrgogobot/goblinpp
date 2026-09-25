@@ -1,6 +1,6 @@
 # Third-party notices
 
-This notice bundle accompanies the Goblin++ 0.1.0-alpha.12 macOS arm64 binary.
+This notice bundle accompanies the Goblin++ 0.1.0-alpha.13 macOS arm64 binary.
 It was collected offline from the exact `Cargo.lock` normal-dependency tree
 for `aarch64-apple-darwin` and from the active Rust standard-library documentation.
 It records upstream terms; it does not replace them or constitute legal advice.

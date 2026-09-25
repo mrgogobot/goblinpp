@@ -1,27 +1,32 @@
-# Alpha.12 acceptance results
+# Alpha.13 acceptance results
 
-Current alpha.12 local source-check gates (macOS arm64, Rust 1.92.0):
+Current alpha.13 local source-check gates (macOS arm64, Rust 1.92.0):
 
-- `cargo test --locked --all-targets`: 107 passed, 0 failed; six new
-  alpha.12 integration tests cover interpreter/native agreement, verified run
-  evidence, short-circuit Boolean logic, nearest-loop `break`/`continue`,
-  independent direct-array iteration, checked remainder and integer parsing,
-  nesting, type/range failures, and parse-time loop-control refusal;
+- `cargo test --locked --all-targets`: 112 passed, 0 failed; five new
+  alpha.13 integration tests cover scientific-math values and dimensions,
+  interpreter/native agreement, verifiable success and failure runs, domain
+  and arity refusal, and reserved builtin names;
 - `cargo clippy --locked --all-targets -- -D warnings` and
   `cargo fmt --all -- --check`: pass;
-- `cargo build --locked --release`: pass; binary reports
-  `goblin++ 0.1.0-alpha.12`;
-- VS Code extension 0.1.7 tests against the release binary: 16 passed, 0
+- debug build used by the test gates reports `goblin++ 0.1.0-alpha.13`;
+- VS Code extension 0.1.8 tests against the current binary: 16 passed, 0
   failed, including the real CLI check/run/verify gate;
-- `examples/everyday_alpha12.gbl` check, interpreted run, native-compiled run,
-  and independent verification of both runs: pass; both print `even sum = 6;
-  within limit = true`;
+- `examples/scientific_math.gbl` is covered by the same interpreter/compiler
+  and receipt-verification contract in `tests/math_builtins.rs`;
 - older canonical hashes and the retained Python 0.0.7 compatibility corpus:
   pass unchanged.
 
-These are local source-check results, not yet a public release, clean-checkout
-reproduction, or cross-platform result. Direct array iteration is in-memory;
-it does not claim streaming FITS-row semantics.
+These are local source-check results for the alpha.13 working tree, not a new
+public release, clean-checkout reproduction, or cross-platform result. The
+public alpha.12 archive remains unchanged.
+
+## Previous stage: Alpha.12 acceptance results
+
+Alpha.12 passed 107 Rust tests and 16 VS Code tests before its public release.
+Its control-flow gates covered short-circuit Boolean logic, nearest-loop
+`break`/`continue`, independent direct-array iteration, checked remainder and
+integer parsing, nesting, type/range failures, and parse-time loop-control
+refusal.
 
 ## Previous stage: Alpha.11 acceptance results
 
