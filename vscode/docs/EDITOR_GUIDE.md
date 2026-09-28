@@ -1,6 +1,6 @@
 # Goblin++ VS Code editor guide
 
-This guide targets the Rust engine 0.1.0-alpha.13 and extension 0.1.8.
+This guide targets the Rust engine 0.1.0-alpha.14 and extension 0.1.9.
 
 ## 1. Open a trusted folder
 

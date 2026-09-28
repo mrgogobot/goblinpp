@@ -336,6 +336,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "paranoid_mode": parsed.paranoid(), "inline_rust": parsed.inline_rust.iter().map(|block| json!({"sha256": block.sha256, "requires_compile": true})).collect::<Vec<_>>(),
         "stdout_preview": evaluation.stdout, "sealed_preview": evaluation.sealed.iter().map(|(name, value)| (name.clone(), value.to_json())).collect::<serde_json::Map<_,_>>(),
         "generated_output_preview": evaluation.generated.values().map(|artifact| json!({"name": artifact.name, "media_type": artifact.media_type, "byte_count": artifact.bytes.len(), "producer": artifact.producer, "metadata": artifact.metadata})).collect::<Vec<_>>(),
+        "warnings": evaluation.warnings,
         "diagnostic": error.as_ref().map(|value| json!({"code": value.code, "category": value.category, "message": value.message, "classification": value.classification})),
     });
     if json_output {
@@ -352,6 +353,9 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         );
         for block in &parsed.inline_rust {
             println!("INLINE_RUST_{}_SHA256={}", block.index + 1, block.sha256);
+        }
+        for warning in &evaluation.warnings {
+            eprintln!("{warning}");
         }
         if let Some(error) = error {
             eprintln!("{}", error.pretty());
@@ -645,7 +649,8 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
         "available": ["rust interpreter", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "dimension-aware scientific math built-ins in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "string_functions": ["to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
-        "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "hypot"],
+        "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
+        "deprecated_math_aliases": ["sin", "cos", "tan", "asin", "acos", "atan", "atan2"],
         "fits_functions": ["fits_hdu_count", "fits_header", "fits_axis", "fits_count", "fits_pixel", "fits_mean", "fits_rows", "fits_columns", "fits_column", "fits_column_valid_count", "fits_column_mean", "fits_column_min", "fits_column_max", "fits_select_stats"],
         "output_functions": ["write_text", "write_csv", "write_tsv", "write_json", "plot_fits_histogram", "plot_fits_scatter"],
         "pending_from_python_reference": ["Ed25519 ledger signing", "interrupted-head recovery", "adopt legacy freeze", "normative corpus commands"],

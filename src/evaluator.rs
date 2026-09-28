@@ -105,6 +105,7 @@ struct LoadedData {
 pub struct Evaluation {
     pub env: HashMap<String, Value>,
     pub stdout: Vec<String>,
+    pub warnings: Vec<String>,
     pub sealed: BTreeMap<String, Value>,
     pub generated: BTreeMap<String, GeneratedOutput>,
     pub constants_used: BTreeMap<String, ConstantUse>,
@@ -131,6 +132,7 @@ impl Evaluation {
         Self {
             env: HashMap::new(),
             stdout: Vec::new(),
+            warnings: Vec::new(),
             sealed: BTreeMap::new(),
             generated: BTreeMap::new(),
             constants_used: BTreeMap::new(),
@@ -575,9 +577,10 @@ impl Evaluation {
                 self.eval_string_call(name, args)
             }
             "abs" | "sqrt" | "min" | "max" | "floor" | "ceil" | "round" | "exp" | "ln"
-            | "log10" | "sin" | "cos" | "tan" | "asin" | "acos" | "atan" | "atan2" | "hypot" => {
-                self.eval_math_call(name, args)
-            }
+            | "log10" | "sin" | "cos" | "tan" | "asin" | "acos" | "atan" | "atan2" | "sind"
+            | "cosd" | "tand" | "sinr" | "cosr" | "tanr" | "asind" | "acosd" | "atand"
+            | "asinr" | "acosr" | "atanr" | "atan2d" | "atan2r" | "deg2rad" | "rad2deg"
+            | "hypot" => self.eval_math_call(name, args),
             "append" => {
                 require_args(name, args, 2)?;
                 let array = self.eval_expr(&args[0])?;
@@ -1098,6 +1101,12 @@ impl Evaluation {
     }
 
     fn eval_math_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        if let Some((radians, degrees)) = legacy_angle_replacements(name) {
+            let warning = legacy_angle_warning(name, radians, degrees);
+            if !self.warnings.contains(&warning) {
+                self.warnings.push(warning);
+            }
+        }
         let minimum = if matches!(name, "min" | "max") { 2 } else { 0 };
         if minimum != 0 && args.len() < minimum {
             return Err(GoblinError::parse(format!(
@@ -1105,7 +1114,7 @@ impl Evaluation {
                 args.len()
             )));
         }
-        let expected = if matches!(name, "atan2" | "hypot") {
+        let expected = if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot") {
             2
         } else if minimum == 0 {
             1
@@ -1178,24 +1187,33 @@ impl Evaluation {
                     value.log10()
                 })
             }
-            "sin" => scalar(dimensionless(first)?.sin()),
-            "cos" => scalar(dimensionless(first)?.cos()),
-            "tan" => scalar(dimensionless(first)?.tan()),
-            "asin" | "acos" => {
+            "sin" | "sinr" => scalar(dimensionless(first)?.sin()),
+            "cos" | "cosr" => scalar(dimensionless(first)?.cos()),
+            "tan" | "tanr" => scalar(dimensionless(first)?.tan()),
+            "sind" => scalar(dimensionless(first)?.to_radians().sin()),
+            "cosd" => scalar(dimensionless(first)?.to_radians().cos()),
+            "tand" => scalar(dimensionless(first)?.to_radians().tan()),
+            "asin" | "acos" | "asinr" | "acosr" | "asind" | "acosd" => {
                 let value = dimensionless(first)?;
                 if !(-1.0..=1.0).contains(&value) {
                     return Err(GoblinError::numeric(format!(
                         "INVERSE TRIGONOMETRIC DOMAIN ERROR\n\n{name}() requires a value from -1 through 1."
                     )));
                 }
-                scalar(if name == "asin" {
+                let radians = if matches!(name, "asin" | "asinr" | "asind") {
                     value.asin()
                 } else {
                     value.acos()
+                };
+                scalar(if matches!(name, "asind" | "acosd") {
+                    radians.to_degrees()
+                } else {
+                    radians
                 })
             }
-            "atan" => scalar(dimensionless(first)?.atan()),
-            "atan2" => {
+            "atan" | "atanr" => scalar(dimensionless(first)?.atan()),
+            "atand" => scalar(dimensionless(first)?.atan().to_degrees()),
+            "atan2" | "atan2r" | "atan2d" => {
                 same_dimensions()?;
                 let y = first.value_si;
                 let x = values[1].value_si;
@@ -1204,8 +1222,15 @@ impl Evaluation {
                         "ATAN2 DOMAIN ERROR\n\natan2(0, 0) has no defined direction.",
                     ));
                 }
-                scalar(y.atan2(x))
+                let radians = y.atan2(x);
+                scalar(if name == "atan2d" {
+                    radians.to_degrees()
+                } else {
+                    radians
+                })
             }
+            "deg2rad" => scalar(dimensionless(first)?.to_radians()),
+            "rad2deg" => scalar(dimensionless(first)?.to_degrees()),
             "hypot" => {
                 same_dimensions()?;
                 Quantity::new(first.value_si.hypot(values[1].value_si), first.dimension)
@@ -1404,6 +1429,25 @@ impl Evaluation {
             })?;
         loaded.fits.copy_evidence(destination)
     }
+}
+
+fn legacy_angle_replacements(name: &str) -> Option<(&'static str, &'static str)> {
+    match name {
+        "sin" => Some(("sinr", "sind")),
+        "cos" => Some(("cosr", "cosd")),
+        "tan" => Some(("tanr", "tand")),
+        "asin" => Some(("asinr", "asind")),
+        "acos" => Some(("acosr", "acosd")),
+        "atan" => Some(("atanr", "atand")),
+        "atan2" => Some(("atan2r", "atan2d")),
+        _ => None,
+    }
+}
+
+fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
+    format!(
+        "GOBLIN WARNING G302\n\nAMBIGUOUS ANGLE FUNCTION\n\n{name}() currently means radians for compatibility.\n\nUse:\n    {radians}()    # radians\n    {degrees}()    # degrees\n"
+    )
 }
 
 fn require_args(name: &str, args: &[Expr], expected: usize) -> Result<()> {

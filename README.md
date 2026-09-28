@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.13
+# Goblin++ Rust Engine 0.1.0-alpha.14
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -131,16 +131,21 @@ compiler:
 root = sqrt(81)
 distance = hypot(3 m, 4 m)
 smallest = min(3 kg, 1 kg, 2 kg)
-signal = sin(pi / 2)
+signal = sinr(pi / 2)
+half = sind(30)
 decades = log10(1000)
 ```
 
 `abs`, `min`, `max`, and `hypot` preserve compatible dimensions. `sqrt`
 accepts only non-negative values whose unit exponents are all even, so
 `sqrt((3 m)^2)` is `3 m` while `sqrt(3 m)` is refused. `floor`, `ceil`,
-`round`, `exp`, `ln`, `log10`, and the trigonometric functions require
-dimensionless inputs. Trigonometric inputs and inverse results are radians.
-Invalid domains and non-finite results become explicit, preserved failures.
+`round`, `exp`, `ln`, and `log10` require dimensionless inputs. Trigonometric
+names state their angle convention: `sind`/`cosd`/`tand` use degrees,
+`sinr`/`cosr`/`tanr` use radians, and inverse or `atan2` names use the same
+suffix for their result. `deg2rad` and `rad2deg` perform explicit conversion.
+The old unsuffixed names temporarily retain radians behavior but emit a
+preserved `G302` migration warning. Invalid domains and non-finite results
+become explicit, preserved failures.
 See [MATH.md](docs/MATH.md) and `examples/scientific_math.gbl`.
 
 ## G funk: user-defined functions

@@ -8,7 +8,7 @@ EVIDENCE_CREATED=NO
 CUSTODY_CHECKED=NO
 ```
 
-For a parsed program, the Rust CLI returns `goblin.check.v1`. It reports `status`, a single nullable `diagnostic`, starting source and canonical hashes, and previews of stdout, explicitly sealed values, and generated outputs. The extension checks that the report does not claim evidence or custody authority. A failed evaluation appears as a document-level diagnostic because v1 does not provide a precise source range.
+For a parsed program, the Rust CLI returns `goblin.check.v1`. It reports `status`, a single nullable `diagnostic`, non-fatal migration `warnings`, starting source and canonical hashes, and previews of stdout, explicitly sealed values, and generated outputs. The extension checks that the report does not claim evidence or custody authority. A failed evaluation appears as a document-level diagnostic because v1 does not provide a precise source range.
 
 Lexical and parsing failures currently exit before the CLI can emit JSON. The extension recognizes their `G001`/`G002` stderr messages and displays a document-level preview diagnostic. Other command failures remain command failures, not source diagnostics. The extension never invents a line number.
 

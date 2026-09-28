@@ -270,13 +270,28 @@ function refreshIconViews() {
 }
 
 function publishCheckReport(uri, report, announce) {
+  const warningDiagnostics = report.warnings.map((warning) => {
+    const diagnostic = new vscode.Diagnostic(
+      new vscode.Range(0, 0, 0, 0),
+      warning,
+      vscode.DiagnosticSeverity.Warning,
+    );
+    diagnostic.code = "G302";
+    diagnostic.source = "Goblin++ check (preview only)";
+    return diagnostic;
+  });
   if (report.status === "PASS") {
-    diagnosticCollection.delete(uri);
+    if (warningDiagnostics.length) {
+      diagnosticCollection.set(uri, warningDiagnostics);
+    } else {
+      diagnosticCollection.delete(uri);
+    }
     setStatus("check-pass");
     if (announce) {
-      vscode.window.showInformationMessage(
-        "Goblin++ check: PASS (preview only; no evidence or custody check).",
-      );
+      const message = warningDiagnostics.length
+        ? `Goblin++ check: PASS with ${warningDiagnostics.length} migration warning(s) (preview only).`
+        : "Goblin++ check: PASS (preview only; no evidence or custody check).";
+      vscode.window.showInformationMessage(message);
     }
     return;
   }
@@ -292,7 +307,7 @@ function publishCheckReport(uri, report, announce) {
   );
   diagnostic.code = item.code;
   diagnostic.source = "Goblin++ check (preview only)";
-  diagnosticCollection.set(uri, [diagnostic]);
+  diagnosticCollection.set(uri, [...warningDiagnostics, diagnostic]);
   setStatus("check-fail");
   if (announce) {
     vscode.window.showWarningMessage(
@@ -464,7 +479,7 @@ function activate(context) {
 
   const lexiconPath = path.join(context.extensionPath, "spec", "lexicon.v0.json");
   const lexicon = JSON.parse(fs.readFileSync(lexiconPath, "utf8"));
-  const runtimeVocabularyPath = path.join(context.extensionPath, "spec", "rust-alpha13-editor.json");
+  const runtimeVocabularyPath = path.join(context.extensionPath, "spec", "rust-alpha14-editor.json");
   const runtimeVocabulary = JSON.parse(fs.readFileSync(runtimeVocabularyPath, "utf8"));
   extensionLexicon = lexicon;
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);

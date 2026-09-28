@@ -1,4 +1,4 @@
-# Scientific mathematics in Goblin++ 0.1.0-alpha.13
+# Scientific mathematics in Goblin++ 0.1.0-alpha.14
 
 The scientific-math built-ins execute in both the Rust interpreter and the
 native compiler. Their results remain ordinary Goblin++ quantities and may be
@@ -43,16 +43,36 @@ decades = log10(1000)
 
 ## Trigonometry
 
-`sin`, `cos`, `tan`, `asin`, `acos`, and `atan` accept one dimensionless
-value. `asin` and `acos` restrict their input to the closed interval `[-1, 1]`.
-`atan2(y, x)` accepts two values with matching dimensions and refuses
-`atan2(0, 0)`. Angles are represented as dimensionless radians; there is no
-implicit degree conversion.
+Angle conventions are part of each preferred function name:
+
+- `sind`, `cosd`, and `tand` interpret their dimensionless input as degrees;
+- `sinr`, `cosr`, and `tanr` interpret their dimensionless input as radians;
+- `asind`, `acosd`, and `atand` return a dimensionless numeric angle measured
+  in degrees;
+- `asinr`, `acosr`, and `atanr` return a dimensionless numeric angle measured
+  in radians;
+- `atan2d(y, x)` and `atan2r(y, x)` accept matching dimensions, refuse the
+  undefined pair `(0, 0)`, and return degrees or radians respectively;
+- `deg2rad` and `rad2deg` perform explicit conversion of dimensionless numeric
+  angles.
+
+Inverse sine and cosine restrict their input to the closed interval `[-1, 1]`.
+Degree and radian values are not yet distinct quantity types: do not write
+`30 deg` or `0.5 rad`. The suffix is the enforced angle convention.
 
 ```goblin
-opposite = sin(pi / 2)
-angle = atan2(1 m, 1 m)
+opposite = sinr(pi / 2)
+half = sind(30)
+angle_r = atan2r(1 m, 1 m)
+angle_d = atan2d(1 m, 1 m)
+converted = deg2rad(180)
 ```
+
+For migration, the older `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, and
+`atan2` names retain their alpha.13 radians behavior. Each used name emits one
+preserved `G302` warning per run directing the author to its explicit `r` or
+`d` form. These aliases are deprecated and may be removed only at a declared
+breaking language version; they never silently change to degrees.
 
 ## Explicit refusals
 
@@ -62,10 +82,11 @@ These examples fail rather than inventing a result:
 bad_root = sqrt(-1)        # real-number domain error
 bad_unit = sqrt(3 m)       # fractional dimension would be required
 bad_log = ln(0)            # logarithm domain error
-bad_trig = sin(1 m)        # trigonometry requires a dimensionless angle
+bad_trig = sind(1 m)       # trigonometry requires a dimensionless angle
 bad_pair = hypot(1 m, 1 s) # dimensions do not match
 ```
 
 Goblin++ currently implements real-valued `f64` mathematics. Complex numbers,
-fractional-dimension quantities, uncertainty propagation, and angle units are
-separate future design decisions, not implied by these built-ins.
+fractional-dimension quantities, uncertainty propagation, and first-class
+angle quantity units are separate future design decisions, not implied by
+these built-ins.

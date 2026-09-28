@@ -188,6 +188,10 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         Ok(())
     })();
 
+    if !options.compile {
+        stderr = lines_to_text(&evaluation.warnings);
+    }
+
     if parsed.is_none()
         && let Ok(text) = std::str::from_utf8(&source_bytes)
         && let Ok(value) = parse_source(text)

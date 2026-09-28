@@ -54,7 +54,7 @@ test("extension activates and registers commands and language providers", async 
     CompletionItemKind: { Keyword: 1, Function: 2, Constant: 3, Unit: 4 },
     ConfigurationTarget: { Global: 1, Workspace: 2 },
     Diagnostic: class Diagnostic {},
-    DiagnosticSeverity: { Error: 0 },
+    DiagnosticSeverity: { Error: 0, Warning: 1 },
     DocumentSymbol: class DocumentSymbol {},
     Hover: class Hover {},
     MarkdownString: class MarkdownString {
@@ -143,11 +143,13 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 97);
+    assert.equal(items.length, 113);
     assert(items.some((item) => item.label === "π" && item.kind === 3));
     assert(items.some((item) => item.label === "km" && item.kind === 4));
     assert(items.some((item) => item.label === "fits_mean" && item.kind === 2));
     assert(items.some((item) => item.label === "fits_select_stats" && item.kind === 2));
+    assert(items.some((item) => item.label === "sind" && item.kind === 2));
+    assert(items.some((item) => item.label === "sinr" && item.kind === 2));
     assert.match(items.find((item) => item.label === "for").insertText.value, /range/);
     assert.match(items.find((item) => item.label === "switch").insertText.value, /default/);
     assert.match(items.find((item) => item.label === "g_func").insertText.value, /return/);

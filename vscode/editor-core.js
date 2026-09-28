@@ -138,6 +138,10 @@ function parseCheckReport(stdout) {
   ) {
     throw new Error("Goblin++ check crossed its preview-only trust boundary.");
   }
+  const warnings = report.warnings || [];
+  if (!Array.isArray(warnings) || warnings.some((warning) => typeof warning !== "string")) {
+    throw new Error("Goblin++ check returned invalid warnings.");
+  }
   const diagnostic = report.diagnostic;
   if (report.status === "PASS" && diagnostic !== null) {
     throw new Error("A passing Goblin++ check cannot contain a diagnostic.");
@@ -149,7 +153,7 @@ function parseCheckReport(stdout) {
   )) {
     throw new Error("A failing Goblin++ check must contain a valid diagnostic.");
   }
-  return { ...report, diagnostics: diagnostic ? [diagnostic] : [] };
+  return { ...report, warnings, diagnostics: diagnostic ? [diagnostic] : [] };
 }
 
 function parseCheckResponse(stdout, stderr, exitCode) {

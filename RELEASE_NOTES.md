@@ -1,4 +1,20 @@
-# 0.1.0-alpha.13
+# 0.1.0-alpha.14
+
+Added explicit angle-convention trigonometry to the Rust interpreter and native
+compiler. `sind`/`cosd`/`tand` accept numeric degrees;
+`sinr`/`cosr`/`tanr` accept numeric radians; inverse and two-argument forms use
+matching `d` or `r` suffixes for their result. `deg2rad` and `rad2deg` provide
+explicit numeric conversion. Inputs remain dimensionless quantities in this
+stage; `deg` and `rad` are not silently introduced as physical units.
+
+The alpha.13 unsuffixed names retain their radians behavior for compatibility
+and emit one preserved `G302` migration warning per function name per run.
+They do not silently change meaning. Both execution engines, warning evidence,
+domain and dimension refusals, native result agreement, documentation,
+examples, capabilities output, and VS Code authoring support are covered by
+the alpha.14 gates.
+
+## Previous stage: 0.1.0-alpha.13
 
 Added dimension-aware scientific mathematics to both the Rust interpreter and
 native compiler: `abs`, `sqrt`, variadic `min`/`max`, `floor`, `ceil`,

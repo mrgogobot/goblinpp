@@ -1,6 +1,7 @@
 // Included verbatim in generated Rust programs. `Value`, `Dim`, and `ZERO` are
 // defined by the generated runtime before this file is inserted.
 fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
+    warn_legacy_angle(name);
     let minimum = if matches!(name, "min" | "max") { 2 } else { 0 };
     if minimum != 0 && values.len() < minimum {
         return Err(format!(
@@ -8,7 +9,7 @@ fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
             values.len()
         ));
     }
-    let expected = if matches!(name, "atan2" | "hypot") {
+    let expected = if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot") {
         2
     } else if minimum == 0 {
         1
@@ -77,31 +78,76 @@ fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
             }
             Value::scalar(if name == "ln" { value.ln() } else { value.log10() })
         }
-        "sin" => Value::scalar(require_dimensionless(first, first_dim)?.sin()),
-        "cos" => Value::scalar(require_dimensionless(first, first_dim)?.cos()),
-        "tan" => Value::scalar(require_dimensionless(first, first_dim)?.tan()),
-        "asin" | "acos" => {
+        "sin" | "sinr" => Value::scalar(require_dimensionless(first, first_dim)?.sin()),
+        "cos" | "cosr" => Value::scalar(require_dimensionless(first, first_dim)?.cos()),
+        "tan" | "tanr" => Value::scalar(require_dimensionless(first, first_dim)?.tan()),
+        "sind" => Value::scalar(require_dimensionless(first, first_dim)?.to_radians().sin()),
+        "cosd" => Value::scalar(require_dimensionless(first, first_dim)?.to_radians().cos()),
+        "tand" => Value::scalar(require_dimensionless(first, first_dim)?.to_radians().tan()),
+        "asin" | "acos" | "asinr" | "acosr" | "asind" | "acosd" => {
             let value = require_dimensionless(first, first_dim)?;
             if !(-1.0..=1.0).contains(&value) {
                 return Err(format!(
                     "INVERSE TRIGONOMETRIC DOMAIN ERROR: {name}() requires a value from -1 through 1."
                 ));
             }
-            Value::scalar(if name == "asin" { value.asin() } else { value.acos() })
+            let radians = if matches!(name, "asin" | "asinr" | "asind") {
+                value.asin()
+            } else {
+                value.acos()
+            };
+            Value::scalar(if matches!(name, "asind" | "acosd") {
+                radians.to_degrees()
+            } else {
+                radians
+            })
         }
-        "atan" => Value::scalar(require_dimensionless(first, first_dim)?.atan()),
-        "atan2" => {
+        "atan" | "atanr" => Value::scalar(require_dimensionless(first, first_dim)?.atan()),
+        "atand" => Value::scalar(require_dimensionless(first, first_dim)?.atan().to_degrees()),
+        "atan2" | "atan2r" | "atan2d" => {
             require_matching_dimensions()?;
             let x = quantities[1].0;
             if first == 0.0 && x == 0.0 {
                 return Err("ATAN2 DOMAIN ERROR: atan2(0, 0) has no defined direction.".into());
             }
-            Value::scalar(first.atan2(x))
+            let radians = first.atan2(x);
+            Value::scalar(if name == "atan2d" {
+                radians.to_degrees()
+            } else {
+                radians
+            })
         }
+        "deg2rad" => Value::scalar(require_dimensionless(first, first_dim)?.to_radians()),
+        "rad2deg" => Value::scalar(require_dimensionless(first, first_dim)?.to_degrees()),
         "hypot" => {
             require_matching_dimensions()?;
             Value::q(first.hypot(quantities[1].0), first_dim)
         }
         _ => Err(format!("UNKNOWN SYMBOL: {name}")),
+    }
+}
+
+fn warn_legacy_angle(name: &str) {
+    let Some((radians, degrees)) = (match name {
+        "sin" => Some(("sinr", "sind")),
+        "cos" => Some(("cosr", "cosd")),
+        "tan" => Some(("tanr", "tand")),
+        "asin" => Some(("asinr", "asind")),
+        "acos" => Some(("acosr", "acosd")),
+        "atan" => Some(("atanr", "atand")),
+        "atan2" => Some(("atan2r", "atan2d")),
+        _ => None,
+    }) else {
+        return;
+    };
+    static WARNED: std::sync::OnceLock<std::sync::Mutex<std::collections::HashSet<String>>> =
+        std::sync::OnceLock::new();
+    let warned = WARNED.get_or_init(|| std::sync::Mutex::new(std::collections::HashSet::new()));
+    if let Ok(mut warned) = warned.lock()
+        && warned.insert(name.to_string())
+    {
+        eprintln!(
+            "GOBLIN WARNING G302\n\nAMBIGUOUS ANGLE FUNCTION\n\n{name}() currently means radians for compatibility.\n\nUse:\n    {radians}()    # radians\n    {degrees}()    # degrees\n"
+        );
     }
 }

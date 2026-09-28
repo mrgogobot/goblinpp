@@ -1,4 +1,27 @@
-# Alpha.13 acceptance results
+# Alpha.14 acceptance results
+
+Current alpha.14 local source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked --all-targets`: 113 passed, 0 failed; the explicit-angle
+  tests cover degree/radian forward, inverse, `atan2`, conversion, domain,
+  dimension, reserved-name, legacy-warning, native-parity, and independently
+  verifiable run paths;
+- `cargo clippy --locked --all-targets -- -D warnings` and
+  `cargo fmt --all -- --check`: pass;
+- release build reports `goblin++ 0.1.0-alpha.14`;
+- VS Code extension 0.1.9 tests against the current binary: 16 passed, 0
+  failed, including the real CLI check/run/verify gate;
+- `examples/scientific_math.gbl` passes in interpreted and native-compiled
+  modes, and both preserved runs independently verify;
+- alpha.13 unsuffixed trig calls retain radians results and emit one preserved
+  `G302` warning per used legacy function name; older canonical-hash and Python
+  0.0.7 compatibility gates remain unchanged.
+
+These are local source-check results for the alpha.14 working tree, not a new
+public release, clean-checkout reproduction, or cross-platform result. The
+public alpha.13 release and Zenodo record remain unchanged.
+
+## Previous stage: Alpha.13 acceptance results
 
 Current alpha.13 local source-check gates (macOS arm64, Rust 1.92.0):
 

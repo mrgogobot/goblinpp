@@ -9,16 +9,21 @@ largest = max(3 kg, 1 kg, 2 kg)
 growth = exp(1)
 natural = ln(growth)
 decades = log10(1000)
-right_angle_sine = sin(pi / 2)
-direction = atan2(1 m, 1 m)
+right_angle_sine = sinr(pi / 2)
+thirty_degree_sine = sind(30)
+direction_radians = atan2r(1 m, 1 m)
+direction_degrees = atan2d(1 m, 1 m)
 
 print("sqrt(81) = {root}")
 print("length = {length}; diagonal = {diagonal}")
 print("mass range = {smallest} to {largest}")
 print("ln(exp(1)) = {natural}; log10(1000) = {decades}")
-print("sin(pi/2) = {right_angle_sine}; direction = {direction} radians")
+print("sinr(pi/2) = {right_angle_sine}; sind(30) = {thirty_degree_sine}")
+print("direction = {direction_radians} radians = {direction_degrees} degrees")
 
 seal root
 seal length
 seal diagonal
-seal direction
+seal thirty_degree_sine
+seal direction_radians
+seal direction_degrees

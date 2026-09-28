@@ -1,10 +1,10 @@
 # Public-release checklist
 
-This is the reusable checklist for changes after the public alpha.12 release.
+This is the reusable checklist for changes after the public alpha.13 release.
 A commit is not a new release, and each new version still needs its own review,
 tag, assets, and preservation record. The checklist keeps decisions visible
 instead of silently making them for the author. The current working Rust engine
-is `0.1.0-alpha.13`; the bundled editor extension source is `0.1.8`.
+is `0.1.0-alpha.14`; the bundled editor extension source is `0.1.9`.
 
 ## Before making the GitHub repository public
 
