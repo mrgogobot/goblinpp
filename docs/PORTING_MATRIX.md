@@ -42,7 +42,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.9 invokes the Rust CLI and adds alpha.14 explicit-angle authoring hints; its hints are advisory |
+| VS Code extension backend switch | Implemented, separately packaged | Extension 0.1.10 invokes the Rust CLI and adds alpha.15 vector, coordinate, and kinematics authoring hints; its hints are advisory |
 
 ## Promotion gates
 

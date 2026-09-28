@@ -142,6 +142,34 @@
     "body": "${1:length} = hypot(${2:x}, ${3:y})",
     "description": "Hypotenuse of two quantities with matching dimensions."
   },
+  "Astronomical units to metres": {
+    "prefix": "au2m",
+    "body": "${1:distance} = au2m(${2:1})",
+    "description": "Convert an explicit number of astronomical units to SI metres."
+  },
+  "Vector products": {
+    "prefix": "vector",
+    "body": [
+      "${1:length} = magnitude(${2:[3 m, 4 m]})",
+      "${3:projection} = dot(${4:[1 m, 0 m, 0 m]}, ${5:[0 m, 1 m, 0 m]})",
+      "${6:normal} = cross(${4:[1 m, 0 m, 0 m]}, ${5:[0 m, 1 m, 0 m]})"
+    ],
+    "description": "Dimension-checked homogeneous vector magnitude, dot, and cross products."
+  },
+  "Spherical coordinates in degrees": {
+    "prefix": "spherical",
+    "body": "${1:position} = spherical2cartesiand(${2:1 m}, ${3:90}, ${4:0})",
+    "description": "Convert radius, inclination from +z, and azimuth from +x to [x, y, z]."
+  },
+  "Rotational motion": {
+    "prefix": "rotation",
+    "body": [
+      "${1:omega} = angular_velocityd(${2:360}, ${3:2 s})",
+      "${4:speed} = tangential_velocity(${5:1 m}, ${1:omega})",
+      "${6:acceleration} = centripetal_acceleration(${5:1 m}, ${1:omega})"
+    ],
+    "description": "Explicit degree-based angular velocity, tangential speed, and centripetal acceleration."
+  },
   "Parse a checked integer": {
     "prefix": "parse_integer",
     "body": "${1:value} = parse_integer(${2:text})",

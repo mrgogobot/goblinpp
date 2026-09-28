@@ -1,10 +1,16 @@
-# VS Code extension 0.1.9
+# VS Code extension 0.1.10
 
-Updated for Rust 0.1.0-alpha.14. Added highlighting, completion help, and
-snippets for explicit degree/radian trigonometry, inverse functions,
-`atan2d`/`atan2r`, and `deg2rad`/`rad2deg`. Unsuffixed trigonometric names are
-marked as deprecated radians-compatible aliases; the engine owns warning and
-execution semantics.
+Updated for Rust 0.1.0-alpha.15. Added highlighting and detailed completion
+help for astronomical distance conversion, vector algebra, explicit
+polar/spherical coordinate conversion, linear velocity, named Galilean and
+collinear relativistic velocity addition, and rotational-motion helpers.
+
+## Previous release: 0.1.9
+
+Added highlighting, completion help, and snippets for explicit degree/radian
+trigonometry, inverse functions, `atan2d`/`atan2r`, and
+`deg2rad`/`rad2deg`. Unsuffixed trigonometric names are marked as deprecated
+radians-compatible aliases; the engine owns warning and execution semantics.
 
 ## Previous release: 0.1.8
 

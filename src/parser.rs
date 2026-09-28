@@ -99,7 +99,8 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "write_json"
             | "plot_fits_histogram"
             | "plot_fits_scatter"
-    ) || name.starts_with("__goblin_")
+    ) || crate::science::is_function(name)
+        || name.starts_with("__goblin_")
         || resolve(name).is_some()
         || is_unit(name)
 }

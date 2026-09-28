@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.14
+# Goblin++ Rust Engine 0.1.0-alpha.15
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -147,6 +147,31 @@ The old unsuffixed names temporarily retain radians behavior but emit a
 preserved `G302` migration warning. Invalid domains and non-finite results
 become explicit, preserved failures.
 See [MATH.md](docs/MATH.md) and `examples/scientific_math.gbl`.
+
+## Vectors, coordinates, and motion
+
+The science helpers preserve dimensions and make conventions visible in the
+function name:
+
+```goblin
+distance = au2m(1)
+direction = spherical2cartesiand(2 m, 90, 45)
+speed = velocity([10 m, 4 m, 0 m], 2 s)
+normal = cross([1 m, 0 m, 0 m], [0 m, 1 m, 0 m])
+omega = angular_velocityd(360, 2 s)
+```
+
+Distance conversion covers astronomical units, parsecs, and light-years in
+both directions. `magnitude`, `dot`, and `cross` operate on homogeneous arrays.
+Polar and spherical conversion uses explicit degree/radian suffixes; spherical
+inclination is measured from +z and azimuth from +x in the x-y plane.
+Velocity addition is never implicit: choose `velocity_add_galilean` or the
+one-dimensional `velocity_add_relativistic_collinear`. Rotational helpers cover
+angular velocity, tangential velocity, centripetal acceleration, and angular
+momentum. These are Euclidean/elementary mechanics helpers, not curved
+spacetime or general relativity. See
+[VECTORS_COORDINATES_KINEMATICS.md](docs/VECTORS_COORDINATES_KINEMATICS.md) and
+`examples/vector_motion.gbl`.
 
 ## G funk: user-defined functions
 

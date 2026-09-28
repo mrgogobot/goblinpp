@@ -1,4 +1,21 @@
-# 0.1.0-alpha.14
+# 0.1.0-alpha.15
+
+Added dimension-checked astronomical distance conversions, homogeneous vector
+`magnitude`/`dot`/`cross`, explicit Cartesian/polar/spherical conversion, linear
+velocity, explicitly named Galilean and collinear special-relativistic velocity
+addition, angular velocity, tangential velocity, centripetal acceleration, and
+angular momentum. All functions run in both the Rust interpreter and native
+compiler.
+
+Coordinate and angle conventions are part of the public interface: `d` means
+degrees, `r` means radians, spherical inclination is measured from +z, and
+azimuth is measured from +x toward +y. Inputs with invalid dimensions,
+ambiguous origins, invalid radii or inclinations, non-positive elapsed time, or
+superluminal relativistic operands are refused. This stage deliberately does
+not claim general-relativistic, reference-frame, tensor, orbital-propagation,
+or uncertainty semantics.
+
+## Previous stage: 0.1.0-alpha.14
 
 Added explicit angle-convention trigonometry to the Rust interpreter and native
 compiler. `sind`/`cosd`/`tand` accept numeric degrees;

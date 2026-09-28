@@ -171,6 +171,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
+    let compiled_science_runtime = include_str!("compiled_science_runtime.rs");
     let mut functions = String::new();
     functions.push_str("fn goblin_call(name: &str, args: Vec<Value>, goblin_args: &Vec<String>, mut goblin_loop_steps: &mut u64, mut goblin_input_steps: &mut usize, goblin_call_depth: usize) -> Result<Value, String> {\n");
     functions.push_str(&format!(
@@ -229,6 +230,7 @@ mod goblin_text {{
 }}
 {compiled_text_runtime}
 {compiled_math_runtime}
+{compiled_science_runtime}
 
 fn as_q(value: Value) -> Result<(f64, Dim), String> {{ match value {{ Value::Q(v, d) => Ok((v, d)), _ => Err("Arithmetic requires numeric quantities.".into()) }} }}
 fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
@@ -797,6 +799,15 @@ fn generate_expr(expression: &Expr) -> Result<String> {
         {
             format!(
                 "goblin_string_call({name:?}, vec![{}])",
+                args.iter()
+                    .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        }
+        Expr::Call { name, args } if crate::science::is_function(name) => {
+            format!(
+                "goblin_science_call({name:?}, vec![{}])",
                 args.iter()
                     .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
                     .collect::<Result<Vec<_>>>()?

@@ -581,6 +581,10 @@ impl Evaluation {
             | "cosd" | "tand" | "sinr" | "cosr" | "tanr" | "asind" | "acosd" | "atand"
             | "asinr" | "acosr" | "atanr" | "atan2d" | "atan2r" | "deg2rad" | "rad2deg"
             | "hypot" => self.eval_math_call(name, args),
+            name if crate::science::is_function(name) => {
+                crate::science::require_arity(name, args.len())?;
+                crate::science::call(name, self.eval_args(args)?)
+            }
             "append" => {
                 require_args(name, args, 2)?;
                 let array = self.eval_expr(&args[0])?;
