@@ -1,4 +1,17 @@
-# VS Code extension 0.1.10
+# VS Code extension 0.1.12
+
+Updated for Rust alpha.17. Added the 18 electrical `ee_` functions, SI electrical
+unit completion and highlighting, snippets, and six-axis dimension labels.
+The chemistry vocabulary remains included. Function semantics are defined by
+the installed Goblin++ engine.
+
+## Previous stage: 0.1.11
+
+Updated for Rust 0.1.0-alpha.16. Added highlighting, completion help, and
+snippets for the versioned chemistry registry, molar mass, mass/amount,
+concentration, dilution, practical laboratory units, `R`, and `m_u`.
+
+## Previous release: 0.1.10
 
 Updated for Rust 0.1.0-alpha.15. Added highlighting and detailed completion
 help for astronomical distance conversion, vector algebra, explicit

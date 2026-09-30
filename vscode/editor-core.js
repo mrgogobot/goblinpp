@@ -2,9 +2,9 @@
 
 const path = require("path");
 
-const IDENTIFIER_PATTERN = /^[A-Za-z_πħωΩΔΣλμσθ∇∂][A-Za-z0-9_πħωΩΔΣλμσθ∇∂]*$/u;
-const IDENTIFIER_START = /[A-Za-z_πħωΩΔΣλμσθ∇∂]/u;
-const IDENTIFIER_CONTINUE = /[A-Za-z0-9_πħωΩΔΣλμσθ∇∂]/u;
+const IDENTIFIER_PATTERN = /^[A-Za-z_πħωΩΔΣλμσθ∇∂µÅ][A-Za-z0-9_πħωΩΔΣλμσθ∇∂µÅ]*$/u;
+const IDENTIFIER_START = /[A-Za-z_πħωΩΔΣλμσθ∇∂µÅ]/u;
+const IDENTIFIER_CONTINUE = /[A-Za-z0-9_πħωΩΔΣλμσθ∇∂µÅ]/u;
 
 const CONSTANT_ICONS = Object.freeze({
   "math.pi": "◯",
@@ -18,7 +18,7 @@ const CONSTANT_ICONS = Object.freeze({
 
 const INSERTABLE_IDENTIFIER_GLYPHS = Object.freeze([
   ["ω", "omega", "Identifier glyph; no built-in scientific meaning."],
-  ["Ω", "capital omega", "Identifier glyph; no built-in scientific meaning."],
+  ["Ω", "ohm", "SI electrical resistance unit; use as a unit suffix."],
   ["Δ", "capital delta", "Identifier glyph; no built-in scientific meaning."],
   ["Σ", "capital sigma", "Identifier glyph; no built-in scientific meaning."],
   ["λ", "lambda", "Identifier glyph; no built-in scientific meaning."],
@@ -184,7 +184,7 @@ function parseCheckResponse(stdout, stderr, exitCode) {
 }
 
 function dimensionLabel(dimension) {
-  const names = ["mass", "length", "time", "temperature", "amount"];
+  const names = ["mass", "length", "time", "temperature", "amount", "current"];
   const parts = [];
   for (let index = 0; index < names.length; index += 1) {
     if (dimension[index]) {
@@ -197,16 +197,21 @@ function dimensionLabel(dimension) {
 function vocabularyEntries(lexicon, runtimeVocabulary = {}) {
   const vocabulary = lexicon.vocabulary || {};
   const entries = [];
-  for (const constant of vocabulary.constants || []) {
+  const constants = [
+    ...(vocabulary.constants || []),
+    ...(runtimeVocabulary.constants || []),
+  ];
+  for (const constant of constants) {
     for (const alias of constant.aliases) {
       entries.push({
         spelling: alias,
         kind: "constant",
-        detail: constant.canonical_id,
+        detail: constant.detail || constant.canonical_id,
       });
     }
   }
-  for (const unit of vocabulary.units || []) {
+  const units = [...(vocabulary.units || []), ...(runtimeVocabulary.units || [])];
+  for (const unit of units) {
     entries.push({
       spelling: unit.spelling,
       kind: "unit",

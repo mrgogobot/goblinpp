@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.15
+# Goblin++ Rust Engine 0.1.0-alpha.17
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -15,6 +15,8 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 
 - [Goblin++ Alpha.12 Day-One Tutorial](docs/tutorial/Goblin++_Alpha12_Day-One_Tutorial.pdf)
 - [Install the VS Code extension](vscode/README.md)
+- [Build or install the JetBrains IDE plugin](jetbrains/README.md)
+- [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
 
 The ordinary command interprets a saved `.gbl` file:
 
@@ -33,8 +35,9 @@ The first form runs the native artifact and preserves the generated Rust, compil
 
 ## Repository status
 
-This source repository includes the Rust engine, its tests and examples, and the
-VS Code extension in [`vscode/`](vscode/). It does **not** contain a prebuilt
+This source repository includes the Rust engine, its tests and examples, the
+VS Code extension in [`vscode/`](vscode/), and the JetBrains plugin source in
+[`jetbrains/`](jetbrains/). It does **not** contain a prebuilt
 binary, personal run directories, or scientific input data beyond the small
 deterministic FITS test fixture. The first public alpha is preserved on GitHub
 and Zenodo; active development continues here. The remaining promotion gates are in
@@ -83,6 +86,25 @@ seal energy
 ```
 
 In addition to baseline evidence, paranoid runs observe and preserve the source bytes again after execution. A different end-of-run hash refuses `PASS` and records a verifiable protocol violation; a missing source also refuses `PASS`. The receipt is independently checked before ledger registration. This is an end-of-run observation, not continuous monitoring: edits restored before that check cannot be detected by it. Frozen-byte enforcement, output confinement, data hashing, and exact-hash authorization for arbitrary inline Rust apply in either mode. `GO_PARANOID` is not an OS sandbox; see [SECURITY.md](docs/SECURITY.md).
+
+## Electrical engineering
+
+Alpha.17 adds electric current as the sixth SI base dimension, electrical
+units such as amperes, volts, ohms, farads, and henries, and 18 `ee_` helpers:
+
+```goblin
+current = ee_current(12 V, 4.7 kohm)
+milliamps = ee_in_unit(current, "mA")
+print("current = {milliamps:.3f} mA")
+tau = ee_rc_time_constant(10 kohm, 100 uF)
+node_ok = ee_kcl_balanced([3 mA, -2 mA, -1 mA], 0.01 mA)
+```
+
+Ohm's law, signed power and energy, ideal passive components, resistance
+networks, and explicit KCL/KVL residuals run in both execution engines. The
+function guide documents signs, dimensional requirements, conversion output,
+and model scope. See [ELECTRICAL_ENGINEERING.md](docs/ELECTRICAL_ENGINEERING.md)
+and `examples/electrical.gbl`.
 
 ## Everyday control flow
 
@@ -172,6 +194,28 @@ momentum. These are Euclidean/elementary mechanics helpers, not curved
 spacetime or general relativity. See
 [VECTORS_COORDINATES_KINEMATICS.md](docs/VECTORS_COORDINATES_KINEMATICS.md) and
 `examples/vector_motion.gbl`.
+
+## Chemistry foundation
+
+Common laboratory calculations use a small, versioned chemistry registry
+rather than a new forest of keywords:
+
+```goblin
+water_molar_mass = chem_molar_mass("H2O")
+water_amount = chem_moles(36.03 g, water_molar_mass)
+stock = chem_concentration(0.1 mol, 100 mL)
+diluted = chem_dilution(stock, 10 mL, 100 mL)
+print("water amount = {water_amount}")
+```
+
+Both execution engines support exact-symbol atomic lookup, bounded formula
+molar mass, mass/amount conversion, amount concentration, and explicit
+dilution. Laboratory units include litres and microlitres, nanometres,
+ångströms, common pressure units, and daltons. The element registry identity
+and hash are preserved in run and freeze evidence. This foundation does not
+infer isotopes, charge, hydrates, reactions, pH, equilibrium, kinetics, or
+biological sequence semantics. See [CHEMISTRY.md](docs/CHEMISTRY.md) and
+`examples/chemistry.gbl`.
 
 ## G funk: user-defined functions
 

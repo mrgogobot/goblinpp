@@ -1,8 +1,10 @@
 pub mod ast;
 pub mod audit;
+pub mod chemistry;
 pub mod compiler;
 pub mod constants;
 pub mod custody;
+pub mod electrical;
 pub mod error;
 pub mod evaluator;
 pub mod fits;

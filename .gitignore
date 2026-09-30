@@ -13,3 +13,7 @@
 /vscode/vsix/
 /vscode/node_modules/
 /vscode/.vscode-test/
+/jetbrains/.gradle/
+/jetbrains/.intellijPlatform/
+/jetbrains/build/
+/jetbrains/.idea/

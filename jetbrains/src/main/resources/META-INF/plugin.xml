@@ -1,0 +1,93 @@
+<idea-plugin>
+    <id>org.goblinpp.jetbrains</id>
+    <name>Goblin++</name>
+    <vendor url="https://github.com/mrgogobot/goblinpp">Malin Hess</vendor>
+
+    <description><![CDATA[
+      Editor and workflow support for Goblin++, an evidence-first scientific programming language
+      built on Rust. Provides .gbl file recognition, syntax highlighting, completion, quick
+      documentation, and actions for the installed goblin++ command-line tool.
+    ]]></description>
+
+    <change-notes><![CDATA[
+      <p>Goblin++ JetBrains 0.3.2:</p>
+      <ul>
+        <li>Electrical and chemistry functions, SI units, completion, and quick documentation</li>
+        <li>Native Run configurations for .gbl programs</li>
+        <li>Run gutter icon, toolbar execution, program arguments, and interactive console input</li>
+        <li>New Project wizard for IntelliJ-based IDEs, including PyCharm and CLion</li>
+        <li>Auditable or everyday starter modes</li>
+        <li>.gbl file recognition and syntax highlighting</li>
+        <li>Vocabulary-driven completion and quick documentation</li>
+        <li>Run, compile-and-run, check, freeze, status, and doctor actions</li>
+        <li>Configurable Goblin++ executable path</li>
+      </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Goblin++"
+                  language="Goblin++"
+                  implementationClass="org.goblinpp.jetbrains.GoblinFileType"
+                  fieldName="INSTANCE"
+                  extensions="gbl"/>
+        <lang.parserDefinition language="Goblin++"
+                               implementationClass="org.goblinpp.jetbrains.GoblinParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Goblin++"
+                                       implementationClass="org.goblinpp.jetbrains.GoblinSyntaxHighlighterFactory"/>
+        <lang.braceMatcher language="Goblin++"
+                           implementationClass="org.goblinpp.jetbrains.GoblinBraceMatcher"/>
+        <lang.commenter language="Goblin++"
+                        implementationClass="org.goblinpp.jetbrains.GoblinCommenter"/>
+        <completion.contributor language="Goblin++"
+                                implementationClass="org.goblinpp.jetbrains.GoblinCompletionContributor"/>
+        <lang.documentationProvider language="Goblin++"
+                                    implementationClass="org.goblinpp.jetbrains.GoblinDocumentationProvider"/>
+        <applicationConfigurable parentId="tools"
+                                 id="org.goblinpp.jetbrains.settings"
+                                 displayName="Goblin++"
+                                 instance="org.goblinpp.jetbrains.GoblinSettingsConfigurable"/>
+        <notificationGroup id="Goblin++" displayType="BALLOON"/>
+        <directoryProjectGenerator
+                implementation="org.goblinpp.jetbrains.project.GoblinDirectoryProjectGenerator"/>
+        <configurationType
+                implementation="org.goblinpp.jetbrains.run.GoblinRunConfigurationType"/>
+        <runConfigurationProducer
+                implementation="org.goblinpp.jetbrains.run.GoblinRunConfigurationProducer"/>
+        <runLineMarkerContributor language="Goblin++"
+                implementationClass="org.goblinpp.jetbrains.run.GoblinRunLineMarkerContributor"/>
+    </extensions>
+
+    <actions>
+        <group id="Goblin++.Actions" text="Goblin++" popup="true" icon="/icons/goblinpp.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="Goblin++.Run"
+                    class="org.goblinpp.jetbrains.actions.GoblinRunAction"
+                    text="Run Current File"
+                    description="Run the current Goblin++ program"
+                    icon="/icons/goblinpp.svg"/>
+            <action id="Goblin++.CompileRun"
+                    class="org.goblinpp.jetbrains.actions.GoblinCompileRunAction"
+                    text="Compile and Run Current File"
+                    description="Compile and run the current Goblin++ program"/>
+            <action id="Goblin++.Check"
+                    class="org.goblinpp.jetbrains.actions.GoblinCheckAction"
+                    text="Check Current File"
+                    description="Run a read-only Goblin++ machinery check"/>
+            <separator/>
+            <action id="Goblin++.Freeze"
+                    class="org.goblinpp.jetbrains.actions.GoblinFreezeAction"
+                    text="Freeze Current File"
+                    description="Freeze the current Goblin++ source"/>
+            <action id="Goblin++.Status"
+                    class="org.goblinpp.jetbrains.actions.GoblinStatusAction"
+                    text="Show Current File Status"
+                    description="Show Goblin++ custody status for the current source"/>
+            <action id="Goblin++.Doctor"
+                    class="org.goblinpp.jetbrains.actions.GoblinDoctorAction"
+                    text="Check Project with Doctor"
+                    description="Run Goblin++ project diagnostics"/>
+        </group>
+    </actions>
+</idea-plugin>

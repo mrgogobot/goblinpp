@@ -4,7 +4,8 @@ This is the reusable checklist for changes after the public alpha.13 release.
 A commit is not a new release, and each new version still needs its own review,
 tag, assets, and preservation record. The checklist keeps decisions visible
 instead of silently making them for the author. The current working Rust engine
-is `0.1.0-alpha.15`; the bundled editor extension source is `0.1.10`.
+is `0.1.0-alpha.17`; the bundled VS Code extension source is `0.1.12` and the
+JetBrains plugin source is `0.3.2`.
 
 ## Before making the GitHub repository public
 

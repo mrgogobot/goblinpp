@@ -1,4 +1,60 @@
-# Alpha.15 acceptance results
+# Alpha.17 acceptance results
+
+Current alpha.17 local source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked --all-targets`: 137 passed, 0 failed. Electrical gates
+  cover all 18 functions, 34 unit spellings, expected values and dimensions,
+  Unicode input, passive-component domains, tiny parallel resistances, reserved
+  names, scalar/array native evidence, and independently verifiable failures
+  in both engines;
+- `cargo clippy --locked --all-targets -- -D warnings`,
+  `cargo fmt --all -- --check`, and `git diff --check`: pass;
+- release build reports `goblin++ 0.1.0-alpha.17`;
+- VS Code extension 0.1.12: 16 passed, 0 failed against the actual alpha.17
+  binary, including compiled chemistry/electrical and Unicode-unit input;
+- JetBrains plugin 0.3.2: 11 passed, 0 failed; Plugin Verifier reports
+  compatible with IntelliJ IC-243.28141.18, PyCharm PY-253.33514.19, and CLion
+  CL-262.10968.117;
+- the complete `examples/electrical.gbl` passes interpreted and compiled,
+  with independently verified receipts and matching sealed artifacts;
+- real archived alpha.15 and alpha.16 binaries generated frozen energy runs
+  in both modes; alpha.17 independently verifies all four runs and recognizes
+  each historical freeze as `FROZEN_VERIFIED`;
+- electrical registry SHA-256 at this gate is
+  `982afcad3968913c96fcf82e2123d654b64580aa11738f7e114ea161f7513da1`.
+
+These are local source-check results for the alpha.17 working tree, not a new
+public release or clean-machine reproduction. IDE verification covers only
+the named builds. The engine tests and prebuilt bundle target macOS arm64;
+other engine platforms have not been validated at this gate.
+
+## Previous stage: Alpha.16 acceptance results
+
+Current alpha.16 local source-check gates (macOS arm64, Rust 1.92.0):
+
+- `cargo test --locked --all-targets`: 125 passed, 0 failed. Chemistry gates
+  cover values and dimensions, unsupported syntax, all 43 registry elements in
+  both engines, verifiable run evidence, freeze evidence, and historical
+  pre-alpha.16 freeze compatibility;
+- `cargo clippy --locked --all-targets -- -D warnings`,
+  `cargo fmt --all -- --check`, and `git diff --check`: pass;
+- release build reports `goblin++ 0.1.0-alpha.16`;
+- VS Code extension 0.1.11: 16 passed, 0 failed against the actual alpha.16
+  binary, including compiled chemistry and Unicode-unit input;
+- JetBrains plugin 0.3.1: 10 passed, 0 failed; Plugin Verifier reports
+  compatible with IntelliJ IC-243.28141.18, PyCharm PY-253.33514.19, and CLion
+  CL-262.10968.117;
+- `examples/chemistry.gbl` passes in interpreted and native-compiled modes with
+  registry `IUPAC-2021-ABRIDGED-COMMON-v1`; both paths are also covered by the
+  independently verified integration tests;
+- chemistry registry SHA-256 at this gate is
+  `c26c5bf4c5df38fa25ffad332a7608727167650bb946f88f372e646c33059f9e`.
+
+These are local source-check results for the alpha.16 working tree, not a new
+public release or clean-checkout reproduction. The platform verifier results
+cover the named IDE builds; the Rust engine tests ran on macOS arm64.
+
+## Previous stage: Alpha.15 acceptance results
 
 Current alpha.15 local source-check gates (macOS arm64, Rust 1.92.0):
 

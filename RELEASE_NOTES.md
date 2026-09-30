@@ -1,4 +1,46 @@
-# 0.1.0-alpha.15
+# 0.1.0-alpha.17
+
+Added electric current as a sixth SI base dimension, 34 electrical unit
+spellings, and 18 `ee_` functions in both execution engines. The helpers cover
+Ohm's law, signed power and energy, charge, series/parallel resistance, RC time
+constants, ideal capacitor/inductor energy, explicit KCL/KVL residual and
+tolerance checks, and electrical unit reporting.
+
+New run and freeze evidence includes the versioned electrical registry and
+six-axis dimensions. Historical constant-only and alpha.16 scientific freezes
+retain their original five-axis checks; old five-axis native manifests are
+accepted with zero current exponent. Generic inverse-time display remains
+`1/s` so existing angular-velocity output is preserved.
+
+VS Code 0.1.12 and JetBrains 0.3.2 include matching completion, highlighting,
+units, and function help. See `docs/ELECTRICAL_ENGINEERING.md` and the runnable
+`examples/electrical.gbl`.
+
+## Previous stage: 0.1.0-alpha.16
+
+Added a deliberately scoped chemistry foundation to both execution engines:
+a versioned 43-element common-element registry, exact-symbol atomic lookup,
+bounded chemical-formula molar mass, and dimension-checked helpers for moles,
+mass, amount concentration, and dilution. Added practical volume, wavelength,
+pressure, and atomic-mass units plus `R` and `m_u`.
+
+Chemistry registry identity and SHA-256 now appear in run evidence, and the
+combined scientific registry used by freeze receipts includes constants,
+units, and chemistry reference data. Unsupported formula syntax and dimension
+errors fail explicitly. Isotopes, charge, hydrates, reactions, balancing, pH,
+equilibrium, kinetics, thermodynamic state, uncertainty, and biological
+sequence semantics remain intentionally outside this stage.
+
+Historical freeze receipts through alpha.15 retain their original
+constant-only registry check and remain verifiable. New alpha.16 freezes bind
+the expanded scientific registry; verification labels the historical path
+instead of claiming that an old receipt covered data that did not yet exist.
+
+The VS Code 0.1.11 and JetBrains 0.3.1 editor sources add matching chemistry
+completion, documentation, highlighting, constants, and units; runtime
+semantics remain authoritative.
+
+## Previous stage: 0.1.0-alpha.15
 
 Added dimension-checked astronomical distance conversions, homogeneous vector
 `magnitude`/`dot`/`cross`, explicit Cartesian/polar/spherical conversion, linear

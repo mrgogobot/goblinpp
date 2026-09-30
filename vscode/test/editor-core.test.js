@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha15-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha17-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,10 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy constant spellings with alpha.15 runtime features", () => {
+test("completion combines legacy spellings with alpha.17 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 140);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 140);
+  assert.equal(entries.length, 217);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 217);
   assert.deepEqual(
     entries.find((entry) => entry.spelling === "π"),
     { spelling: "π", kind: "constant", detail: "math.pi" },
@@ -146,6 +146,9 @@ test("completion combines legacy constant spellings with alpha.15 runtime featur
   }
   for (const spelling of ["au2m", "magnitude", "dot", "cross", "spherical2cartesiand", "velocity", "velocity_add_relativistic_collinear", "angular_velocityd", "angular_momentum"]) {
     assert(entries.some((entry) => entry.spelling === spelling));
+  }
+  for (const spelling of ["chem_registry_version", "chem_atomic_number", "chem_atomic_weight", "chem_molar_mass", "chem_moles", "chem_mass", "chem_concentration", "chem_dilution", "R", "m_u", "L", "µL", "Å", "atm", "Da"]) {
+    assert(entries.some((entry) => entry.spelling === spelling), `missing ${spelling}`);
   }
   assert(entries.some((entry) => entry.spelling === "while"));
   for (const keyword of ["if", "else", "switch", "case", "default"]) {
@@ -247,9 +250,11 @@ test("user icon validation is bounded and identifier-only", () => {
   assert.match(core.iconMappingError("123456789", true), /eight/);
 });
 
-test("dimension labels expose the complete five-component basis", () => {
+test("dimension labels expose six axes and retain historical five-axis input", () => {
   assert.equal(core.dimensionLabel([0, 0, 0, 0, 0]), "dimensionless");
   assert.equal(core.dimensionLabel([1, 2, -2, 0, 0]), "mass^1 · length^2 · time^-2");
+  assert.equal(core.dimensionLabel([0, 0, 0, 0, 0, 1]), "current^1");
+  assert.equal(core.dimensionLabel([1, 2, -3, 0, 0, -2]), "mass^1 · length^2 · time^-3 · current^-2");
 });
 
 test("all TextMate regular expressions compile", () => {
@@ -269,10 +274,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.15 language coloring and extension identity are internally consistent", () => {
+test("alpha.17 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.10");
+  assert.equal(manifest.version, "0.1.12");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -280,7 +285,17 @@ test("alpha.15 language coloring and extension identity are internally consisten
     assert(comparisons.test(spelling));
   }
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
-  for (const spelling of ["input", "argv", "len", "append", "parse_number", "parse_integer", "str_trim", "str_join", "sqrt", "sin", "sind", "sinr", "asind", "asinr", "atan2", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot", "au2m", "magnitude", "dot", "cross", "spherical2cartesiand", "velocity", "velocity_add_relativistic_collinear", "angular_velocityd", "angular_momentum", "fits_column_mean", "fits_select_stats", "write_json", "plot_fits_scatter"]) {
+  const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
+  for (const entry of runtimeVocabulary.functions.filter((entry) => entry.spelling.startsWith("ee_"))) {
+    assert(builtins.test(`${entry.spelling}(`));
+    assert(entries.some((candidate) => candidate.spelling === entry.spelling));
+  }
+  const unitPattern = new RegExp(grammar.repository.quantities.patterns[0].match);
+  for (const spelling of ["A", "µA", "V", "Ω", "kΩ", "uF", "H", "W", "S", "MHz"]) {
+    assert(entries.some((entry) => entry.spelling === spelling));
+    assert(unitPattern.test(`1 ${spelling}`));
+  }
+  for (const spelling of ["input", "argv", "len", "append", "parse_number", "parse_integer", "str_trim", "str_join", "sqrt", "sin", "sind", "sinr", "asind", "asinr", "atan2", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot", "au2m", "magnitude", "dot", "cross", "spherical2cartesiand", "velocity", "velocity_add_relativistic_collinear", "angular_velocityd", "angular_momentum", "chem_molar_mass", "chem_dilution", "fits_column_mean", "fits_select_stats", "write_json", "plot_fits_scatter"]) {
     assert(builtins.test(`${spelling}(`));
   }
   const branches = new RegExp(grammar.repository.statements.patterns[1].match);

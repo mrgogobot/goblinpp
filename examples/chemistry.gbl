@@ -1,0 +1,24 @@
+GO_PARANOID
+
+# A deliberately small, provenance-labelled chemistry foundation.
+
+registry = chem_registry_version()
+water_molar_mass = chem_molar_mass("H2O")
+glucose_molar_mass = chem_molar_mass("C6H12O6")
+
+sample_mass = 36.03 g
+water_amount = chem_moles(sample_mass, water_molar_mass)
+
+stock = chem_concentration(0.1 mol, 100 mL)
+diluted = chem_dilution(stock, 10 mL, 100 mL)
+
+print("chemistry registry = {registry}")
+print("H2O molar mass = {water_molar_mass}")
+print("glucose molar mass = {glucose_molar_mass}")
+print("sample amount = {water_amount}")
+print("stock concentration = {stock:.6f}")
+print("diluted concentration = {diluted:.6f}")
+
+seal water_molar_mass
+seal water_amount
+seal diluted

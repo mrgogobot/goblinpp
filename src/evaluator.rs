@@ -79,7 +79,7 @@ pub struct ConstantUse {
     pub id: String,
     pub source_alias: String,
     pub value_si: String,
-    pub dimension: [i32; 5],
+    pub dimension: [i32; 6],
     pub status: String,
     pub registry: String,
 }
@@ -584,6 +584,14 @@ impl Evaluation {
             name if crate::science::is_function(name) => {
                 crate::science::require_arity(name, args.len())?;
                 crate::science::call(name, self.eval_args(args)?)
+            }
+            name if crate::chemistry::is_function(name) => {
+                crate::chemistry::require_arity(name, args.len())?;
+                crate::chemistry::call(name, self.eval_args(args)?)
+            }
+            name if crate::electrical::is_function(name) => {
+                crate::electrical::require_arity(name, args.len())?;
+                crate::electrical::call(name, self.eval_args(args)?)
             }
             "append" => {
                 require_args(name, args, 2)?;
@@ -1781,7 +1789,7 @@ mod tests {
                 .quantity("test")
                 .unwrap()
                 .dimension,
-            [1, 2, -2, 0, 0]
+            [1, 2, -2, 0, 0, 0]
         );
         assert!(evaluation.stdout[0].starts_with("Energy = 8.987551787"));
     }

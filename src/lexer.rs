@@ -224,7 +224,7 @@ pub fn normalize_display_syntax(source: &str) -> String {
 }
 
 fn is_ident_start(ch: char) -> bool {
-    ch.is_ascii_alphabetic() || ch == '_' || "πħωΩΔΣλμσθ∇∂".contains(ch)
+    ch.is_ascii_alphabetic() || ch == '_' || "πħωΩΔΣλμσθ∇∂µÅ".contains(ch)
 }
 
 fn is_ident_continue(ch: char) -> bool {

@@ -1,11 +1,11 @@
 // Included verbatim in generated Rust programs. `Value`, `Dim`, and `ZERO` are
 // defined by the generated runtime before this file is inserted.
-const SCIENCE_LENGTH: Dim = [0, 1, 0, 0, 0];
-const SCIENCE_MASS: Dim = [1, 0, 0, 0, 0];
-const SCIENCE_TIME: Dim = [0, 0, 1, 0, 0];
-const SCIENCE_VELOCITY: Dim = [0, 1, -1, 0, 0];
-const SCIENCE_ANGULAR_VELOCITY: Dim = [0, 0, -1, 0, 0];
-const SCIENCE_MOMENTUM: Dim = [1, 1, -1, 0, 0];
+const SCIENCE_LENGTH: Dim = [0, 1, 0, 0, 0, 0];
+const SCIENCE_MASS: Dim = [1, 0, 0, 0, 0, 0];
+const SCIENCE_TIME: Dim = [0, 0, 1, 0, 0, 0];
+const SCIENCE_VELOCITY: Dim = [0, 1, -1, 0, 0, 0];
+const SCIENCE_ANGULAR_VELOCITY: Dim = [0, 0, -1, 0, 0, 0];
+const SCIENCE_MOMENTUM: Dim = [1, 1, -1, 0, 0, 0];
 const SCIENCE_AU_METERS: f64 = 149_597_870_700.0;
 const SCIENCE_LIGHT_YEAR_METERS: f64 = 9_460_730_472_580_800.0;
 const SCIENCE_PARSEC_METERS: f64 =
@@ -199,7 +199,7 @@ fn goblin_science_call(name: &str, values: Vec<Value>) -> Result<Value, String> 
                 name,
             )?
             .0;
-            Value::q(radius * angular.powi(2), [0, 1, -2, 0, 0])
+            Value::q(radius * angular.powi(2), [0, 1, -2, 0, 0, 0])
         }
         "angular_momentum" => {
             let position = science_vector_dim(&values[0], name, 3, SCIENCE_LENGTH)?;

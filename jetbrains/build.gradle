@@ -1,0 +1,121 @@
+import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
+
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij.platform' version '2.2.1'
+}
+
+group = providers.gradleProperty('pluginGroup').get()
+version = providers.gradleProperty('pluginVersion').get()
+
+repositories {
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+}
+
+dependencies {
+    intellijPlatform {
+        // Multi-OS archives are reproducible and avoid mounting a macOS DMG
+        // during command-line and CI builds.
+        intellijIdeaCommunity(providers.gradleProperty('platformVersion'), false)
+        jetbrainsRuntime()
+        pluginVerifier()
+        instrumentationTools()
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+def generatedResources = layout.buildDirectory.dir('generated-resources')
+
+tasks.register('generateGoblinVocabulary') {
+    def editorSpec = file('../vscode/spec/rust-alpha17-editor.json')
+    def lexiconSpec = file('../vscode/spec/lexicon.v0.json')
+    inputs.files(editorSpec, lexiconSpec)
+    outputs.dir(generatedResources)
+
+    doLast {
+        def output = generatedResources.get().file('goblinpp-vocabulary.tsv').asFile
+        output.parentFile.mkdirs()
+        def encoder = Base64.encoder
+        def encode = { value ->
+            encoder.encodeToString((value ?: '').toString().getBytes('UTF-8'))
+        }
+        def editor = new groovy.json.JsonSlurper().parse(editorSpec)
+        def lexicon = new groovy.json.JsonSlurper().parse(lexiconSpec)
+        def entries = []
+        editor.statements.each { item ->
+            entries << [item.spelling, item.kind, item.detail, item.snippet ?: '']
+        }
+        editor.functions.each { item ->
+            entries << [item.spelling, item.kind, item.detail, item.snippet ?: '']
+        }
+        (editor.constants ?: []).each { item ->
+            item.aliases.each { alias ->
+                entries << [alias, 'constant', item.detail ?: "Scientific constant ${item.canonical_id}.", '']
+            }
+        }
+        (editor.units ?: []).each { item ->
+            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}.", '']
+        }
+        lexicon.vocabulary.constants.each { item ->
+            item.aliases.each { alias ->
+                entries << [alias, 'constant', "Scientific constant ${item.canonical_id}.", '']
+            }
+        }
+        lexicon.vocabulary.units.each { item ->
+            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}.", '']
+        }
+        def unique = entries.collectEntries { [(it[0]): it] }.values().sort { a, b -> a[0] <=> b[0] }
+        output.withWriter('UTF-8') { writer ->
+            unique.each { item -> writer.println(item.collect(encode).join('\t')) }
+        }
+    }
+}
+
+sourceSets.main.resources.srcDir(generatedResources)
+tasks.named('processResources') {
+    dependsOn tasks.named('generateGoblinVocabulary')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+tasks.named('prepareSandbox', PrepareSandboxTask) {
+    from(layout.projectDirectory.dir('artwork')) {
+        into(pluginName.map { name -> "${name}/artwork" })
+    }
+}
+
+intellijPlatform {
+    pluginConfiguration {
+        name = providers.gradleProperty('pluginName')
+        version = providers.gradleProperty('pluginVersion')
+        ideaVersion {
+            sinceBuild = providers.gradleProperty('pluginSinceBuild')
+            // Do not cap the plugin at the build platform. The public Platform
+            // APIs used here are verifier-checked against newer JetBrains IDEs.
+            untilBuild = provider { null }
+        }
+    }
+    pluginVerification {
+        ides {
+            // Verify against the same multi-OS IntelliJ Platform archive used
+            // for compilation so headless builds do not require DMG mounting.
+            ide('IC', providers.gradleProperty('platformVersion').get(), false)
+        }
+    }
+}

@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.15 CLI check, run, and verify contracts", {
+test("actual alpha.17 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.15 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.15/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.17/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -65,6 +65,18 @@ test("actual alpha.15 CLI check, run, and verify contracts", {
   const everyday12Run = invoke(core.goblinArgs("run", everyday12, ["--compile"]));
   assert.equal(everyday12Run.status, 0, everyday12Run.stderr);
   assert.match(everyday12Run.stdout, /sum = 6; ok = true/);
+
+  const chemistry = path.join(root, "chemistry.gbl");
+  fs.writeFileSync(chemistry, 'mm = chem_molar_mass("H2O")\namount = chem_moles(36.03 g, mm)\nvolume = 25 µL\nprint("amount = {amount}; volume = {volume}")\nseal amount\n');
+  const chemistryRun = invoke(core.goblinArgs("run", chemistry, ["--compile"]));
+  assert.equal(chemistryRun.status, 0, chemistryRun.stderr);
+  assert.match(chemistryRun.stdout, /amount = 2 mol/);
+
+  const electrical = path.join(root, "electrical.gbl");
+  fs.writeFileSync(electrical, 'current = ee_current(12 V, 4.7 kΩ)\nmilliamps = ee_in_unit(current, "mA")\nprint("current = {milliamps:.3f} mA")\nseal current\n');
+  const electricalRun = invoke(core.goblinArgs("run", electrical, ["--compile"]));
+  assert.equal(electricalRun.status, 0, electricalRun.stderr);
+  assert.match(electricalRun.stdout, /current = 2\.553 mA/);
 
   fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "sample.fits"), path.join(root, "sample.fits"));
   const selection = path.join(root, "selection.gbl");

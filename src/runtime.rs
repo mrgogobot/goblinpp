@@ -66,6 +66,17 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "paranoid_mode": false, "paranoid_postflight": Value::Null,
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": source_sha },
         "canonical_source": Value::Null, "constants_used": [], "data_imports": [], "inline_rust": [],
+        "scientific_registries": {
+            "chemistry": {
+                "id": crate::chemistry::REGISTRY_ID,
+                "sha256": crate::chemistry::registry_sha256()?,
+                "element_count": crate::chemistry::ELEMENTS.len(),
+            },
+            "electrical": {
+                "id": crate::electrical::REGISTRY_ID,
+                "sha256": crate::electrical::registry_sha256()?,
+            },
+        },
         "sealed_artifacts": [], "generated_artifacts": [], "stdout_sha256": Value::Null, "stderr_sha256": Value::Null,
         "interaction": Value::Null,
         "environment": { "runtime": format!("goblin++ {}", crate::VERSION), "os": std::env::consts::OS, "arch": std::env::consts::ARCH },
@@ -745,9 +756,7 @@ fn verify_native_results(
                     .map(str::parse::<i32>)
                     .collect::<std::result::Result<Vec<_>, _>>()
                     .map_err(|_| GoblinError::compile("Invalid native result dimension."))?;
-                let dimension: [i32; 5] = parts.try_into().map_err(|_| {
-                    GoblinError::compile("Native result dimension needs five axes.")
-                })?;
+                let dimension = native_dimension(parts)?;
                 (
                     name,
                     EvalValue::Quantity(crate::quantity::Quantity::new(
@@ -835,9 +844,7 @@ fn decode_native_array(encoded: &str) -> Result<Vec<EvalValue>> {
                     .map(str::parse::<i32>)
                     .collect::<std::result::Result<Vec<_>, _>>()
                     .map_err(|_| GoblinError::compile("Invalid native array dimensions."))?;
-                let dimension: [i32; 5] = parts
-                    .try_into()
-                    .map_err(|_| GoblinError::compile("Native array dimensions need five axes."))?;
+                let dimension = native_dimension(parts)?;
                 EvalValue::Quantity(crate::quantity::Quantity::new(
                     f64::from_bits(bits),
                     dimension,
@@ -854,6 +861,22 @@ fn decode_native_array(encoded: &str) -> Result<Vec<EvalValue>> {
         }
     }
     Ok(items)
+}
+
+fn native_dimension(parts: Vec<i32>) -> Result<crate::quantity::Dimension> {
+    match parts.as_slice() {
+        [mass, length, time, temperature, amount] => {
+            // Alpha.10-alpha.16 native manifests predate the electric-current
+            // axis. Their first five SI axes retain exactly the same meaning.
+            Ok([*mass, *length, *time, *temperature, *amount, 0])
+        }
+        [mass, length, time, temperature, amount, current] => {
+            Ok([*mass, *length, *time, *temperature, *amount, *current])
+        }
+        _ => Err(GoblinError::compile(
+            "Native result dimension needs five historical axes or six current axes.",
+        )),
+    }
 }
 
 fn decode_hex_text(value: &str) -> Result<String> {
@@ -963,4 +986,48 @@ pub fn read_receipt(run_dir: impl AsRef<Path>) -> Result<Value> {
         ));
     }
     Ok(value)
+}
+
+#[cfg(test)]
+mod dimension_compatibility_tests {
+    use super::*;
+
+    #[test]
+    fn old_native_scalar_and_array_manifests_keep_their_five_axis_meaning() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("native-results.tsv");
+        // Name 'x', value 1.0 kg, from the five-axis native manifest contract.
+        fs::write(&path, "Q\t78\t3ff0000000000000\t1,0,0,0,0\n").unwrap();
+        let quantity = crate::quantity::Quantity::from_unit(1.0, "kg").unwrap();
+        let expected =
+            std::collections::BTreeMap::from([("x".into(), EvalValue::Quantity(quantity))]);
+        verify_native_results(&path, &expected).unwrap();
+        let payload = "Q\t3ff0000000000000\t1,0,0,0,0";
+        let encoded = payload
+            .as_bytes()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        assert_eq!(
+            decode_native_array(&encoded).unwrap(),
+            vec![EvalValue::Quantity(quantity)]
+        );
+        assert!(native_dimension(vec![0; 4]).is_err());
+        assert!(native_dimension(vec![0; 7]).is_err());
+    }
+
+    #[test]
+    fn new_native_arrays_preserve_electric_current_axis() {
+        let payload = "Q\t3ff0000000000000\t0,0,0,0,0,1";
+        let encoded = payload
+            .as_bytes()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let quantity = crate::quantity::Quantity::from_unit(1.0, "A").unwrap();
+        assert_eq!(
+            decode_native_array(&encoded).unwrap(),
+            vec![EvalValue::Quantity(quantity)]
+        );
+    }
 }

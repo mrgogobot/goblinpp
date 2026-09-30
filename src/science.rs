@@ -7,9 +7,9 @@ pub const LIGHT_YEAR_METERS: f64 = 9_460_730_472_580_800.0;
 pub const PARSEC_METERS: f64 = AU_METERS * 648_000.0 / std::f64::consts::PI;
 pub const SPEED_OF_LIGHT_MPS: f64 = 299_792_458.0;
 
-pub const VELOCITY: Dimension = [0, 1, -1, 0, 0];
-pub const ANGULAR_VELOCITY: Dimension = [0, 0, -1, 0, 0];
-pub const MOMENTUM: Dimension = [1, 1, -1, 0, 0];
+pub const VELOCITY: Dimension = [0, 1, -1, 0, 0, 0];
+pub const ANGULAR_VELOCITY: Dimension = [0, 0, -1, 0, 0, 0];
+pub const MOMENTUM: Dimension = [1, 1, -1, 0, 0, 0];
 
 pub const FUNCTIONS: &[&str] = &[
     "au2m",

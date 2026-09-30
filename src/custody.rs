@@ -3,6 +3,7 @@ use crate::error::{GoblinError, Result};
 use crate::hashing::{hash_canonical_json, sha256_bytes, sha256_file};
 use crate::ledger::{self, LedgerEvent};
 use crate::parser::parse_source;
+use crate::quantity::unit_snapshots;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -12,6 +13,8 @@ use std::path::{Path, PathBuf};
 
 pub const FREEZE_SUFFIX: &str = ".freeze.json";
 pub const LINEAGE_SUFFIX: &str = ".lineage.json";
+const ALPHA16_SCIENTIFIC_REGISTRY_SHA256: &str =
+    "f9039ddff661ab49e4cb2c02f611c41591923cae05c8a978141e40fa8ca0bc06";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CustodyCheck {
@@ -56,7 +59,37 @@ pub fn lineage_path(source: impl AsRef<Path>) -> PathBuf {
 }
 
 pub fn constant_registry_sha256() -> Result<String> {
-    hash_canonical_json(&snapshots())
+    hash_canonical_json(&json!({
+        "constants": snapshots(),
+        "units": unit_snapshots(),
+        "chemistry": crate::chemistry::registry_snapshot(),
+        "electrical": crate::electrical::registry_snapshot(),
+    }))
+}
+
+fn legacy_constant_snapshots() -> Vec<Value> {
+    snapshots()
+        .into_iter()
+        .filter(|value| {
+            !matches!(
+                value.id,
+                "physical.molar_gas_constant" | "physical.atomic_mass_constant"
+            )
+        })
+        .map(|constant| {
+            let mut historical = serde_json::to_value(constant).expect("finite constant snapshot");
+            historical["dimension"].as_array_mut().unwrap().truncate(5);
+            historical
+        })
+        .collect()
+}
+
+fn legacy_constant_registry_sha256() -> Result<String> {
+    // Freeze receipt v1 through alpha.15 hashed only the original constant
+    // array. Retaining that exact calculation lets a newer engine validate
+    // historical evidence without pretending it was frozen against new units
+    // or chemistry reference data.
+    hash_canonical_json(&legacy_constant_snapshots())
 }
 
 pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)> {
@@ -106,7 +139,13 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "policy": "EXACT_SOURCE_BYTES_AND_CANONICAL_PROGRAM",
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": sha256_bytes(&bytes) },
         "canonical_source": { "sha256": parsed.canonical_sha256()? },
-        "constant_registry": { "sha256": constant_registry_sha256()?, "entries": snapshots() },
+        "constant_registry": {
+            "sha256": constant_registry_sha256()?,
+            "entries": snapshots(),
+            "units": unit_snapshots(),
+            "chemistry": crate::chemistry::registry_snapshot(),
+            "electrical": crate::electrical::registry_snapshot(),
+        },
         "inline_rust": parsed.inline_rust.iter().map(|block| json!({"index": block.index, "sha256": block.sha256})).collect::<Vec<_>>(),
         "lineage": lineage,
     });
@@ -245,13 +284,32 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     ));
     let expected_registry = field(&["constant_registry", "sha256"]);
     let actual_registry = constant_registry_sha256().ok();
-    let registry_ok = expected_registry == actual_registry;
+    let legacy_registry = legacy_constant_registry_sha256().ok();
+    let legacy_registry_ok = expected_registry == legacy_registry;
+    let alpha16_registry_ok =
+        expected_registry.as_deref() == Some(ALPHA16_SCIENTIFIC_REGISTRY_SHA256);
+    let registry_ok =
+        expected_registry == actual_registry || legacy_registry_ok || alpha16_registry_ok;
+    let registry_detail = if legacy_registry_ok {
+        Some("Historical pre-alpha.16 constant registry verified; newer scientific registry data was not claimed by this receipt.".into())
+    } else if alpha16_registry_ok {
+        Some("Historical alpha.16 five-axis scientific registry verified; electrical units and the appended current axis were not claimed by this receipt.".into())
+    } else {
+        None
+    };
+    let reported_registry = if legacy_registry_ok {
+        legacy_registry
+    } else if alpha16_registry_ok {
+        Some(ALPHA16_SCIENTIFIC_REGISTRY_SHA256.into())
+    } else {
+        actual_registry
+    };
     checks.push(custody_check(
         "CONSTANT_REGISTRY_SHA256",
         registry_ok,
         expected_registry,
-        actual_registry,
-        None,
+        reported_registry,
+        registry_detail,
     ));
     let (lineage_ok, lineage_detail) =
         if let Some(lineage) = receipt.get("lineage").filter(|value| !value.is_null()) {
@@ -619,5 +677,87 @@ mod tests {
             create_revision(&parent, root.path().join("b.gbl"), "notation experiment").unwrap();
         assert_eq!(fs::read(child).unwrap(), fs::read(parent).unwrap());
         assert!(verify_lineage(lineage).unwrap().0);
+    }
+
+    #[test]
+    fn historical_constant_only_freeze_receipts_remain_verifiable() {
+        let root = tempdir().unwrap();
+        let source = root.path().join("historical.gbl");
+        fs::write(&source, program()).unwrap();
+        let (receipt_path, _) = create_freeze(&source).unwrap();
+        let mut receipt: Value = serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
+        receipt["goblin_version"] = Value::String("0.1.0-alpha.15".into());
+        receipt["constant_registry"] = json!({
+            "sha256": legacy_constant_registry_sha256().unwrap(),
+            "entries": legacy_constant_snapshots(),
+        });
+        receipt["freeze_receipt_sha256"] =
+            Value::String(sealed_hash(&receipt, "freeze_receipt_sha256").unwrap());
+        fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+
+        let report = verify_freeze(&source);
+        assert!(report.verified);
+        assert!(report.checks.iter().any(|check| {
+            check.check == "CONSTANT_REGISTRY_SHA256"
+                && check.pass
+                && check
+                    .detail
+                    .as_deref()
+                    .is_some_and(|detail| detail.contains("Historical"))
+        }));
+    }
+
+    #[test]
+    fn alpha16_five_axis_registry_receipts_remain_verifiable() {
+        let root = tempdir().unwrap();
+        let source = root.path().join("alpha16.gbl");
+        fs::write(&source, program()).unwrap();
+        let (receipt_path, _) = create_freeze(&source).unwrap();
+        let mut receipt: Value = serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
+        receipt["goblin_version"] = Value::String("0.1.0-alpha.16".into());
+        let mut constants = serde_json::to_value(snapshots()).unwrap();
+        for item in constants.as_array_mut().unwrap() {
+            item["dimension"].as_array_mut().unwrap().truncate(5);
+        }
+        let mut units = serde_json::to_value(
+            crate::quantity::UNITS
+                .iter()
+                .take(21)
+                .map(|unit| {
+                    json!({"name": unit.name, "dimension": unit.dimension, "factor": unit.factor,
+                "status": unit.status, "registry": unit.registry})
+                })
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
+        units
+            .as_array_mut()
+            .unwrap()
+            .sort_by_key(|unit| unit["name"].as_str().unwrap().to_string());
+        for item in units.as_array_mut().unwrap() {
+            item["dimension"].as_array_mut().unwrap().truncate(5);
+        }
+        let historical = json!({"constants": constants, "units": units,
+            "chemistry": crate::chemistry::registry_snapshot()});
+        assert_eq!(
+            hash_canonical_json(&historical).unwrap(),
+            ALPHA16_SCIENTIFIC_REGISTRY_SHA256
+        );
+        receipt["constant_registry"] = json!({"sha256": ALPHA16_SCIENTIFIC_REGISTRY_SHA256,
+            "entries": historical["constants"], "units": historical["units"], "chemistry": historical["chemistry"]});
+        receipt["freeze_receipt_sha256"] =
+            Value::String(sealed_hash(&receipt, "freeze_receipt_sha256").unwrap());
+        fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+
+        let report = verify_freeze(&source);
+        assert!(report.verified);
+        assert!(report.checks.iter().any(|check| {
+            check.check == "CONSTANT_REGISTRY_SHA256"
+                && check.pass
+                && check
+                    .detail
+                    .as_deref()
+                    .is_some_and(|detail| detail.contains("alpha.16"))
+        }));
     }
 }

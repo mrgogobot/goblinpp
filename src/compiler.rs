@@ -172,6 +172,8 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
     let compiled_science_runtime = include_str!("compiled_science_runtime.rs");
+    let compiled_chemistry_runtime = include_str!("compiled_chemistry_runtime.rs");
+    let compiled_electrical_runtime = include_str!("compiled_electrical_runtime.rs");
     let mut functions = String::new();
     functions.push_str("fn goblin_call(name: &str, args: Vec<Value>, goblin_args: &Vec<String>, mut goblin_loop_steps: &mut u64, mut goblin_input_steps: &mut usize, goblin_call_depth: usize) -> Result<Value, String> {\n");
     functions.push_str(&format!(
@@ -199,8 +201,8 @@ use std::collections::{{BTreeMap, HashMap}};
 use std::fs::OpenOptions;
 use std::io::{{BufRead, Read, Write}};
 
-type Dim = [i32; 5];
-const ZERO: Dim = [0, 0, 0, 0, 0];
+type Dim = [i32; 6];
+const ZERO: Dim = [0, 0, 0, 0, 0, 0];
 const MAX_LOOP_ITERATIONS: u64 = 1_000_000;
 
 #[derive(Clone, Debug)]
@@ -231,6 +233,8 @@ mod goblin_text {{
 {compiled_text_runtime}
 {compiled_math_runtime}
 {compiled_science_runtime}
+{compiled_chemistry_runtime}
+{compiled_electrical_runtime}
 
 fn as_q(value: Value) -> Result<(f64, Dim), String> {{ match value {{ Value::Q(v, d) => Ok((v, d)), _ => Err("Arithmetic requires numeric quantities.".into()) }} }}
 fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
@@ -441,8 +445,13 @@ fn format_numeric(value: f64, spec: &str) -> Option<String> {{
     None
 }}
 fn format_dim(dim: Dim) -> String {{
-    if dim == ZERO {{ return "1".into(); }} if dim == [1,2,-2,0,0] {{ return "J".into(); }}
-    let names = ["kg", "m", "s", "K", "mol"]; let mut top = vec![]; let mut bottom = vec![];
+    if dim == ZERO {{ return "1".into(); }}
+    for (candidate, label) in [
+        ([1,2,-2,0,0,0], "J"), ([1,2,-3,0,0,0], "W"), ([0,0,0,0,0,1], "A"),
+        ([0,0,1,0,0,1], "C"), ([1,2,-3,0,0,-1], "V"), ([1,2,-3,0,0,-2], "ohm"),
+        ([-1,-2,3,0,0,2], "S"), ([-1,-2,4,0,0,2], "F"), ([1,2,-2,0,0,-2], "H"),
+    ] {{ if dim == candidate {{ return label.into(); }} }}
+    let names = ["kg", "m", "s", "K", "mol", "A"]; let mut top = vec![]; let mut bottom = vec![];
     for (name, power) in names.iter().zip(dim) {{ if power == 0 {{ continue; }} let item = if power.abs() == 1 {{ name.to_string() }} else {{ format!("{{name}}^{{}}", power.abs()) }}; if power > 0 {{ top.push(item) }} else {{ bottom.push(item) }} }}
     let numerator = if top.is_empty() {{ "1".into() }} else {{ top.join("*") }}; if bottom.is_empty() {{ numerator }} else {{ format!("{{numerator}}/{{}}", bottom.join("*")) }}
 }}
@@ -461,12 +470,12 @@ fn write_native_results(sealed: &BTreeMap<String, Value>) -> Result<(), String> 
     let mut file = OpenOptions::new().write(true).create_new(true).open(&path).map_err(|error| format!("cannot create native result manifest {{path}}: {{error}}"))?;
     for (name, value) in sealed {{
         let line = match value {{
-            Value::Q(number, dim) => format!("Q\t{{}}\t{{:016x}}\t{{}},{{}},{{}},{{}},{{}}\n", hex(name.as_bytes()), number.to_bits(), dim[0], dim[1], dim[2], dim[3], dim[4]),
+            Value::Q(number, dim) => format!("Q\t{{}}\t{{:016x}}\t{{}}\n", hex(name.as_bytes()), number.to_bits(), dim.iter().map(i32::to_string).collect::<Vec<_>>().join(",")),
             Value::Text(text) => format!("T\t{{}}\t{{}}\n", hex(name.as_bytes()), hex(text.as_bytes())),
             Value::Bool(value) => format!("B\t{{}}\t{{}}\n", hex(name.as_bytes()), value),
             Value::Array(items) => {{
                 let payload = items.iter().map(|item| match item {{
-                    Value::Q(number, dim) => Ok(format!("Q\t{{:016x}}\t{{}},{{}},{{}},{{}},{{}}", number.to_bits(), dim[0], dim[1], dim[2], dim[3], dim[4])),
+                    Value::Q(number, dim) => Ok(format!("Q\t{{:016x}}\t{{}}", number.to_bits(), dim.iter().map(i32::to_string).collect::<Vec<_>>().join(","))),
                     Value::Text(text) => Ok(format!("T\t{{}}", hex(text.as_bytes()))),
                     Value::Bool(value) => Ok(format!("B\t{{value}}")),
                     Value::Array(_) => Err("Nested arrays cannot be sealed.".to_string()),
@@ -500,6 +509,7 @@ fn main() {{ if let Err(error) = goblin_main() {{ eprintln!("GOBLIN NATIVE ERROR
         functions = functions,
         text_runtime = text_runtime,
         compiled_text_runtime = compiled_text_runtime,
+        compiled_chemistry_runtime = compiled_chemistry_runtime,
         compiled_math_runtime = compiled_math_runtime,
     ))
 }
@@ -808,6 +818,24 @@ fn generate_expr(expression: &Expr) -> Result<String> {
         Expr::Call { name, args } if crate::science::is_function(name) => {
             format!(
                 "goblin_science_call({name:?}, vec![{}])",
+                args.iter()
+                    .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        }
+        Expr::Call { name, args } if crate::chemistry::is_function(name) => {
+            format!(
+                "goblin_chemistry_call({name:?}, vec![{}])",
+                args.iter()
+                    .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        }
+        Expr::Call { name, args } if crate::electrical::is_function(name) => {
+            format!(
+                "goblin_electrical_call({name:?}, vec![{}])",
                 args.iter()
                     .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
                     .collect::<Result<Vec<_>>>()?

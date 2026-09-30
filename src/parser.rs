@@ -100,6 +100,8 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "plot_fits_histogram"
             | "plot_fits_scatter"
     ) || crate::science::is_function(name)
+        || crate::chemistry::is_function(name)
+        || crate::electrical::is_function(name)
         || name.starts_with("__goblin_")
         || resolve(name).is_some()
         || is_unit(name)
