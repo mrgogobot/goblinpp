@@ -117,10 +117,13 @@ fn branch_failure_and_frozen_edits_are_preserved_and_verifiable() {
 }
 
 #[test]
-fn compiled_mode_refuses_data_calls_even_in_unreachable_branches() {
+fn compiled_mode_keeps_unreachable_data_calls_unexecuted() {
     let root = tempdir().unwrap();
     let parsed = parse_source("if false { x = fits_count(\"sample.fits\", 0) }\n").unwrap();
-    let error = compile(&parsed, root.path().join("program"), &[]).unwrap_err();
-    assert_eq!(error.code, "G501");
-    assert!(error.message.contains("Native code generation for FITS"));
+    let compiled = compile(&parsed, root.path().join("program"), &[]).unwrap();
+    let output = std::process::Command::new(compiled.binary)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{:?}", output);
+    assert!(output.stdout.is_empty());
 }

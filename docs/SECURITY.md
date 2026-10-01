@@ -4,7 +4,7 @@
 
 Goblin++ preserves source and run logs. Depending on what a program does, its
 run directory and evidence store can also contain unredacted `input()` prompts
-and responses, program arguments, imported FITS bytes, sealed values, and
+and responses, program arguments, imported library and FITS/CSV/TSV bytes, sealed values, and
 generated files. These records are not encrypted. Avoid passwords, access
 tokens, personal information, or confidential research data unless you have
 reviewed the storage location and operating-system access controls. Removing a
@@ -50,13 +50,33 @@ Alpha limits should be treated as limits, not invitations to infer unsupported a
 
 ## Generated output
 
+Alpha.19 extends compiled runs to scientific I/O using a locked, offline Cargo
+support build. Shared support sources and native output manifests are hashed.
+Native/reference parity checks are not a sandbox or a proof of scientific
+correctness. A standalone executable lacks launcher custody/freeze/postflight
+checks; use audited `--compile` runs for those checks.
+
 Source programs cannot write arbitrary filesystem paths through the supported output API. Output names must be one ordinary filename: absolute paths, directories, `..`, and duplicate declarations are refused. The runtime creates files exclusively beneath the unique run directory with create-new semantics and a 64 MiB per-file bound. Verification constrains receipt paths back to that output directory before reading them.
 
 Plot metadata binds the imported FITS digest and the deterministic sampling description. A plot is still a visualization, not a substitute for a declared scientific selection rule. JPEG is omitted because lossy pixels are unsuitable as the sole authoritative scientific artifact.
 
 Inline Rust remains outside this boundary. An authorized native block has the user's full operating-system authority and can write anywhere that account permits.
 
-## Loops
+## Local modules and delimited input
+
+Imports accept relative, non-traversing `.gbl` paths below the entry directory,
+refuse symlink path components, cycles and duplicate function names, and allow
+only function definitions and imports in libraries. They never fetch packages.
+Freeze pins raw module bytes; paranoid postflight observes imported hashes.
+Like root-source observations, this is not continuous monitoring or an atomic
+filesystem transaction.
+
+CSV/TSV reads are bounded UTF-8 snapshots with explicit delimiters, headers and
+numeric conversion. Missing or malformed numeric cells fail; values are never
+silently skipped or assigned inferred units. These restrictions do not certify
+the provenance or scientific validity of the input data.
+
+## Loop limits
 
 Interpreter and compiled loops share a 1,000,000 loop-body-iteration limit per run, including nested loops. Exceeding it becomes a preserved machinery failure. This prevents ordinary accidental infinite loops; it does not bound time spent in a single scientific function call, memory use from generated outputs beyond their individual caps, or authorized inline Rust. `GO_PARANOID` and inline Rust blocks are required to be top-level, so loop control cannot silently alter their authorization model.
 

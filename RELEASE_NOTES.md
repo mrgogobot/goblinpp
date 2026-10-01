@@ -1,4 +1,30 @@
-# 0.1.0-alpha.18 (unreleased, statistics step 1)
+# 0.1.0-alpha.19 (unreleased, tables/modules/native I/O)
+
+Added ten explicit CSV/TSV readers: row/column counts, headers, text columns
+and checked numeric columns. UTF-8, quotes, strict row shape, unique headers,
+resource limits and refusal of missing/nonfinite numeric values are enforced.
+Input bytes and requested accesses are preserved and independently verified.
+
+Added top-level `import "relative/library.gbl"` for reusable `g_func` libraries.
+Libraries contain definitions/imports only; no hidden top-level execution.
+Cycles, symlinks, path traversal and duplicate names fail. Frozen programs pin
+the raw library graph; canonical hashing and run verification include it.
+
+The compiler now supports existing FITS readers, file writers and plots plus
+the new table readers through shared Rust helpers. No Goblin++/Python process
+or source parsing is used at native runtime. Audited runs compare native and
+reference input/output evidence and bytes; generated support sources are
+preserved in a hashed inventory. Data compilation uses locked offline Cargo
+and requires cached dependencies. Standalone executables have explicit,
+separate output/custody boundaries.
+
+VS Code 0.1.14 and JetBrains 0.3.4 add matching highlighting and completion.
+See `docs/DATA_MODULES_NATIVE.md` and `examples/csv_modules.gbl`.
+No dependencies were added. No bulk export, FITS writing, automatic unit or
+missing-value inference, external package imports or additional statistics
+are claimed by this stage.
+
+## Previous stage: 0.1.0-alpha.18 (statistics step 1)
 
 Added `sum(array)` and `mean(array)` to both execution engines. They require
 non-empty homogeneous numeric arrays, preserve SI dimensions, and use one

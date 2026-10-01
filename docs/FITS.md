@@ -86,8 +86,9 @@ choose them for your scientific question. The run receipt records the source,
 input hash, and a structured access description; `seal stats` preserves the
 result as an independently checked artifact. This initial operation does not
 apply survey-specific quality cuts, uncertainties, random catalogues, or FITS
-`TUNIT` conversion. FITS calls remain interpreter-only: `--compile` refuses
-them rather than silently switching engines. See `examples/fits_selection.gbl`.
+`TUNIT` conversion. Alpha.19 supports these FITS calls in both engines using
+the same Rust helpers. See `examples/fits_selection.gbl` and
+[the native I/O guide](DATA_MODULES_NATIVE.md) for compilation and evidence boundaries.
 
 ## Catalogue example
 

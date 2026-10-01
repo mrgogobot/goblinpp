@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.18 CLI check, run, and verify contracts", {
+test("actual alpha.19 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.18 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.18/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.19/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -102,6 +102,25 @@ test("actual alpha.18 CLI check, run, and verify contracts", {
   const selectionVerify = invoke(core.goblinArgs("verify", selectionRunDir));
   assert.equal(selectionVerify.status, 0);
   assert.match(selectionVerify.stdout, /VERIFICATION_STATUS=PASS/);
+
+  const library = path.join(root, "library.gbl");
+  fs.writeFileSync(library, 'g_func measured_mean(numbers) { return mean(numbers) * 1 m }\n');
+  fs.writeFileSync(path.join(root, "data.csv"), 'sample,length\nA,10\nB,11\nC,12\n');
+  const tables = path.join(root, "tables.gbl");
+  fs.writeFileSync(tables, 'GO_PARANOID\nimport "library.gbl"\nvalues = csv_numbers("data.csv", "length")\naverage = measured_mean(values)\nwrite_text("table.txt", "average = {average}")\nprint("average = {average}")\nseal average\n');
+  assert.equal(invoke(core.goblinArgs("check", tables, ["--json"])).status, 0);
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", tables, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    assert.match(executed.stdout, /average = 11 m/);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    assert.equal(invoke(core.goblinArgs("verify", directory)).status, 0);
+  }
+  const compiledSelection = invoke(core.goblinArgs("run", selection, ["--compile"]));
+  assert.equal(compiledSelection.status, 0, compiledSelection.stderr);
+  assert.match(compiledSelection.stdout, /weighted mean = 1\.6125/);
+  const compiledSelectionDir = /^RUN_DIR=(.+)$/m.exec(compiledSelection.stdout)?.[1];
+  assert.equal(invoke(core.goblinArgs("verify", compiledSelectionDir)).status, 0);
 
   const bad = path.join(root, "bad.gbl");
   fs.writeFileSync(bad, "for i in range(3) {\n x = i\n");

@@ -1,6 +1,10 @@
-# Goblin++ for Visual Studio Code 0.1.13 (unreleased)
+# Goblin++ for Visual Studio Code 0.1.14 (unreleased)
 
-Editor support for the Goblin++ Rust engine **0.1.0-alpha.18** (unreleased statistics step 1). This extension keeps the existing `goblinpp-project.goblinpp` identity, so it updates the earlier VS Code extension rather than creating a second language mode.
+Editor support for the Goblin++ Rust engine **0.1.0-alpha.19** (unreleased tables/modules/native I/O stage). This extension keeps the existing `goblinpp-project.goblinpp` identity, so it updates the earlier VS Code extension rather than creating a second language mode.
+
+Completions and highlighting include `import`, CSV/TSV readers, and the existing
+FITS/output calls, now available in compiled runs. Use the engine's
+`docs/DATA_MODULES_NATIVE.md` for strict table and local-library rules.
 
 It provides `.gbl` recognition, file icons, syntax highlighting, completions, hover help, snippets, document symbols, an optional non-semantic Icon View, and explicit commands for run, compiled run, check, verify, freeze, revision, status, lineage, ledger audit, and doctor. The vocabulary covers loops, branches, `g_func`/`return`, `g_strings` text operations, arrays, interaction, Booleans, FITS readers, generated-output functions, and optional `GO_PARANOID`/`seal` directives. The bundled 0.0.7 lexicon is retained only for constant aliases and units; the Rust addendum is an editor aid, not a new normative language specification.
 
@@ -14,7 +18,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.13.vsix` once that package has been built and reviewed. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.14.vsix` once that package has been built and reviewed. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

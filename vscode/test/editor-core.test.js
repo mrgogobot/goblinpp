@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha18-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha19-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,16 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.18 runtime features", () => {
+test("completion combines legacy spellings with alpha.19 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 219);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 219);
+  assert.equal(entries.length, 230);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 230);
+  assert.equal(entries.find((item) => item.spelling === "import").kind, "statement");
+  for (const prefix of ["csv", "tsv"]) {
+    for (const suffix of ["rows", "columns", "headers", "column", "numbers"]) {
+      assert.equal(entries.find((item) => item.spelling === `${prefix}_${suffix}`).kind, "function");
+    }
+  }
   for (const spelling of ["sum", "mean"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -280,10 +286,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.18 language coloring and extension identity are internally consistent", () => {
+test("alpha.19 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.13");
+  assert.equal(manifest.version, "0.1.14");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -314,6 +320,9 @@ test("alpha.18 language coloring and extension identity are internally consisten
   const functionKeywords = new RegExp(grammar.repository.statements.patterns[2].match);
   assert(functionKeywords.test("g_func"));
   assert(functionKeywords.test("return"));
+  assert(functionKeywords.test("import"));
+  assert(builtins.test("csv_numbers("));
+  assert(builtins.test("tsv_column("));
   const loops = new RegExp(grammar.repository.statements.patterns[0].match);
   for (const spelling of ["for", "while", "break", "continue"]) {
     assert(loops.test(spelling));

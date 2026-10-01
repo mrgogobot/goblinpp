@@ -116,7 +116,13 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     ) {
         let actual = fs::read_to_string(run_dir.join(path))
             .ok()
-            .and_then(|text| parse_source(&text).ok())
+            .and_then(|text| {
+                if let Some(entries) = receipt.get("module_imports") {
+                    crate::modules::verify_preserved(run_dir, &text, entries).ok()
+                } else {
+                    parse_source(&text).ok()
+                }
+            })
             .and_then(|parsed| parsed.canonical_sha256().ok());
         checks.push(check(
             "CANONICAL_SOURCE_SHA256",
@@ -125,6 +131,12 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
             actual,
             None,
         ));
+    }
+    if let Some(entries) = receipt.get("module_imports") {
+        let verified = string_at(&receipt, &["source", "path"])
+            .and_then(|path| fs::read_to_string(run_dir.join(path)).ok())
+            .is_some_and(|text| crate::modules::verify_preserved(run_dir, &text, entries).is_ok());
+        checks.push(check("MODULE_SOURCE_EVIDENCE", verified, None, None, None));
     }
     if schema_v2 {
         let declared_paranoid = receipt.get("paranoid_mode").and_then(Value::as_bool);
@@ -466,6 +478,141 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
             ),
         );
     }
+    if let Some(path) = string_at(
+        &receipt,
+        &["execution", "compiler", "support_manifest_path"],
+    ) {
+        let safe_path = path == "program-native.native-build/support-manifest.json";
+        checks.push(check(
+            "NATIVE_SUPPORT_MANIFEST_PATH",
+            safe_path,
+            None,
+            None,
+            None,
+        ));
+        if safe_path {
+            compare_file(
+                &mut checks,
+                "NATIVE_SUPPORT_MANIFEST_SHA256",
+                &run_dir.join(&path),
+                string_at(
+                    &receipt,
+                    &["execution", "compiler", "support_manifest_sha256"],
+                ),
+            );
+            let manifest = fs::read(run_dir.join(&path))
+                .ok()
+                .and_then(|b| serde_json::from_slice::<Value>(&b).ok());
+            let verified = manifest.as_ref().is_some_and(|m| {
+                m["schema"] == "goblin.native-support.v1"
+                    && m["files"].as_array().is_some_and(|files| {
+                        if files.is_empty() {
+                            return false;
+                        }
+                        let base = run_dir.join(&path).parent().unwrap().to_path_buf();
+                        files.iter().all(|file| {
+                            let Some(name) = file["path"].as_str() else {
+                                return false;
+                            };
+                            if Path::new(name)
+                                .components()
+                                .any(|c| !matches!(c, Component::Normal(_)))
+                            {
+                                return false;
+                            }
+                            let target = base.join(name);
+                            fs::symlink_metadata(&target)
+                                .ok()
+                                .is_some_and(|m| m.is_file() && !m.file_type().is_symlink())
+                                && sha256_file(&target).ok().as_deref() == file["sha256"].as_str()
+                                && fs::metadata(target).ok().map(|m| m.len())
+                                    == file["bytes"].as_u64()
+                        })
+                    })
+            });
+            checks.push(check(
+                "NATIVE_SUPPORT_SOURCE_INVENTORY",
+                verified,
+                None,
+                None,
+                None,
+            ));
+        }
+    }
+    if let Some(path) = string_at(
+        &receipt,
+        &["execution", "compiler", "native_data_manifest_path"],
+    ) {
+        let safe_path = path == "native-data.json";
+        checks.push(check(
+            "NATIVE_DATA_MANIFEST_PATH",
+            safe_path,
+            None,
+            None,
+            None,
+        ));
+        if safe_path {
+            compare_file(
+                &mut checks,
+                "NATIVE_DATA_MANIFEST_SHA256",
+                &run_dir.join(&path),
+                string_at(
+                    &receipt,
+                    &["execution", "compiler", "native_data_manifest_sha256"],
+                ),
+            );
+            let manifest = fs::read(run_dir.join(&path))
+                .ok()
+                .and_then(|b| serde_json::from_slice::<Value>(&b).ok());
+            let verified = manifest.as_ref().is_some_and(|m| {
+                if m["schema"] != "goblin.native-data.v1" {
+                    return false;
+                }
+                let mut expected = receipt["data_imports"].clone();
+                if let Some(entries) = expected.as_array_mut() {
+                    for entry in entries {
+                        entry["evidence_path"] = Value::Null;
+                        entry["evidence_sha256"] = Value::Null;
+                    }
+                }
+                if m["data_imports"] != expected {
+                    return false;
+                }
+                let Some(artifacts) = m["generated_artifacts"].as_array() else {
+                    return false;
+                };
+                let Some(outputs) = receipt["generated_artifacts"].as_array() else {
+                    return false;
+                };
+                artifacts.len() == outputs.len()
+                    && artifacts.iter().zip(outputs).all(|(native, output)| {
+                        let Some(name) = native["name"].as_str() else {
+                            return false;
+                        };
+                        if crate::output::validate_name(name).is_err() {
+                            return false;
+                        }
+                        let mut expected = output.clone();
+                        let Some(expected_object) = expected.as_object_mut() else {
+                            return false;
+                        };
+                        expected_object.remove("path");
+                        let path = run_dir.join("native-outputs").join(name);
+                        *native == expected
+                            && sha256_file(&path).ok().as_deref() == native["sha256"].as_str()
+                            && fs::metadata(path).ok().map(|m| m.len())
+                                == native["byte_count"].as_u64()
+                    })
+            });
+            checks.push(check(
+                "NATIVE_DATA_EVIDENCE_PARITY",
+                verified,
+                None,
+                None,
+                None,
+            ));
+        }
+    }
     let verified = checks.iter().all(|item| item.pass);
     Ok(Verification {
         verified,
@@ -483,7 +630,19 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     }
     let left = read_receipt(left_dir)?;
     let right = read_receipt(right_dir)?;
-    let source_bytes_same = at(&left, &["source", "sha256"]) == at(&right, &["source", "sha256"]);
+    let module_sources = |receipt: &Value| {
+        receipt["module_imports"]
+            .as_array()
+            .map(|imports| {
+                imports
+                    .iter()
+                    .map(|item| (item["path"].clone(), item["sha256"].clone()))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    };
+    let source_bytes_same = at(&left, &["source", "sha256"]) == at(&right, &["source", "sha256"])
+        && module_sources(&left) == module_sources(&right);
     let canonical_program_same =
         at(&left, &["canonical_source", "sha256"]) == at(&right, &["canonical_source", "sha256"]);
     let sealed_artifacts_same = normalized_artifacts(&left) == normalized_artifacts(&right);

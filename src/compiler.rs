@@ -17,6 +17,7 @@ pub struct Compilation {
     pub binary_sha256: String,
     pub generated_source_sha256: String,
     pub rustc_version: String,
+    pub support_manifest: Option<PathBuf>,
 }
 
 pub fn compile(
@@ -26,7 +27,7 @@ pub fn compile(
 ) -> Result<Compilation> {
     parsed.require_executable_program()?;
     approved(&parsed.inline_rust, allowed_inline)?;
-    reject_uncompilable_data_calls(&parsed.program)?;
+    let needs_data = requires_data_runtime(&parsed.program);
     let output = output.as_ref();
     if output.exists() {
         return Err(GoblinError::compile(format!(
@@ -57,19 +58,26 @@ pub fn compile(
         })?;
     file.write_all(source.as_bytes())?;
     file.sync_all()?;
-    let result = Command::new("rustc")
-        .arg("--crate-name")
-        .arg("goblinpp_program")
-        .arg("--edition=2024")
-        .arg("-C")
-        .arg("opt-level=2")
-        .arg("-C")
-        .arg("overflow-checks=yes")
-        .arg("-o")
-        .arg(output)
-        .arg(&generated_source)
-        .output()
-        .map_err(|error| GoblinError::compile(format!("Unable to start rustc: {error}")))?;
+    let (result, support_manifest) = if needs_data {
+        build_data_program(&source, output)?
+    } else {
+        (
+            Command::new("rustc")
+                .arg("--crate-name")
+                .arg("goblinpp_program")
+                .arg("--edition=2024")
+                .arg("-C")
+                .arg("opt-level=2")
+                .arg("-C")
+                .arg("overflow-checks=yes")
+                .arg("-o")
+                .arg(output)
+                .arg(&generated_source)
+                .output()
+                .map_err(|error| GoblinError::compile(format!("Unable to start rustc: {error}")))?,
+            None,
+        )
+    };
     if !result.status.success() {
         let _ = fs::remove_file(output);
         return Err(GoblinError::compile(format!(
@@ -89,17 +97,15 @@ pub fn compile(
         binary_sha256: sha256_file(output)?,
         generated_source_sha256: sha256_bytes(source.as_bytes()),
         rustc_version,
+        support_manifest,
     })
 }
 
-fn reject_uncompilable_data_calls(program: &Program) -> Result<()> {
+fn requires_data_runtime(program: &Program) -> bool {
     fn visit(expression: &Expr) -> bool {
         match expression {
             Expr::Call { name, args } => {
-                name.starts_with("fits_")
-                    || name.starts_with("write_")
-                    || name.starts_with("plot_")
-                    || args.iter().any(visit)
+                crate::evaluator::is_data_function(name) || args.iter().any(visit)
             }
             Expr::Unary { expr, .. } => visit(expr),
             Expr::Array(items) => items.iter().any(visit),
@@ -158,15 +164,128 @@ fn reject_uncompilable_data_calls(program: &Program) -> Result<()> {
             _ => false,
         }
     }
-    if program.statements.iter().any(visit_stmt) {
+    program.statements.iter().any(visit_stmt)
+}
+
+fn build_data_program(
+    source: &str,
+    output: &Path,
+) -> Result<(std::process::Output, Option<PathBuf>)> {
+    // A reviewable, pinned support crate is emitted beside the generated source.
+    // Cargo is offline and locked: compilation never downloads code implicitly.
+    let project = output.with_extension("native-build");
+    fs::create_dir(&project)?;
+    fs::create_dir(project.join("src"))?;
+    let modules = [
+        ("ast", include_str!("ast.rs")),
+        ("constants", include_str!("constants.rs")),
+        ("chemistry", include_str!("chemistry.rs")),
+        ("electrical", include_str!("electrical.rs")),
+        ("delimited", include_str!("delimited.rs")),
+        ("error", include_str!("error.rs")),
+        ("evaluator", include_str!("evaluator.rs")),
+        ("fits", include_str!("fits.rs")),
+        ("hashing", include_str!("hashing.rs")),
+        ("inline_rust", include_str!("inline_rust.rs")),
+        ("interaction", include_str!("interaction.rs")),
+        ("lexer", include_str!("lexer.rs")),
+        ("output", include_str!("output.rs")),
+        ("parser", include_str!("parser.rs")),
+        ("quantity", include_str!("quantity.rs")),
+        ("science", include_str!("science.rs")),
+        ("statistics_runtime", include_str!("statistics_runtime.rs")),
+        ("text_runtime", include_str!("text_runtime.rs")),
+    ];
+    let mut lib = String::from("pub const VERSION: &str = env!(\"CARGO_PKG_VERSION\");\n");
+    let mut files = vec![
+        (
+            "Cargo.toml".to_string(),
+            include_str!("../Cargo.toml").to_string(),
+        ),
+        (
+            "Cargo.lock".to_string(),
+            include_str!("../Cargo.lock").to_string(),
+        ),
+    ];
+    for (name, contents) in modules {
+        lib.push_str(&format!("pub mod {name};\n"));
+        files.push((format!("src/{name}.rs"), contents.into()));
+    }
+    files.push(("src/lib.rs".into(), lib));
+    let cache_key = sha256_bytes(
+        files
+            .iter()
+            .flat_map(|(_, s)| s.bytes())
+            .collect::<Vec<_>>()
+            .as_slice(),
+    );
+    let binary_name = format!(
+        "goblinpp_program_{}",
+        &sha256_bytes(source.as_bytes())[..16]
+    );
+    files[0].1 = files[0].1.replace(
+        "name = \"goblinpp\"\npath = \"src/main.rs\"",
+        &format!("name = {binary_name:?}\npath = \"src/main.rs\""),
+    );
+    files.push(("src/main.rs".into(), source.into()));
+    let inventory = files.iter().map(|(path, text)| serde_json::json!({"path":path, "bytes":text.len(), "sha256":sha256_bytes(text.as_bytes())})).collect::<Vec<_>>();
+    for (path, text) in files {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(project.join(path))?;
+        file.write_all(text.as_bytes())?;
+        file.sync_all()?;
+    }
+    let manifest = project.join("support-manifest.json");
+    let bytes = serde_json::to_vec_pretty(
+        &serde_json::json!({"schema":"goblin.native-support.v1", "files":inventory}),
+    )?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&manifest)?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    let cache = std::env::temp_dir().join(format!("goblinpp-native-cache-{cache_key}"));
+    fs::create_dir_all(&cache)?;
+    if fs::symlink_metadata(&cache)?.file_type().is_symlink() {
         return Err(GoblinError::compile(
-            "Native code generation for FITS and generated-output calls is not yet implemented. Interpret this program without --compile; both facilities still run as native Rust inside the interpreter.",
+            "Native build cache cannot be a symbolic link.",
         ));
     }
-    Ok(())
+    let result = Command::new("cargo").arg("build").arg("--locked").arg("--offline").arg("--release")
+        .arg("--bin").arg(&binary_name).arg("--manifest-path").arg(project.join("Cargo.toml"))
+        .arg("--target-dir").arg(&cache).output()
+        .map_err(|e| GoblinError::compile(format!("Native data compilation requires Cargo and cached locked dependencies. Build the distributed source with cargo build --locked first. {e}")))?;
+    if result.status.success() {
+        let binary = cache.join("release").join(format!(
+            "{binary_name}{}",
+            if cfg!(windows) { ".exe" } else { "" }
+        ));
+        let bytes = fs::read(&binary)?;
+        let mut destination = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(output)?;
+        destination.write_all(&bytes)?;
+        destination.sync_all()?;
+        fs::set_permissions(output, fs::metadata(binary)?.permissions())?;
+    }
+    Ok((result, Some(manifest)))
 }
 
 fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
+    let data_runtime = if requires_data_runtime(program) {
+        include_str!("compiled_data_runtime.rs")
+    } else {
+        ""
+    };
+    let data_finish = if requires_data_runtime(program) {
+        "goblin_data_finish()?;"
+    } else {
+        ""
+    };
     let body = generate_statements(&program.statements, blocks)?;
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
@@ -239,6 +358,7 @@ mod goblin_statistics {{
 {compiled_science_runtime}
 {compiled_chemistry_runtime}
 {compiled_electrical_runtime}
+{data_runtime}
 
 fn as_q(value: Value) -> Result<(f64, Dim), String> {{ match value {{ Value::Q(v, d) => Ok((v, d)), _ => Err("Arithmetic requires numeric quantities.".into()) }} }}
 fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
@@ -502,7 +622,8 @@ fn goblin_main() -> Result<(), String> {{
     let mut goblin_loop_steps: u64 = 0;
     let goblin_call_depth: usize = 0;
     let mut goblin_sealed_values: BTreeMap<String, Value> = BTreeMap::new();
-{body}    write_native_results(&goblin_sealed_values)?;
+{body}    {data_finish}
+    write_native_results(&goblin_sealed_values)?;
     Ok(())
 }}
 
@@ -522,6 +643,9 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
     let mut body = String::new();
     for statement in statements {
         match statement {
+            Stmt::Import(_) => {
+                return Err(GoblinError::compile("Resolve imports before compilation."));
+            }
             Stmt::Function { .. } => {}
             Stmt::Return(expr) => body.push_str(&format!("    return {};\n", generate_expr(expr)?)),
             Stmt::Break => body.push_str("    break;\n"),
@@ -784,6 +908,15 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             "Ok::<Value, String>(Value::Bool(!as_bool(({})?, \"not\")?))",
             generate_expr(expr)?
         ),
+        Expr::Call { name, args } if crate::evaluator::is_data_function(name) => {
+            format!(
+                "goblin_data_call({name:?}, vec![{}], &goblin_env)",
+                args.iter()
+                    .map(generate_expr)
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        }
         Expr::Call { name, args } if name == "argv" => {
             if args.len() != 1 {
                 return Err(GoblinError::compile("argv() requires one index."));

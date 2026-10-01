@@ -1,6 +1,6 @@
 # Audited files and plots
 
-Goblin++ 0.1.0-alpha.6 can produce text, Markdown, CSV, TSV, JSON, SVG, and PNG artifacts. Generated files never appear beside the source program. They are created exclusively inside the unique run directory:
+Goblin++ 0.1.0-alpha.19 can produce text, Markdown, CSV, TSV, JSON, SVG, and PNG artifacts in interpreted and audited compiled runs. Generated files never appear beside the source program. They are created exclusively inside the unique run directory:
 
 ```text
 RUN_DIR/outputs/filename
@@ -110,7 +110,7 @@ Editing, replacing, truncating, or deleting an output causes verification to fai
 
 ## Current limits
 
-- Generated output functions run through the Rust interpreter; compiled output calls are refused.
+- Both engines share the Rust output helpers. Audited compiled runs compare native bytes against reference output; standalone binary output has a separate boundary described in [the native I/O guide](DATA_MODULES_NATIVE.md).
 - Each output is limited to 64 MiB in this first stage.
 - Output filenames are flat and live under `RUN_DIR/outputs`.
 - Bulk FITS-to-table export awaits explicit row-selection and filtering semantics.

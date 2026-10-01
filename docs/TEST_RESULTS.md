@@ -1,4 +1,35 @@
-# Alpha.18 statistics step 1 (local, unreleased)
+# Alpha.19 tables, modules and compiled I/O (local, unreleased)
+
+- Rust tests (`cargo test --locked --offline --all-targets`): 154 passed,
+  0 failed on macOS arm64 with Rust 1.92.0.
+- Rust formatting, warning-denying Clippy and whitespace checks: pass.
+- VS Code 0.1.14: 16 passed, 0 failed; activation, 230 unique vocabulary entries, import/table
+  highlighting and completion checks; actual CLI check/run/verify gates cover
+  CSV + imported functions and compiled FITS in addition to previous features.
+- JetBrains 0.3.4: 12 passed, 0 failed; cached IntelliJ 2024.3.7/JDK 21 plugin
+  build passes. No new live CLion/PyCharm smoke test or multi-version verifier
+  is claimed in this stage.
+- Nine new Rust integration gates cover combined CSV/TSV + transitive/dedup
+  libraries + native FITS/output/plots, quoted Unicode/BOM/CRLF/multiline data,
+  explicit numeric refusals and preserved failures, table limits, symlinks,
+  invalid library execution, path traversal/cycles/duplicates, frozen library
+  notation refusal, native interpolation-name safety, module-only semantic
+  diffs, module changes at paranoid postflight, and independent verification
+  without live libraries. Tampering table/module bytes, native output bytes,
+  support sources or native manifests fails verification.
+- Native executables run with no Goblin++ engine available on PATH. Interpreted
+  and native output/seal descriptors and payload bytes agree. Existing energy
+  canonical hashes and historical receipt/freeze checks remain covered.
+- Former blanket compiled-FITS refusal tests now prove lazy branches and
+  uncalled functions do not read missing data. Selected/weighted FITS summaries
+  independently verify in compiled mode.
+
+These are local test results, not external CI, a clean-machine dependency-cache
+test, authenticated authorship or a claim of scientific correctness. Cargo data
+builds are locked/offline; standalone custody boundaries are documented in
+[the I/O guide](DATA_MODULES_NATIVE.md).
+
+## Previous stage: Alpha.18 statistics step 1
 
 - Rust tests (`cargo test --locked --all-targets`): 145 passed, 0 failed.
 - Rust formatting, warning-denying Clippy, and whitespace checks: pass.

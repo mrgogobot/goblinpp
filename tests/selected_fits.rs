@@ -67,8 +67,11 @@ fn selection_and_optional_weights_match_independent_arithmetic_and_verify() {
     )
     .unwrap();
     let compiled_receipt = read_receipt(&compiled).unwrap();
-    assert_eq!(compiled_receipt["status"], "MACHINERY_FAIL");
-    assert_eq!(compiled_receipt["failure"]["code"], "G501");
+    assert_eq!(compiled_receipt["status"], "PASS", "{compiled_receipt}");
+    assert_eq!(
+        compiled_receipt["sealed_artifacts"],
+        receipt["sealed_artifacts"]
+    );
     assert!(verify_run(&compiled).unwrap().verified);
 }
 

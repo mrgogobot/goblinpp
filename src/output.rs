@@ -16,6 +16,12 @@ pub struct GeneratedOutput {
     pub metadata: Value,
 }
 
+pub fn artifact_descriptor(output: &GeneratedOutput) -> Value {
+    json!({"name":output.name, "sha256":crate::hashing::sha256_bytes(&output.bytes),
+        "byte_count":output.bytes.len(), "media_type":output.media_type,
+        "producer":output.producer, "metadata":output.metadata})
+}
+
 impl GeneratedOutput {
     pub fn new(
         name: &str,

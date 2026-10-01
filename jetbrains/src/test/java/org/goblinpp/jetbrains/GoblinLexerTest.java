@@ -75,6 +75,15 @@ final class GoblinLexerTest {
         return tokens;
     }
 
+    @Test
+    void classifiesLocalImportsAndTableReaders() {
+        List<Token> tokens = lex("import \"lib/measurements.gbl\"\nvalues = csv_numbers(\"data.csv\", \"length\")\nnames = tsv_column(\"data.tsv\", \"sample\")\n");
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.KEYWORD, "import")));
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.FUNCTION, "csv_numbers")));
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.FUNCTION, "tsv_column")));
+        assertFalse(tokens.stream().anyMatch(token -> token.type == TokenType.BAD_CHARACTER));
+    }
+
     private record Token(IElementType type, String text) {
     }
 }

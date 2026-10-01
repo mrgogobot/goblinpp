@@ -1,4 +1,11 @@
-# VS Code extension 0.1.13 (unreleased)
+# VS Code extension 0.1.14 (unreleased)
+
+Updated for Rust alpha.19: `import`, ten explicit CSV/TSV reader completions,
+snippets and function help, plus syntax highlighting. Existing FITS and output
+calls now work in compiled runs with an alpha.19 engine. Editor hints do not
+replace the engine's strict table, module or evidence checks.
+
+## Previous stage: 0.1.13
 
 Updated for the first Rust alpha.18 statistics step: completion, snippets,
 function help and highlighting for dimension-preserving `sum` and `mean`.

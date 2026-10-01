@@ -145,12 +145,16 @@ fn invalid_g_func_syntax_and_reserved_names_are_rejected() {
 }
 
 #[test]
-fn compiled_mode_refuses_data_calls_in_function_bodies() {
+fn compiled_mode_supports_uninvoked_data_functions() {
     let root = tempdir().unwrap();
     let parsed =
         parse_source("g_func f() { return fits_count(\"sample.fits\", 0) }\nx = 1\n").unwrap();
-    let error = compile(&parsed, root.path().join("program"), &[]).unwrap_err();
-    assert_eq!(error.code, "G501");
+    let compiled = compile(&parsed, root.path().join("program"), &[]).unwrap();
+    let output = std::process::Command::new(compiled.binary)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{:?}", output);
+    assert!(output.stdout.is_empty());
 }
 
 #[test]

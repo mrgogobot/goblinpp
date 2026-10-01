@@ -2,7 +2,6 @@ use crate::constants::snapshots;
 use crate::error::{GoblinError, Result};
 use crate::hashing::{hash_canonical_json, sha256_bytes, sha256_file};
 use crate::ledger::{self, LedgerEvent};
-use crate::parser::parse_source;
 use crate::quantity::unit_snapshots;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -105,7 +104,8 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
     let bytes = fs::read(source)?;
     let text = std::str::from_utf8(&bytes)
         .map_err(|_| GoblinError::freeze("Source is not valid UTF-8."))?;
-    let parsed = parse_source(text)?;
+    let resolved = crate::modules::resolve(source, text)?;
+    let parsed = &resolved.parsed;
     parsed.require_executable_program()?;
     let lineage_file = lineage_path(source);
     let lineage = if lineage_file.exists() {
@@ -139,6 +139,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "policy": "EXACT_SOURCE_BYTES_AND_CANONICAL_PROGRAM",
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": sha256_bytes(&bytes) },
         "canonical_source": { "sha256": parsed.canonical_sha256()? },
+        "module_imports": resolved.snapshot(),
         "constant_registry": {
             "sha256": constant_registry_sha256()?,
             "entries": snapshots(),
@@ -184,10 +185,12 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         }
     };
     let source_sha = sha256_bytes(&bytes);
-    let canonical_sha = std::str::from_utf8(&bytes)
+    let resolved = std::str::from_utf8(&bytes)
         .ok()
-        .and_then(|text| parse_source(text).ok())
-        .and_then(|parsed| parsed.canonical_sha256().ok());
+        .and_then(|text| crate::modules::resolve(source, text).ok());
+    let canonical_sha = resolved
+        .as_ref()
+        .and_then(|r| r.parsed.canonical_sha256().ok());
     let receipt_bytes = match fs::read(&path) {
         Ok(value) => value,
         Err(error) => {
@@ -275,6 +278,20 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     ));
     let expected_canonical = field(&["canonical_source", "sha256"]);
     let canonical_ok = expected_canonical == canonical_sha;
+    let expected_modules = receipt
+        .get("module_imports")
+        .cloned()
+        .unwrap_or_else(|| json!([]));
+    let modules_ok = resolved
+        .as_ref()
+        .is_some_and(|r| r.snapshot() == expected_modules);
+    checks.push(custody_check(
+        "MODULE_SOURCE_GRAPH",
+        modules_ok,
+        None,
+        None,
+        None,
+    ));
     checks.push(custody_check(
         "CANONICAL_SOURCE_SHA256",
         canonical_ok,
@@ -344,6 +361,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "CONSTANT_REGISTRY_CHANGED_AFTER_FREEZE"
     } else if !lineage_ok {
         "LINEAGE_RECEIPT_TAMPERED"
+    } else if !modules_ok {
+        "MODULE_CHANGED_AFTER_FREEZE"
     } else if !source_ok && canonical_ok {
         "NOTATION_ONLY_CHANGE_AFTER_FREEZE"
     } else if !source_ok || !canonical_ok {

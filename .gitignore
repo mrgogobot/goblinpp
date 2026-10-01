@@ -5,6 +5,8 @@
 *.freeze.json
 *.lineage.json
 *.goblin.rs
+*.native-build/
+goblin-native-outputs-*/
 *.vsix
 *.zip
 **/.DS_Store

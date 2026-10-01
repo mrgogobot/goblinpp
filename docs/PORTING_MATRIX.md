@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.18 step 1 status | Evidence or boundary |
+| Capability | Alpha.19 status | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -36,16 +36,18 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Filtered/weighted FITS table summary | New, implemented in working tree | `fits_select_stats` streams scalar numeric rows with explicit half-open bounds, optional positive weights, selected/used row counts, and sealed/verifiable output; no implicit survey cuts or unit conversion |
 | Large FITS evidence | New, implemented | Streaming SHA-256 and one checksum-addressed stored copy, hard-linked per run |
 | FITS ASCII tables/compression/special columns | Pending | Discoverable metadata; unsupported values are explicitly refused |
-| FITS calls in compiled programs | Pending | Compiler refuses; interpreter is native Rust |
-| Output calls in compiled programs | Pending | Compiler refuses; interpreter output remains native Rust |
+| FITS calls in compiled programs | New, implemented | Shared Rust helpers; native input hashes and accesses must match reference; support inventory preserved |
+| Output calls in compiled programs | New, implemented | Native output metadata and bytes compared, then independently verified; standalone custody boundary documented |
 | Bulk table export and FITS writing | Pending | Requires explicit output schema, unit, and provenance contracts; the summary operation does not export rows |
 | User-defined functions | Implemented in working tree | `g_func`, parameters, explicit `return`, local copy-value scope, forward calls and 16-call limit; interpreter/native parity tested |
+| Local function libraries | New, implemented | Static definitions-only imports, cycle/traversal/symlink/duplicate refusal, frozen raw graph, independent module-evidence verification |
+| CSV/TSV reading | New, implemented | Bounded UTF-8 snapshots, explicit delimiter and text/numeric column choice, strict headers/row shape, no silently skipped numeric cells, both engines |
 | Nested collections | Pending | Arrays remain one-dimensional |
 | Ed25519 ledger authorship | Pending | Alpha reports `CHECKSUM_ONLY` honestly |
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| Editor integrations | Implemented; updated sources not yet released | VS Code 0.1.13 and JetBrains 0.3.3 sources add statistics hints alongside chemistry/electrical; their hints are advisory |
+| Editor integrations | Implemented; updated sources not yet released | VS Code 0.1.14 and JetBrains 0.3.4 sources add table and import hints alongside chemistry/electrical; their hints are advisory |
 
 ## Promotion gates
 

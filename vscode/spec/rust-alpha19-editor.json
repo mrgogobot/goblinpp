@@ -1,8 +1,14 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.18",
+  "runtime": "goblin++ 0.1.0-alpha.19",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
+    {
+      "spelling": "import",
+      "kind": "statement",
+      "detail": "Statically import local .gbl g_func libraries; no top-level execution or hidden inline Rust. Paths stay below the entry source directory.",
+      "snippet": "import \"${1:lib/analysis.gbl}\""
+    },
     {
       "spelling": "GO_PARANOID",
       "kind": "statement",
@@ -128,6 +134,16 @@
     }
   ],
   "functions": [
+    {"spelling":"csv_rows", "kind":"function", "detail":"Count data rows in a UTF-8 CSV with a unique nonempty header; header is excluded.", "snippet":"csv_rows(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_columns", "kind":"function", "detail":"Count CSV header columns; ragged rows are refused.", "snippet":"csv_columns(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_headers", "kind":"function", "detail":"Return CSV header names as an independent text array.", "snippet":"csv_headers(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_column", "kind":"function", "detail":"Read an exact case-sensitive header as text; no inferred numbers or silent missing-value policy.", "snippet":"csv_column(\"${1:measurements.csv}\", \"${2:label}\")"},
+    {"spelling":"csv_numbers", "kind":"function", "detail":"Explicit finite dimensionless numeric CSV column; blank, malformed or nonfinite cells fail instead of being dropped. Assign physical units explicitly.", "snippet":"csv_numbers(\"${1:measurements.csv}\", \"${2:length}\")"},
+    {"spelling":"tsv_rows", "kind":"function", "detail":"Count data rows in a UTF-8 tab-separated table; header is excluded.", "snippet":"tsv_rows(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_columns", "kind":"function", "detail":"Count TSV header columns; ragged rows are refused.", "snippet":"tsv_columns(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_headers", "kind":"function", "detail":"Return TSV header names as an independent text array.", "snippet":"tsv_headers(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_column", "kind":"function", "detail":"Read an exact case-sensitive TSV header as text, preserving empty fields.", "snippet":"tsv_column(\"${1:measurements.tsv}\", \"${2:label}\")"},
+    {"spelling":"tsv_numbers", "kind":"function", "detail":"Read a finite dimensionless numeric TSV column; missing or invalid numbers fail explicitly.", "snippet":"tsv_numbers(\"${1:measurements.tsv}\", \"${2:value}\")"},
     {
       "spelling": "input",
       "kind": "function",

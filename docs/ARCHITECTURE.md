@@ -6,8 +6,10 @@ The engine is intentionally split at trust boundaries:
 - `quantity` and `constants` implement deterministic scalar science semantics;
 - `evaluator` interprets the AST and records constants, output, seals, and data access;
 - `fits` streams read-only multi-HDU metadata and image/table values without a C or Python bridge;
+- `delimited` snapshots bounded UTF-8 CSV/TSV with explicit numeric conversion;
+- `modules` statically expands definitions-only local imports and preserves the raw source graph;
 - `output` validates artifact names and deterministically renders delimited text, SVG, and lossless PNG bytes;
-- `compiler` emits reviewable Rust and invokes `rustc` without a shell;
+- `compiler` emits reviewable Rust and invokes `rustc`, or offline locked Cargo for shared data helpers, without a shell;
 - `inline_rust` extracts exact code bytes and enforces digest authorization;
 - `runtime` performs custody preflight, execution, and evidence preservation;
 - `custody`, `ledger`, and `audit` freeze, chain, and independently verify history;
@@ -15,7 +17,7 @@ The engine is intentionally split at trust boundaries:
 
 Interpretation is the default. Compilation is never inferred from source contents. Inline Rust cannot cause an implicit switch to native execution.
 
-The compiler emits direct operations over generated quantity values. It does not bundle or invoke the source parser at runtime. This distinction is tested by inspecting generated source and by sealing the generated source and executable.
+The compiler emits direct operations over generated quantity values. It never invokes the source parser at runtime. Data programs link a shared support library whose sources include the existing parser because of module dependencies; no Goblin source evaluation occurs in the generated entry point. This distinction is tested by inspecting generated source, running standalone without the engine on PATH, and sealing generated source, support inventory and executable.
 
 ## FITS data path
 
@@ -26,5 +28,21 @@ Run evidence is content-addressed under `.goblin/imports/SHA256.fits`. The first
 ## Generated output path
 
 Output calls construct bytes during interpreter evaluation but cannot choose an operating-system path. The runtime materializes those bytes with exclusive creation beneath the new run's `outputs` directory. The receipt binds filename, media type, byte count, producer, metadata, and SHA-256. The verifier accepts only flat `outputs/NAME` receipt paths and rehashes every artifact.
+
+Alpha.19 native calls use the same Rust FITS/table/output helpers, with already
+evaluated arguments from generated code. Audited compiled runs compare native
+input access/hash descriptors, seals, output metadata and bytes against a
+reference evaluation. Native manifest and output copies are independently
+verified. This performs two evaluations; standalone execution has different
+custody and working-directory boundaries. See [the I/O guide](DATA_MODULES_NATIVE.md).
+
+## Library and table evidence
+
+Modules are statically expanded into the canonical AST without executing
+library top-level statements. Raw source graph entries are included in freeze
+receipts and run evidence. Verification resolves only preserved module bytes.
+CSV/TSV access operates on a bounded starting snapshot; tables are retained
+under the existing checksum-addressed input evidence mechanism with `.csv`
+or `.tsv` extensions and explicit operation/column access descriptors.
 
 FITS plots select deterministic evenly spaced row indexes and record the population, requested, examined, and valid counts. PNG encoding uses fixed RGB dimensions, filter type zero, and stored DEFLATE blocks; SVG numeric layout is likewise deterministic. Rendering does not depend on system fonts for PNG and introduces no plotting-library runtime dependency.

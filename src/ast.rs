@@ -51,6 +51,7 @@ pub enum Expr {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
+    Import(String),
     Directive(String),
     Function {
         name: String,
@@ -163,6 +164,7 @@ impl Expr {
 impl Stmt {
     pub fn canonical(&self) -> Value {
         match self {
+            Stmt::Import(path) => json!(["import", path]),
             Stmt::Directive(name) => json!(["directive", name]),
             Stmt::Function { name, params, body } => json!([
                 "g_func",

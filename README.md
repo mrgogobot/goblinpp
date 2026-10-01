@@ -1,11 +1,11 @@
-# Goblin++ Rust Engine 0.1.0-alpha.18 (unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.19 (unreleased)
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
 Goblin++ is an evidence-first scientific language. This release begins the audited migration from the Python 0.0.7 reference implementation to a native Rust engine.
 
 > **Privacy warning:** Run evidence can preserve source code, `input()` prompts
-> and responses, command-line arguments, imported FITS data, generated files,
+> and responses, command-line arguments, imported libraries and FITS/CSV/TSV data, generated files,
 > and stdout/stderr in plaintext. Do not use passwords, tokens, or confidential
 > research data without reviewing where that evidence is stored and who can
 > access it. `GO_PARANOID` and SHA-256 protect integrity, not confidentiality.
@@ -18,6 +18,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
 - [Statistics basics: sum and mean](docs/STATISTICS.md)
+- [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
 
 The ordinary command interprets a saved `.gbl` file:
 
@@ -33,6 +34,11 @@ goblin++ compile experiment.gbl -o experiment
 ```
 
 The first form runs the native artifact and preserves the generated Rust, compiled binary, stdout, stderr, sealed scientific artifacts, and hashes in the run directory. The second form produces a standalone binary without running it.
+
+Alpha.19 supports CSV/TSV input, local `import` function libraries, and native
+FITS/file/plot calls. Data-using compilation requires Cargo and cached locked
+crates; it builds offline. Standalone output does not include the launcher's
+custody/freeze/postflight guarantees. See the linked guide before choosing a mode.
 
 ## Repository status
 
@@ -302,7 +308,7 @@ and `examples/fits_selection.gbl` before using it for scientific work.
 
 Inputs are opened read-only and processed with bounded memory. A run streams the entire input through SHA-256 and preserves a second verified copy in `.goblin/imports/SHA256.fits`; run directories hard-link that checksum-addressed object when the filesystem permits, avoiding one full duplicate per run. The bundled `examples/sample.fits` is deterministic and reproducible with `tools/generate_sample_fits.rs`.
 
-ASCII tables can be discovered but not read. Random groups, compressed images, bit columns, complex columns, variable-length arrays, WCS interpretation, automatic unit conversion, and compiled FITS calls remain explicit limits.
+ASCII tables can be discovered but not read. Random groups, compressed images, bit columns, complex columns, variable-length arrays, WCS interpretation and automatic unit conversion remain explicit limits. Alpha.19 supports the implemented FITS calls in compiled programs; see [native I/O](docs/DATA_MODULES_NATIVE.md).
 
 See [FITS.md](docs/FITS.md) for the complete function and evidence contract.
 

@@ -91,6 +91,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     let mut stdout = String::new();
     let mut stderr = String::new();
     let mut parsed: Option<ParsedSource> = None;
+    let mut resolved_modules: Option<crate::modules::ResolvedSource> = None;
     let mut evaluation = Evaluation::new(source_parent);
     let mut outcome = (|| -> Result<()> {
         let mut argv = vec![source.to_string_lossy().to_string()];
@@ -104,7 +105,19 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         }
         let text = std::str::from_utf8(&source_bytes)
             .map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
-        let current = parse_source(text)?;
+        let root_source = parse_source(text)?;
+        receipt["paranoid_mode"] = Value::Bool(root_source.paranoid());
+        let resolved = match crate::modules::resolve(source, text) {
+            Ok(value) => value,
+            Err(error) => {
+                enforce_freeze(source, &root, &run_dir, &mut receipt)?;
+                return Err(error);
+            }
+        };
+        resolved.preserve(&run_dir)?;
+        receipt["module_imports"] = serde_json::to_value(&resolved.imports)?;
+        let current = resolved.parsed.clone();
+        resolved_modules = Some(resolved);
         current.require_executable_program()?;
         receipt["canonical_source"] = json!({ "sha256": current.canonical_sha256()? });
         receipt["paranoid_mode"] = Value::Bool(current.paranoid());
@@ -119,6 +132,19 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 .collect::<Vec<_>>()
         );
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
+        if freeze_path(source).exists() {
+            let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            let expected = frozen
+                .get("module_imports")
+                .cloned()
+                .unwrap_or_else(|| json!([]));
+            if resolved_modules.as_ref().unwrap().snapshot() != expected {
+                return Err(protocol(
+                    "MODULE_CHANGED_AFTER_FREEZE",
+                    "An imported library differs from the frozen source graph.",
+                ));
+            }
+        }
         if options.compile {
             crate::inline_rust::approved(&current.inline_rust, &options.allowed_inline_rust)?;
             let safe_program = Program {
@@ -146,6 +172,11 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 .env("GOBLIN_NATIVE_RESULT_PATH", &absolute_native_results)
                 .env("GOBLIN_SOURCE_ARGV0", source.to_string_lossy().as_ref())
                 .env("GOBLIN_STDIN_REPLAY", "1")
+                .env("GOBLIN_NATIVE_DATA_BASE", source_parent.canonicalize()?)
+                .env(
+                    "GOBLIN_NATIVE_DATA_PATH",
+                    run_dir.canonicalize()?.join("native-data.json"),
+                )
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -184,6 +215,21 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     GoblinError::compile(format!("Compiled stdin replay failed: {error}"))
                 })?;
             verify_native_results(&native_results, &evaluation.sealed)?;
+            let native_data = run_dir.join("native-data.json");
+            if native_data.exists() {
+                verify_native_data(&native_data, &evaluation)?;
+                receipt["execution"]["compiler"]["native_data_manifest_path"] =
+                    json!("native-data.json");
+                receipt["execution"]["compiler"]["native_data_manifest_sha256"] =
+                    json!(sha256_file(&native_data)?);
+            } else if compilation.support_manifest.is_some() {
+                return Err(GoblinError::compile("Native data manifest is missing."));
+            }
+            if current.inline_rust.is_empty() && stdout != lines_to_text(&evaluation.stdout) {
+                return Err(GoblinError::compile(
+                    "Native stdout differs from the interpreter reference.",
+                ));
+            }
             receipt["execution"]["compiler"]["native_result_manifest_path"] =
                 Value::String("native-results.tsv".into());
             receipt["execution"]["compiler"]["native_result_manifest_sha256"] =
@@ -272,6 +318,16 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         artifacts.push(json!({ "name": name, "path": path.file_name().unwrap().to_string_lossy(), "sha256": sha256_file(&path)? }));
     }
     receipt["sealed_artifacts"] = Value::Array(artifacts);
+    if receipt["paranoid_mode"] == true
+        && resolved_modules
+            .as_ref()
+            .is_some_and(|m| !m.unchanged(source))
+    {
+        outcome = Err(protocol(
+            "MODULE_CHANGED_AT_POSTFLIGHT",
+            "An imported library changed after its starting bytes were preserved.",
+        ));
+    }
     if receipt["paranoid_mode"] == true
         && let Err(error) = observe_paranoid_source(source, &source_sha, &run_dir, &mut receipt)
     {
@@ -572,7 +628,12 @@ fn preserve_data_evidence(
         )));
     }
     for import in imports {
-        let name = format!("{}.fits", import.sha256);
+        let extension = match import.format.as_str() {
+            "CSV-UTF8" => "csv",
+            "TSV-UTF8" => "tsv",
+            _ => "fits",
+        };
+        let name = format!("{}.{extension}", import.sha256);
         let stored = store.join(&name);
         let destination = directory.join(&name);
         if stored.exists() {
@@ -727,7 +788,36 @@ fn compilation_json(compilation: &Compilation) -> Value {
         "rustc": compilation.rustc_version,
         "binary_path": compilation.binary.file_name().unwrap().to_string_lossy(), "binary_sha256": compilation.binary_sha256,
         "generated_source_path": compilation.generated_source.file_name().unwrap().to_string_lossy(), "generated_source_sha256": compilation.generated_source_sha256,
+        "support_manifest_path": compilation.support_manifest.as_ref().map(|path| format!("{}/support-manifest.json",path.parent().unwrap().file_name().unwrap().to_string_lossy())),
+        "support_manifest_sha256": compilation.support_manifest.as_ref().and_then(|path| sha256_file(path).ok()),
     })
+}
+
+fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
+    let manifest: Value = serde_json::from_slice(&fs::read(path)?)?;
+    let generated = expected
+        .generated
+        .values()
+        .map(crate::output::artifact_descriptor)
+        .collect::<Vec<_>>();
+    if manifest["schema"] != "goblin.native-data.v1"
+        || manifest["data_imports"] != serde_json::to_value(expected.data_imports())?
+        || manifest["generated_artifacts"] != json!(generated)
+    {
+        return Err(GoblinError::compile(
+            "Native input/output parity failure; input hashes, accesses or output metadata/bytes differ from the interpreter reference.",
+        ));
+    }
+    let directory = path.parent().unwrap().join("native-outputs");
+    for artifact in expected.generated.values() {
+        let observed = fs::read(directory.join(&artifact.name))?;
+        if observed != artifact.bytes {
+            return Err(GoblinError::compile(
+                "Native generated bytes differ from the interpreter reference.",
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn verify_native_results(

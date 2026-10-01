@@ -12,6 +12,10 @@ final class GoblinVocabularyTest {
         assertTrue(GoblinVocabulary.entries().size() >= 100);
         assertEquals("function", GoblinVocabulary.find("sqrt").kind());
         assertEquals("function", GoblinVocabulary.find("sum").kind());
+        assertEquals("statement", GoblinVocabulary.find("import").kind());
+        assertEquals("function", GoblinVocabulary.find("csv_numbers").kind());
+        assertEquals("function", GoblinVocabulary.find("tsv_column").kind());
+        assertTrue(GoblinVocabulary.find("csv_numbers").detail().contains("dimensionless"));
         assertEquals("function", GoblinVocabulary.find("mean").kind());
         assertTrue(GoblinVocabulary.find("sum").detail().contains("non-empty"));
         assertTrue(GoblinVocabulary.find("mean").snippet().contains("values"));

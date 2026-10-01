@@ -11,6 +11,7 @@ pub fn reserved_function_name(name: &str) -> bool {
     matches!(
         name,
         "g_func"
+            | "import"
             | "return"
             | "GO_PARANOID"
             | "seal"
@@ -99,7 +100,8 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "write_json"
             | "plot_fits_histogram"
             | "plot_fits_scatter"
-    ) || crate::science::is_function(name)
+    ) || crate::delimited::is_function(name)
+        || crate::science::is_function(name)
         || crate::chemistry::is_function(name)
         || crate::electrical::is_function(name)
         || name.starts_with("__goblin_")
@@ -246,6 +248,18 @@ impl Parser {
     }
 
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
+        if self.ident_is("import") {
+            if in_block {
+                return Err(GoblinError::parse("import declarations must be top-level."));
+            }
+            self.advance();
+            let TokenKind::Text(path) = self.advance().kind else {
+                return Err(GoblinError::parse(
+                    "import requires a quoted local .gbl path.",
+                ));
+            };
+            return Ok(Stmt::Import(path));
+        }
         if self.ident_is("g_func") {
             if in_block {
                 return Err(GoblinError::parse("g_func declarations must be top-level."));

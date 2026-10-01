@@ -74,6 +74,33 @@ pub const MAX_LOOP_ITERATIONS: u64 = 1_000_000;
 pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
+pub fn is_data_function(name: &str) -> bool {
+    crate::delimited::is_function(name)
+        || matches!(
+            name,
+            "fits_header"
+                | "fits_axis"
+                | "fits_count"
+                | "fits_pixel"
+                | "fits_mean"
+                | "fits_hdu_count"
+                | "fits_rows"
+                | "fits_columns"
+                | "fits_column"
+                | "fits_column_valid_count"
+                | "fits_column_mean"
+                | "fits_column_min"
+                | "fits_column_max"
+                | "fits_select_stats"
+                | "write_text"
+                | "write_csv"
+                | "write_tsv"
+                | "write_json"
+                | "plot_fits_histogram"
+                | "plot_fits_scatter"
+        )
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConstantUse {
     pub id: String,
@@ -114,6 +141,7 @@ pub struct Evaluation {
     loop_iterations: u64,
     base_dir: PathBuf,
     data: BTreeMap<PathBuf, LoadedData>,
+    tables: BTreeMap<PathBuf, crate::delimited::Table>,
     functions: HashMap<String, (Vec<String>, Vec<Stmt>)>,
     function_depth: usize,
     return_value: Option<Value>,
@@ -141,6 +169,7 @@ impl Evaluation {
             loop_iterations: 0,
             base_dir: base_dir.as_ref().to_path_buf(),
             data: BTreeMap::new(),
+            tables: BTreeMap::new(),
             functions: HashMap::new(),
             function_depth: 0,
             return_value: None,
@@ -190,6 +219,9 @@ impl Evaluation {
 
     fn eval_stmt_flow(&mut self, statement: &Stmt) -> Result<ExecFlow> {
         match statement {
+            Stmt::Import(_) => Err(GoblinError::parse(
+                "Imports must be resolved through the file launcher before evaluation.",
+            )),
             Stmt::Function { .. } => Ok(ExecFlow::Normal),
             Stmt::Return(expr) => {
                 self.return_value = Some(self.eval_expr(expr)?);
@@ -535,6 +567,9 @@ impl Evaluation {
     }
 
     fn eval_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        if crate::delimited::is_function(name) {
+            return self.eval_table_call(name, args);
+        }
         match name {
             "len" => {
                 require_args(name, args, 1)?;
@@ -1376,6 +1411,86 @@ impl Evaluation {
             .collect()
     }
 
+    fn eval_table_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        let operation = name.split_once('_').unwrap().1;
+        require_args(
+            name,
+            args,
+            if matches!(operation, "column" | "numbers") {
+                2
+            } else {
+                1
+            },
+        )?;
+        let values = self.eval_args(args)?;
+        let requested = values[0].text(name)?;
+        let path = if Path::new(requested).is_absolute() {
+            PathBuf::from(requested)
+        } else {
+            self.base_dir.join(requested)
+        };
+        if std::fs::symlink_metadata(&path)?.file_type().is_symlink() {
+            return Err(GoblinError::data("Refusing symbolic-link table input."));
+        }
+        let key = path.canonicalize()?;
+        let delimiter = if name.starts_with("csv_") {
+            b','
+        } else {
+            b'\t'
+        };
+        if !self.tables.contains_key(&key) {
+            self.tables
+                .insert(key.clone(), crate::delimited::Table::open(&key, delimiter)?);
+        }
+        let table = self.tables.get_mut(&key).unwrap();
+        if table.delimiter != delimiter {
+            return Err(GoblinError::data(
+                "The same input cannot be interpreted with two different delimiters in one run.",
+            ));
+        }
+        let column = values.get(1).map(|v| v.text(name)).transpose()?;
+        let access = serde_json::json!({"operation":name,"column":column}).to_string();
+        if !table.access.contains(&access) {
+            table.access.push(access);
+        }
+        match operation {
+            "rows" => Quantity::scalar(table.rows.len() as f64).map(Value::Quantity),
+            "columns" => Quantity::scalar(table.headers.len() as f64).map(Value::Quantity),
+            "headers" => Ok(Value::Array(table.headers.iter().cloned().map(Value::Text).collect())),
+            "column" => Ok(Value::Array(table.column(column.unwrap())?.into_iter().map(Value::Text).collect())),
+            "numbers" => table.column(column.unwrap())?.iter().enumerate().map(|(row, text)| {
+                let number = text_runtime::parse_number(text).map_err(|e| GoblinError::data(format!("{name}: data row {} is not a finite number: {e}. No rows were silently skipped.", row + 1)))?;
+                Quantity::scalar(number).map(Value::Quantity)
+            }).collect::<Result<Vec<_>>>().map(Value::Array),
+            _ => unreachable!(),
+        }
+    }
+
+    /// Shared native data API. Arguments have already been evaluated by generated Rust.
+    /// No source parsing, statement interpretation or engine subprocess is involved.
+    pub fn native_data_call(
+        &mut self,
+        name: &str,
+        values: Vec<Value>,
+        environment: HashMap<String, Value>,
+    ) -> Result<Value> {
+        if !is_data_function(name) {
+            return Err(GoblinError::compile("Unsupported native data call."));
+        }
+        self.env = environment;
+        let mut args = Vec::new();
+        for (i, value) in values.into_iter().enumerate() {
+            // Not a valid source identifier: never overwrite an interpolation variable.
+            let key = format!("@goblin_data_arg_{i}");
+            self.env.insert(key.clone(), value);
+            args.push(Expr::Name {
+                source: key,
+                canonical_id: None,
+            });
+        }
+        self.eval_call(name, &args)
+    }
+
     fn interpolate(&self, template: &str) -> Result<String> {
         let mut output = String::new();
         let mut cursor = 0;
@@ -1428,10 +1543,36 @@ impl Evaluation {
                 evidence_path: None,
                 evidence_sha256: None,
             })
+            .chain(self.tables.values().map(|table| {
+                DataImport {
+                    path: table.path.display().to_string(),
+                    sha256: table.sha256.clone(),
+                    byte_count: table.bytes.len() as u64,
+                    format: if table.delimiter == b',' {
+                        "CSV-UTF8"
+                    } else {
+                        "TSV-UTF8"
+                    }
+                    .into(),
+                    access: table.access.clone(),
+                    evidence_path: None,
+                    evidence_sha256: None,
+                }
+            }))
             .collect()
     }
 
     pub fn copy_data_evidence(&self, sha256: &str, destination: &Path) -> Result<String> {
+        if let Some(table) = self.tables.values().find(|t| t.sha256 == sha256) {
+            use std::io::Write;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(destination)?;
+            file.write_all(&table.bytes)?;
+            file.sync_all()?;
+            return Ok(crate::hashing::sha256_bytes(&table.bytes));
+        }
         let loaded = self
             .data
             .values()
