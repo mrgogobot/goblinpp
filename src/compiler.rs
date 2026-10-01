@@ -172,6 +172,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
     let compiled_science_runtime = include_str!("compiled_science_runtime.rs");
+    let statistics_runtime = include_str!("statistics_runtime.rs");
     let compiled_chemistry_runtime = include_str!("compiled_chemistry_runtime.rs");
     let compiled_electrical_runtime = include_str!("compiled_electrical_runtime.rs");
     let mut functions = String::new();
@@ -232,6 +233,9 @@ mod goblin_text {{
 }}
 {compiled_text_runtime}
 {compiled_math_runtime}
+mod goblin_statistics {{
+{statistics_runtime}
+}}
 {compiled_science_runtime}
 {compiled_chemistry_runtime}
 {compiled_electrical_runtime}

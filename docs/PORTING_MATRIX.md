@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.17 status | Evidence or boundary |
+| Capability | Alpha.18 step 1 status | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -13,6 +13,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices and iteration values, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
 | Dimensional quantities | Implemented | Six base dimensions including electric current; historical five-axis evidence retained; mismatch and numeric-domain failures tested |
 | Scientific mathematics | New, implemented | Dimension-aware `abs`, `sqrt`, extrema and `hypot`; checked dimensionless rounding, exponential, logarithmic and trigonometric functions; interpreter/compiler parity and preserved failures |
+| Array statistics | New, implemented | Non-empty numeric `sum`/`mean`, preserved SI dimensions, shared compensated/scaled runtime, native parity and verifiable failures; median, variance, standard deviation and weights remain pending |
 | Checked integer remainder | New, implemented | `%` requires safe dimensionless integers, rejects zero divisor, and has interpreter/compiler parity |
 | Constants and units | Extended, implemented | Python 0.0.7 registry plus alpha.16 chemistry and alpha.17 SI electrical units; registry contents are freeze evidence |
 | Chemistry foundation | New, implemented | Scoped 43-element abridged registry, formula molar mass, mass/amount/concentration/dilution helpers, interpreter/native parity, explicit unsupported-syntax refusal; no isotope, reaction, pH, equilibrium, kinetics, or biology inference |
@@ -44,7 +45,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | Interrupted-head recovery event | Pending | Do not use alpha ledger for crash-recovery claims |
 | Adoption of pre-ledger freeze receipts | Pending | No compatibility command yet |
 | Normative lexicon/grammar/semantics/tutorial CLI validators | Pending | Python reference remains normative during migration |
-| Editor integrations | Implemented, separately packaged | VS Code 0.1.12 and JetBrains 0.3.2 invoke the Rust CLI and include chemistry and electrical authoring hints; their hints are advisory |
+| Editor integrations | Implemented; updated sources not yet released | VS Code 0.1.13 and JetBrains 0.3.3 sources add statistics hints alongside chemistry/electrical; their hints are advisory |
 
 ## Promotion gates
 

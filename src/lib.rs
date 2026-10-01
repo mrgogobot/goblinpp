@@ -18,6 +18,7 @@ pub mod parser;
 pub mod quantity;
 pub mod runtime;
 pub mod science;
+mod statistics_runtime;
 pub mod text_runtime;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

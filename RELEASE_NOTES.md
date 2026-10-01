@@ -1,4 +1,19 @@
-# 0.1.0-alpha.17
+# 0.1.0-alpha.18 (unreleased, statistics step 1)
+
+Added `sum(array)` and `mean(array)` to both execution engines. They require
+non-empty homogeneous numeric arrays, preserve SI dimensions, and use one
+shared compensated summation implementation. Mean uses magnitude scaling to
+avoid avoidable sum overflow. Empty, nonnumeric, incompatible, and overflowing
+inputs fail explicitly; no values are silently skipped. Existing variables
+named `sum` or `mean` remain valid, but those names are now reserved for built-in
+function calls and cannot name user functions or function parameters.
+
+The current editor sources add completion and help for both functions. This is
+only the first statistics step: median, variance, standard deviation, weights,
+CSV reading, and uncertainty propagation are not implemented by this change.
+See `docs/STATISTICS.md` and `examples/statistics_basics.gbl`.
+
+## Previous stage: 0.1.0-alpha.17
 
 Added electric current as a sixth SI base dimension, 34 electrical unit
 spellings, and 18 `ee_` functions in both execution engines. The helpers cover

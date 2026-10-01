@@ -1,4 +1,10 @@
-# VS Code extension 0.1.12
+# VS Code extension 0.1.13 (unreleased)
+
+Updated for the first Rust alpha.18 statistics step: completion, snippets,
+function help and highlighting for dimension-preserving `sum` and `mean`.
+Requires an alpha.18 engine for execution of these functions.
+
+## Previous stage: 0.1.12
 
 Updated for Rust alpha.17. Added the 18 electrical `ee_` functions, SI electrical
 unit completion and highlighting, snippets, and six-axis dimension labels.

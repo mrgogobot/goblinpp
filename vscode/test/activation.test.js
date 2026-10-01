@@ -143,7 +143,9 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 217);
+    assert.equal(items.length, 219);
+    assert(items.some((item) => item.label === "sum" && item.kind === 2));
+    assert(items.some((item) => item.label === "mean" && item.kind === 2));
     assert(items.some((item) => item.label === "π" && item.kind === 3));
     assert(items.some((item) => item.label === "km" && item.kind === 4));
     assert(items.some((item) => item.label === "fits_mean" && item.kind === 2));

@@ -1,4 +1,24 @@
-# Alpha.17 acceptance results
+# Alpha.18 statistics step 1 (local, unreleased)
+
+- Rust tests (`cargo test --locked --all-targets`): 145 passed, 0 failed.
+- Rust formatting, warning-denying Clippy, and whitespace checks: pass.
+- VS Code 0.1.13: 16 passed, 0 failed, including actual alpha.18 interpreted
+  and compiled statistics runs and independent receipt verification.
+- JetBrains 0.3.3: 11 passed, 0 failed; plugin builds successfully with cached
+  IntelliJ Platform 2024.3.7 and JDK 21. This step does not repeat the broader
+  alpha.17 multi-IDE compatibility verifier or claim a live IDE smoke test.
+- `sum` and `mean` cover known values, compatible unit normalization, SI
+  dimensions including current, singleton/all-zero/negative observations,
+  cancellation compensation, large/tiny means, invalid type/arity/empty/mixed
+  arrays, overflow refusal, both evidence modes, nonmutation, function calls,
+  and strict freeze refusal. Failure receipts independently verify.
+- The reduction algorithm is shared verbatim by interpreted and generated
+  native programs; raw non-finite values are also directly rejected in tests.
+
+These results describe the local alpha.18 step-1 sources, not a published
+release, external CI run, or claim that the remaining statistics are available.
+
+## Previous stage: Alpha.17 acceptance results
 
 Current alpha.17 local source-check gates (macOS arm64, Rust 1.92.0):
 

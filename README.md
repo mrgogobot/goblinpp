@@ -1,4 +1,4 @@
-# Goblin++ Rust Engine 0.1.0-alpha.17
+# Goblin++ Rust Engine 0.1.0-alpha.18 (unreleased)
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -17,6 +17,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Install the VS Code extension](vscode/README.md)
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
+- [Statistics basics: sum and mean](docs/STATISTICS.md)
 
 The ordinary command interprets a saved `.gbl` file:
 

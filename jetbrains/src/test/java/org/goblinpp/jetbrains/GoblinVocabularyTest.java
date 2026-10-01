@@ -11,6 +11,10 @@ final class GoblinVocabularyTest {
     void loadsCurrentEditorVocabulary() {
         assertTrue(GoblinVocabulary.entries().size() >= 100);
         assertEquals("function", GoblinVocabulary.find("sqrt").kind());
+        assertEquals("function", GoblinVocabulary.find("sum").kind());
+        assertEquals("function", GoblinVocabulary.find("mean").kind());
+        assertTrue(GoblinVocabulary.find("sum").detail().contains("non-empty"));
+        assertTrue(GoblinVocabulary.find("mean").snippet().contains("values"));
         assertEquals("function", GoblinVocabulary.find("cross").kind());
         assertEquals("function", GoblinVocabulary.find("chem_molar_mass").kind());
         assertEquals("function", GoblinVocabulary.find("ee_current").kind());

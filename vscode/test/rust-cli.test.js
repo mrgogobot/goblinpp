@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.17 CLI check, run, and verify contracts", {
+test("actual alpha.18 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.17 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.17/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.18/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -77,6 +77,17 @@ test("actual alpha.17 CLI check, run, and verify contracts", {
   const electricalRun = invoke(core.goblinArgs("run", electrical, ["--compile"]));
   assert.equal(electricalRun.status, 0, electricalRun.stderr);
   assert.match(electricalRun.stdout, /current = 2\.553 mA/);
+
+  const statistics = path.join(root, "statistics.gbl");
+  fs.writeFileSync(statistics, 'GO_PARANOID\nvalues = [10 m, 11 m, 12 m]\ntotal = sum(values)\naverage = mean(values)\nprint("total = {total}; mean = {average}")\nseal total\nseal average\n');
+  for (const extra of [[], ["--compile"]]) {
+    const statisticsRun = invoke(core.goblinArgs("run", statistics, extra));
+    assert.equal(statisticsRun.status, 0, statisticsRun.stderr);
+    assert.match(statisticsRun.stdout, /total = 33 m; mean = 11 m/);
+    const statisticsDir = /^RUN_DIR=(.+)$/m.exec(statisticsRun.stdout)?.[1];
+    assert(statisticsDir);
+    assert.equal(invoke(core.goblinArgs("verify", statisticsDir)).status, 0);
+  }
 
   fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "sample.fits"), path.join(root, "sample.fits"));
   const selection = path.join(root, "selection.gbl");

@@ -14,7 +14,7 @@ const SCIENCE_C_MPS: f64 = 299_792_458.0;
 
 fn goblin_science_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
     let expected = match name {
-        "au2m" | "m2au" | "pc2m" | "m2pc" | "ly2m" | "m2ly" | "magnitude"
+        "sum" | "mean" | "au2m" | "m2au" | "pc2m" | "m2pc" | "ly2m" | "m2ly" | "magnitude"
         | "cartesian_radius" | "cartesian_azimuthd" | "cartesian_azimuthr"
         | "cartesian_inclinationd" | "cartesian_inclinationr" => 1,
         "dot" | "cross" | "polar2cartesiand" | "polar2cartesianr" | "velocity"
@@ -33,6 +33,15 @@ fn goblin_science_call(name: &str, values: Vec<Value>) -> Result<Value, String> 
     }
 
     match name {
+        "sum" | "mean" => {
+            let quantities = science_vector(&values[0], name)?;
+            let dimension = quantities[0].1;
+            for value in &quantities {
+                science_require_dim(*value, dimension, name)?;
+            }
+            let numbers: Vec<_> = quantities.iter().map(|value| value.0).collect();
+            Value::q(goblin_statistics::numeric_reduction(name, &numbers)?, dimension)
+        }
         "au2m" => science_distance_from(&values[0], name, SCIENCE_AU_METERS),
         "m2au" => science_distance_to(&values[0], name, SCIENCE_AU_METERS),
         "pc2m" => science_distance_from(&values[0], name, SCIENCE_PARSEC_METERS),

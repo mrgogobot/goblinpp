@@ -12,6 +12,8 @@ pub const ANGULAR_VELOCITY: Dimension = [0, 0, -1, 0, 0, 0];
 pub const MOMENTUM: Dimension = [1, 1, -1, 0, 0, 0];
 
 pub const FUNCTIONS: &[&str] = &[
+    "sum",
+    "mean",
     "au2m",
     "m2au",
     "pc2m",
@@ -47,7 +49,9 @@ pub fn is_function(name: &str) -> bool {
 
 pub fn arity(name: &str) -> Option<usize> {
     match name {
-        "au2m"
+        "sum"
+        | "mean"
+        | "au2m"
         | "m2au"
         | "pc2m"
         | "m2pc"
@@ -92,6 +96,17 @@ pub fn require_arity(name: &str, actual: usize) -> Result<()> {
 pub fn call(name: &str, values: Vec<Value>) -> Result<Value> {
     require_arity(name, values.len())?;
     match name {
+        "sum" | "mean" => {
+            let quantities = vector(&values[0], name)?;
+            let dimension = quantities[0].dimension;
+            for value in &quantities {
+                require_dimension(*value, dimension, name)?;
+            }
+            let numbers: Vec<_> = quantities.iter().map(|value| value.value_si).collect();
+            let result = crate::statistics_runtime::numeric_reduction(name, &numbers)
+                .map_err(GoblinError::numeric)?;
+            Quantity::new(result, dimension).map(Value::Quantity)
+        }
         "au2m" => distance_from_numeric(name, quantity(&values[0], name)?, AU_METERS),
         "m2au" => distance_to_numeric(name, quantity(&values[0], name)?, AU_METERS),
         "pc2m" => distance_from_numeric(name, quantity(&values[0], name)?, PARSEC_METERS),

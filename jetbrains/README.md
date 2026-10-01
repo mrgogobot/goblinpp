@@ -19,6 +19,7 @@ engine: the plugin does not reimplement scientific execution or custody rules.
 - keyword, function, constant, and unit completion
 - quick documentation sourced from the current editor vocabulary
 - chemistry and electrical `chem_`/`ee_` completions, including Unicode SI units
+- dimension-preserving `sum`/`mean` completion and help (requires alpha.18 engine)
 - matching `()`, `[]`, and `{}` plus `#` line comments
 - **Run**, **Compile and Run**, **Check**, **Freeze**, **Status**, and **Doctor**
   actions under **Tools | Goblin++**
@@ -27,7 +28,7 @@ engine: the plugin does not reimplement scientific execution or custody rules.
 - an explicit executable override under **Settings | Tools | Goblin++**
 
 The editor vocabulary is generated at build time from
-[`../vscode/spec/rust-alpha17-editor.json`](../vscode/spec/rust-alpha17-editor.json)
+[`../vscode/spec/rust-alpha18-editor.json`](../vscode/spec/rust-alpha18-editor.json)
 and [`../vscode/spec/lexicon.v0.json`](../vscode/spec/lexicon.v0.json). This keeps
 the JetBrains plugin aligned with the reviewed Goblin++ editor contract instead
 of maintaining another hand-copied keyword list.

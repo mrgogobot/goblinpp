@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha17-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha18-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,16 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.17 runtime features", () => {
+test("completion combines legacy spellings with alpha.18 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 217);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 217);
+  assert.equal(entries.length, 219);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 219);
+  for (const spelling of ["sum", "mean"]) {
+    const entry = entries.find((item) => item.spelling === spelling);
+    assert.equal(entry.kind, "function");
+    assert.match(entry.detail, /non-empty numeric array/);
+    assert.equal(core.completionSnippet(entry), spelling + "(${1:values})");
+  }
   assert.deepEqual(
     entries.find((entry) => entry.spelling === "π"),
     { spelling: "π", kind: "constant", detail: "math.pi" },
@@ -274,10 +280,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.17 language coloring and extension identity are internally consistent", () => {
+test("alpha.18 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.12");
+  assert.equal(manifest.version, "0.1.13");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -285,6 +291,9 @@ test("alpha.17 language coloring and extension identity are internally consisten
     assert(comparisons.test(spelling));
   }
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+  for (const spelling of ["sum", "mean"]) {
+    assert(builtins.test(`${spelling}(`));
+  }
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
   for (const entry of runtimeVocabulary.functions.filter((entry) => entry.spelling.startsWith("ee_"))) {
     assert(builtins.test(`${entry.spelling}(`));
