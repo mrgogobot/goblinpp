@@ -92,7 +92,7 @@ fn chemistry_refuses_unsupported_formulae_and_dimension_mistakes() {
         "x = chem_atomic_weight(\"carbon\")\n",
         "x = chem_moles(1 s, chem_molar_mass(\"H2O\"))\n",
         "x = chem_concentration(1 mol, 1 kg)\n",
-        "c = chem_concentration(1 mol, 1 L)\nx = chem_dilution(c, 10 mL, 5 mL)\n",
+        "concentration = chem_concentration(1 mol, 1 L)\nx = chem_dilution(concentration, 10 mL, 5 mL)\n",
     ] {
         let parsed = parse_source(source).unwrap();
         assert!(

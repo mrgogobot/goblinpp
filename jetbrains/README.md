@@ -1,5 +1,9 @@
 # Goblin++ for JetBrains IDEs
 
+Plugin 0.3.5 accompanies engine alpha.20. Completion help marks constants
+read-only, requires consuming `append` results, and documents immediate
+source-template capture. See `docs/PROTECTED_VALUES.md` in the engine package.
+
 ![Goblin++ project logo](artwork/goblinpp.png)
 
 This plugin adds Goblin++ language and workflow support to IntelliJ Platform

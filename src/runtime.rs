@@ -61,6 +61,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     let started = timestamp();
     let mut receipt = json!({
         "schema": "goblin.run-receipt.v2", "goblin_version": crate::VERSION,
+        "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
         "paranoid_mode": false, "paranoid_postflight": Value::Null,
@@ -557,6 +558,19 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             return Err(protocol(
                 "UNREGISTERED_FREEZE_RECEIPT",
                 "The freeze receipt has no matching event in the clean custody ledger.",
+            ));
+        }
+        if report
+            .receipt
+            .as_ref()
+            .and_then(|value| value["language_semantics"].as_str())
+            != Some(crate::text_runtime::SEMANTICS_POLICY)
+        {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("LANGUAGE_SEMANTICS_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "LANGUAGE_SEMANTICS_CHANGED_AFTER_FREEZE",
+                "This source was frozen under different language semantics. Historical evidence remains verifiable. Create an explicit revision and freeze the child before running with this interpreter.",
             ));
         }
         return Ok(());

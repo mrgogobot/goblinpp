@@ -1,4 +1,29 @@
-# 0.1.0-alpha.19 (unreleased, tables/modules/native I/O)
+# 0.1.0-alpha.20 (local, unreleased, protected values)
+
+- Every registered constant alias is read-only, including `h` (Planck's
+  constant). Assignments are refused before evaluating their right-hand
+  side; nested bindings are checked. Expressions, templates and `seal h`
+  resolve the same registry value and record its use.
+- Discarded calls to registered value-only builtins are refused. `append`
+  remains copy-based: use `a = append(a, value)`. Effectful output/input and
+  user-function calls remain valid statements.
+- Source string literals capture `{name}` / `{name:.Nf}` placeholders
+  when evaluated, including assignments, function returns and array items.
+  Output and input prompts never reinterpret stored text. User input,
+  arguments and imported data remain plain text. `{{name}}` writes `{name}`.
+- Interpreter and native programs share the bounded template scanner. New
+  runs/freezes record a hashed `language_semantics` policy. Historical runs
+  and old freeze integrity remain verifiable, but old frozen sources require
+  explicit revision to adopt changed execution semantics. Diff reports flag
+  `LANGUAGE_SEMANTICS_CHANGE` even if outputs agree.
+- VS Code 0.1.15 and JetBrains 0.3.5 document protection, append result
+  consumption and immediate capture in completion help.
+
+No dependencies were added. Numeric round-trip formatting, deterministic
+math, bulk FITS selection/export, seeded RNG and larger budgets remain queued.
+See `docs/PROTECTED_VALUES.md` and `examples/protected_values.gbl`.
+
+## Previous stage: 0.1.0-alpha.19 (tables/modules/native I/O)
 
 Added ten explicit CSV/TSV readers: row/column counts, headers, text columns
 and checked numeric columns. UTF-8, quotes, strict row shape, unique headers,

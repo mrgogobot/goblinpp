@@ -199,7 +199,8 @@ fn builtin_math_names_cannot_be_shadowed_by_g_func() {
 #[test]
 fn legacy_radian_names_remain_compatible_and_warn_once_per_name() {
     let parsed =
-        parse_source("a = sin(pi / 2)\nb = sin(0)\nc = asin(1)\nd = atan2(1 m, 1 m)\n").unwrap();
+        parse_source("a = sin(pi / 2)\nb = sin(0)\nangle = asin(1)\nd = atan2(1 m, 1 m)\n")
+            .unwrap();
     let evaluation = Evaluation::new(".").eval_program(&parsed.program).unwrap();
     assert!((quantity(&evaluation, "a").value_si - 1.0).abs() < 1e-15);
     assert_eq!(evaluation.warnings.len(), 3);

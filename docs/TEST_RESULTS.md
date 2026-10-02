@@ -1,4 +1,31 @@
-# Alpha.19 tables, modules and compiled I/O (local, unreleased)
+# Alpha.20 protected values (local, unreleased)
+
+- Rust: 165 passed, 0 failed, using `cargo test --locked --offline --all-targets`
+  on macOS arm64 with Rust 1.92.0. Formatting, warning-denying Clippy and
+  whitespace checks pass. No dependencies were added.
+- VS Code 0.1.15: 16 passed, 0 failed, none skipped. Includes actual engine
+  check/run/compile/verify contracts and updated constant/append/prompt help.
+- JetBrains 0.3.5: 13 passed, 0 failed; installer builds offline with cached
+  IntelliJ 2024.3.7/JDK 21. This is not a new live CLion/PyCharm smoke test or
+  multi-version compatibility verification.
+- Eleven new Rust gates cover every registered constant alias, nested binding
+  validation, discarded value-only calls, independent append copies, preserved
+  refusals and preview diagnostics, eager templates across loops/arrays/returns/
+  concatenation/text/CSV/TSV/JSON output, literal/nested JSON braces, unknown
+  fields, formats/size limits, constant evidence/seals, input/argv/imported
+  braces, standalone native execution, old freeze revision enforcement in
+  run/compile, historical receipt integrity, policy diffs and marker tampering.
+- A real alpha.19 bug-reproduction run still independently verifies under
+  alpha.20. Synthetic historical freeze/receipt tests additionally cover
+  migration and policy boundaries without rewriting real user evidence.
+
+These are local results, not external CI, clean-machine dependency installation,
+authenticated authorship or scientific validation of the complete WB-1/WB-2
+workflow. GBL-004 onward remain queued. See [migration](PROTECTED_VALUES.md)
+and the backlog. Use `tools/verify_local.py <package-receipt>` to check the
+archive inventory and isolated installation after packaging.
+
+## Previous stage: Alpha.19 tables, modules and compiled I/O
 
 - Rust tests (`cargo test --locked --offline --all-targets`): 154 passed,
   0 failed on macOS arm64 with Rust 1.92.0.

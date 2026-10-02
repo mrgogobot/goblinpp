@@ -26,6 +26,7 @@ pub fn compile(
     allowed_inline: &[String],
 ) -> Result<Compilation> {
     parsed.require_executable_program()?;
+    crate::parser::validate_execution(&parsed.program)?;
     approved(&parsed.inline_rust, allowed_inline)?;
     let needs_data = requires_data_runtime(&parsed.program);
     let output = output.as_ref();
@@ -276,6 +277,19 @@ fn build_data_program(
 }
 
 fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
+    crate::parser::validate_execution(program)?;
+    let constant_lookup = crate::constants::CONSTANTS
+        .iter()
+        .flat_map(|constant| {
+            constant.aliases.iter().map(move |alias| {
+                format!(
+                    "{alias:?} => Value::q({:?}, {:?})?,",
+                    constant.value_si, constant.dimension
+                )
+            })
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     let data_runtime = if requires_data_runtime(program) {
         include_str!("compiled_data_runtime.rs")
     } else {
@@ -488,10 +502,10 @@ fn goblin_argv(index: Value, argv: &[String]) -> Result<Value, String> {{
     }}
     Ok(Value::Text(argv[index as usize].clone()))
 }}
-fn goblin_input(prompt: Value, env: &HashMap<String, Value>, argc: usize, steps: &mut usize) -> Result<Value, String> {{
+fn goblin_input(prompt: Value, steps: &mut usize) -> Result<Value, String> {{
     if *steps >= 1_024 {{ return Err("input() call limit exceeded.".into()); }}
     *steps += 1;
-    let prompt = match prompt {{ Value::Text(text) => interpolate(&text, env, argc)?, _ => return Err("input() prompt must be text.".into()) }};
+    let prompt = match prompt {{ Value::Text(text) => text, _ => return Err("input() prompt must be text.".into()) }};
     if prompt.len() > 65_536 {{ return Err("input() prompt is too long.".into()); }}
     if std::env::var_os("GOBLIN_STDIN_REPLAY").is_none() {{
         if std::env::var("GOBLIN_INPUT_PROMPT_PROTOCOL").as_deref() == Ok("hex-v1") {{
@@ -509,10 +523,10 @@ fn goblin_input(prompt: Value, env: &HashMap<String, Value>, argc: usize, steps:
     Ok(Value::Text(line))
 }}
 
-fn call_print(values: Vec<Result<Value, String>>, env: &HashMap<String, Value>, argc: usize) -> Result<(), String> {{
+fn call_print(values: Vec<Result<Value, String>>) -> Result<(), String> {{
     let values = values.into_iter().collect::<Result<Vec<_>, _>>()?;
     let text = if values.len() == 1 {{
-        match &values[0] {{ Value::Text(template) => interpolate(template, env, argc)?, value => value.render() }}
+        values[0].render()
     }} else {{ values.iter().map(Value::render).collect::<Vec<_>>().join(" ") }};
     println!("{{text}}"); Ok(())
 }}
@@ -535,22 +549,21 @@ fn call_printf(values: Vec<Result<Value, String>>) -> Result<(), String> {{
     output.push_str(&template[cursor..]); if argument != values.len() {{ return Err("printf has too many values".into()); }} println!("{{output}}"); Ok(())
 }}
 fn interpolate(template: &str, env: &HashMap<String, Value>, argc: usize) -> Result<String, String> {{
-    let mut output = String::new(); let mut cursor = 0;
-    while let Some(relative) = template[cursor..].find('{{') {{
-        let start = cursor + relative; output.push_str(&template[cursor..start]);
-        let end = template[start + 1..].find('}}').map(|v| start + 1 + v).ok_or("unclosed interpolation")?;
-        let field = &template[start + 1..end]; let (name, spec) = field.split_once(':').map_or((field, None), |(n, s)| (n, Some(s)));
-        let argc_value = Value::Q(argc as f64, ZERO);
-        let value = if name == "argc" {{ &argc_value }} else {{ env.get(name).ok_or_else(|| unknown(name))? }};
-        match (value, spec) {{
+    goblin_text::snapshot(template, |name, spec| {{
+        let value = match name {{
+            "argc" => Value::Q(argc as f64, ZERO),
+            {constant_lookup}
+            _ => get(env, name)?,
+        }};
+        match (&value, spec) {{
             (Value::Q(number, dim), Some(spec)) => {{
-                output.push_str(&format_numeric(*number, spec).ok_or("only .Nf and .Ne formatting are supported")?); let unit = format_dim(*dim); if unit != "1" {{ output.push(' '); output.push_str(&unit); }}
+                let mut text = format_numeric(*number, spec).ok_or("only .Nf and .Ne formatting are supported")?;
+                let unit = format_dim(*dim); if unit != "1" {{ text.push(' '); text.push_str(&unit); }}
+                Ok(text)
             }}
-            (value, None) => output.push_str(&value.render()), _ => return Err("format requires quantity".into()),
+            (value, None) => Ok(value.render()), _ => Err("format requires quantity".into()),
         }}
-        cursor = end + 1;
-    }}
-    output.push_str(&template[cursor..]); Ok(output)
+    }})
 }}
 fn format_number(value: f64) -> String {{
     if value == 0.0 {{ return "0".into(); }}
@@ -669,7 +682,7 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
             }
             Stmt::Expression(Expr::Call { name, args }) if name == "print" => {
                 body.push_str(&format!(
-                    "    call_print(vec![{}], &goblin_env, goblin_args.len())?;\n",
+                    "    call_print(vec![{}])?;\n",
                     args.iter()
                         .map(generate_expr)
                         .collect::<Result<Vec<_>>>()?
@@ -689,8 +702,12 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                 body.push_str(&format!("    let _ = ({})?;\n", generate_expr(expr)?));
             }
             Stmt::Seal(name) => {
+                let expr = generate_expr(&Expr::Name {
+                    source: name.clone(),
+                    canonical_id: crate::constants::resolve(name).map(|c| c.id.to_string()),
+                })?;
                 body.push_str(&format!(
-                    "    goblin_sealed_values.insert({name:?}.into(), get(&goblin_env, {name:?})?);\n"
+                    "    goblin_sealed_values.insert({name:?}.into(), ({expr})?);\n"
                 ));
             }
             Stmt::For {
@@ -833,7 +850,9 @@ fn generate_expr(expression: &Expr) -> Result<String> {
     Ok(match expression {
         Expr::Number(value) => format!("Value::scalar({value:?})"),
         Expr::Bool(value) => format!("Ok::<Value, String>(Value::Bool({value}))"),
-        Expr::Text(value) => format!("Ok::<Value, String>(Value::Text({value:?}.into()))"),
+        Expr::Text(value) => {
+            format!("interpolate({value:?}, &goblin_env, goblin_args.len()).map(Value::Text)")
+        }
         Expr::QuantityLiteral { value, unit } => {
             let unit = crate::quantity::unit(unit)
                 .ok_or_else(|| GoblinError::compile(format!("Unknown unit {unit}.")))?;
@@ -1047,9 +1066,7 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             } else {
                 "Ok::<Value, String>(Value::Text(String::new()))".into()
             };
-            format!(
-                "goblin_input(({prompt})?, &goblin_env, goblin_args.len(), &mut goblin_input_steps)"
-            )
+            format!("goblin_input(({prompt})?, &mut goblin_input_steps)")
         }
         Expr::Call { name, args } => format!(
             "goblin_call({name:?}, vec![{}], &goblin_args, &mut goblin_loop_steps, &mut goblin_input_steps, goblin_call_depth + 1)",

@@ -158,7 +158,8 @@ fn evaluates_the_python_007_normative_success_corpus() {
         "x = print(\"hello\")\n",
         "label = \"trial\"\nseal label\n",
         "x = pi\ny = π\n",
-        "c = 1\nx = c\n",
+        // Constant reads remain compatible; shadowing is now explicitly refused.
+        "x = c\n",
         "1 + 2\n",
     ];
     for source in cases {

@@ -190,6 +190,7 @@ impl Evaluation {
     }
 
     pub fn register_functions(&mut self, program: &Program) -> Result<()> {
+        crate::parser::validate_execution(program)?;
         for statement in &program.statements {
             if let Stmt::Function { name, params, body } = statement
                 && self
@@ -204,6 +205,7 @@ impl Evaluation {
     }
 
     pub fn eval_stmt(&mut self, statement: &Stmt) -> Result<()> {
+        crate::parser::validate_statement(statement)?;
         self.eval_stmt_flow(statement).map(|_| ())
     }
 
@@ -235,6 +237,7 @@ impl Evaluation {
             }
             Stmt::Directive(name) => Err(GoblinError::parse(format!("Unknown directive: {name}"))),
             Stmt::Assign { name, expr } => {
+                crate::parser::require_writable_name(name)?;
                 let value = self.eval_expr(expr)?;
                 self.env.insert(name.clone(), value);
                 Ok(ExecFlow::Normal)
@@ -267,7 +270,10 @@ impl Evaluation {
                 Ok(ExecFlow::Normal)
             }
             Stmt::Seal(name) => {
-                let value = self.env.get(name).cloned().ok_or_else(|| unknown(name))?;
+                let value = self.eval_expr(&Expr::Name {
+                    source: name.clone(),
+                    canonical_id: crate::constants::resolve(name).map(|c| c.id.to_string()),
+                })?;
                 self.sealed.insert(name.clone(), value);
                 Ok(ExecFlow::Normal)
             }
@@ -409,7 +415,7 @@ impl Evaluation {
         match expression {
             Expr::Number(value) => Ok(Value::Quantity(Quantity::scalar(*value)?)),
             Expr::Bool(value) => Ok(Value::Bool(*value)),
-            Expr::Text(value) => Ok(Value::Text(value.clone())),
+            Expr::Text(value) => self.interpolate(value).map(Value::Text),
             Expr::QuantityLiteral { value, unit } => {
                 Ok(Value::Quantity(Quantity::from_unit(*value, unit)?))
             }
@@ -655,7 +661,7 @@ impl Evaluation {
                 require_args_one_of(name, args, &[0, 1])?;
                 let prompt = if let Some(expr) = args.first() {
                     let value = self.eval_expr(expr)?;
-                    self.interpolate(value.text(name)?)?
+                    value.text(name)?.to_string()
                 } else {
                     String::new()
                 };
@@ -668,7 +674,7 @@ impl Evaluation {
                     .collect::<Result<Vec<_>>>()?;
                 let text = if values.len() == 1 {
                     match &values[0] {
-                        Value::Text(template) => self.interpolate(template)?,
+                        Value::Text(text) => text.clone(),
                         value => value.render(),
                     }
                 } else {
@@ -1347,7 +1353,7 @@ impl Evaluation {
 
     fn export_cell(&self, value: &Value) -> Result<String> {
         match value {
-            Value::Text(template) => self.interpolate(template),
+            Value::Text(text) => Ok(text.clone()),
             value => Ok(value.render()),
         }
     }
@@ -1491,44 +1497,23 @@ impl Evaluation {
         self.eval_call(name, &args)
     }
 
-    fn interpolate(&self, template: &str) -> Result<String> {
-        let mut output = String::new();
-        let mut cursor = 0;
-        while let Some(relative) = template[cursor..].find('{') {
-            let start = cursor + relative;
-            output.push_str(&template[cursor..start]);
-            let end = template[start + 1..]
-                .find('}')
-                .map(|value| start + 1 + value)
-                .ok_or_else(|| GoblinError::parse("Unclosed print interpolation."))?;
-            let field = &template[start + 1..end];
-            let (name, spec) = field
-                .split_once(':')
-                .map_or((field, None), |(name, spec)| (name, Some(spec)));
-            if name.is_empty()
-                || !name.chars().enumerate().all(|(index, ch)| {
-                    if index == 0 {
-                        ch.is_ascii_alphabetic() || ch == '_'
-                    } else {
-                        ch.is_ascii_alphanumeric() || ch == '_'
-                    }
+    fn interpolate(&mut self, template: &str) -> Result<String> {
+        // Preserve the underlying diagnostic code (notably unknown-symbol G101).
+        let mut failure = None;
+        let result = crate::text_runtime::snapshot(template, |name, spec| {
+            let result = self
+                .eval_expr(&Expr::Name {
+                    source: name.into(),
+                    canonical_id: crate::constants::resolve(name).map(|c| c.id.to_string()),
                 })
-            {
-                return Err(GoblinError::parse(format!(
-                    "Invalid print interpolation {{{field}}}."
-                )));
-            }
-            let argc_value = Value::Quantity(Quantity::scalar(self.interaction.argv.len() as f64)?);
-            let value = if name == "argc" {
-                &argc_value
-            } else {
-                self.env.get(name).ok_or_else(|| unknown(name))?
-            };
-            output.push_str(&format_value(value, spec)?);
-            cursor = end + 1;
-        }
-        output.push_str(&template[cursor..]);
-        Ok(output)
+                .and_then(|value| format_value(&value, spec));
+            result.map_err(|error| {
+                let message = error.message.clone();
+                failure = Some(error);
+                message
+            })
+        });
+        result.map_err(|message| failure.unwrap_or_else(|| GoblinError::parse(message)))
     }
 
     pub fn data_imports(&self) -> Vec<DataImport> {

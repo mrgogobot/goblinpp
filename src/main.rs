@@ -316,9 +316,11 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         vec![file.to_string_lossy().to_string()],
         InputPolicy::Disabled,
     )?;
-    let mut error = None;
-    evaluation.register_functions(&parsed.program)?;
+    let mut error = evaluation.register_functions(&parsed.program).err();
     for statement in &parsed.program.statements {
+        if error.is_some() {
+            break;
+        }
         if matches!(statement, Stmt::InlineRust { .. }) {
             continue;
         }
@@ -329,6 +331,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
     }
     let report = json!({
         "schema": "goblin.check.v1", "goblin_version": goblinpp::VERSION,
+        "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
@@ -385,6 +388,17 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
             return Err(GoblinError::protocol(
                 "UNREGISTERED_FREEZE_RECEIPT",
                 "The source freeze is not registered in a clean custody ledger. Compilation refused.",
+            ));
+        }
+        if freeze
+            .receipt
+            .as_ref()
+            .and_then(|value| value["language_semantics"].as_str())
+            != Some(goblinpp::text_runtime::SEMANTICS_POLICY)
+        {
+            return Err(GoblinError::protocol(
+                "LANGUAGE_SEMANTICS_CHANGED_AFTER_FREEZE",
+                "The freeze uses different language semantics.\n\nClassification:\nLANGUAGE_SEMANTICS_CHANGED_AFTER_FREEZE\n\nCompilation refused. Create an explicit revision and freeze the child to adopt the current semantics.",
             ));
         }
     }
@@ -509,6 +523,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             yn(report.paranoid_mode_same),
             yn(report.execution_engine_same),
             report.classification
+        );
+        println!(
+            "LANGUAGE_SEMANTICS_SAME ....... {}",
+            yn(report.language_semantics_same)
         );
     }
     Ok(0)

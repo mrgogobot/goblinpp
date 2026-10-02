@@ -1,4 +1,9 @@
-# Goblin++ Rust Engine 0.1.0-alpha.19 (unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.20 (local, unreleased)
+
+Alpha.20 fixes protected constant names, discarded value-only builtin calls,
+and delayed string interpolation. Source string placeholders now capture
+values immediately, once. See [the migration guide](docs/PROTECTED_VALUES.md)
+before updating an existing frozen project. Historical receipts remain verifiable.
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 

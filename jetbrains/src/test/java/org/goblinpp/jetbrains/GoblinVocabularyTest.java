@@ -8,6 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void protectedValuesHaveExplicitCompletionHelp() {
+        assertTrue(GoblinVocabulary.find("h").detail().contains("Read-only"));
+        assertTrue(GoblinVocabulary.find("append").detail().contains("Discarded"));
+        assertTrue(GoblinVocabulary.find("input").detail().contains("capture immediately"));
+    }
+    @Test
     void loadsCurrentEditorVocabulary() {
         assertTrue(GoblinVocabulary.entries().size() >= 100);
         assertEquals("function", GoblinVocabulary.find("sqrt").kind());

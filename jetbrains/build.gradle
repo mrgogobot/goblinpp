@@ -36,7 +36,7 @@ java {
 def generatedResources = layout.buildDirectory.dir('generated-resources')
 
 tasks.register('generateGoblinVocabulary') {
-    def editorSpec = file('../vscode/spec/rust-alpha19-editor.json')
+    def editorSpec = file('../vscode/spec/rust-alpha20-editor.json')
     def lexiconSpec = file('../vscode/spec/lexicon.v0.json')
     inputs.files(editorSpec, lexiconSpec)
     outputs.dir(generatedResources)
@@ -67,7 +67,7 @@ tasks.register('generateGoblinVocabulary') {
         }
         lexicon.vocabulary.constants.each { item ->
             item.aliases.each { alias ->
-                entries << [alias, 'constant', "Scientific constant ${item.canonical_id}.", '']
+                entries << [alias, 'constant', "Scientific constant ${item.canonical_id}. Read-only registered constant; cannot be assigned or shadowed.", '']
             }
         }
         lexicon.vocabulary.units.each { item ->

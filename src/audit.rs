@@ -28,6 +28,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub language_semantics_same: bool,
     pub source_bytes_same: bool,
     pub canonical_program_same: bool,
     pub sealed_artifacts_same: bool,
@@ -643,6 +644,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     };
     let source_bytes_same = at(&left, &["source", "sha256"]) == at(&right, &["source", "sha256"])
         && module_sources(&left) == module_sources(&right);
+    let language_semantics_same =
+        at(&left, &["language_semantics"]) == at(&right, &["language_semantics"]);
     let canonical_program_same =
         at(&left, &["canonical_source", "sha256"]) == at(&right, &["canonical_source", "sha256"]);
     let sealed_artifacts_same = normalized_artifacts(&left) == normalized_artifacts(&right);
@@ -675,7 +678,9 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     .flatten()
     .any(|value| value == "NOTATION_ONLY_CHANGE_AFTER_FREEZE");
     let different_named_sources = at(&left, &["source", "path"]) != at(&right, &["source", "path"]);
-    let classification = if source_bytes_same && equivalent_result {
+    let classification = if !language_semantics_same {
+        "LANGUAGE_SEMANTICS_CHANGE"
+    } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
         "NOTATION_ONLY_CHANGE_AFTER_FREEZE"
@@ -689,6 +694,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        language_semantics_same,
         source_bytes_same,
         canonical_program_same,
         sealed_artifacts_same,

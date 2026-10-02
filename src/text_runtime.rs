@@ -2,6 +2,80 @@
 // Keep its public functions independent of the Goblin++ crate.
 pub const MAX_TEXT_BYTES: usize = 1_048_576;
 pub const MAX_TEXT_PARTS: usize = 100_000;
+pub const SEMANTICS_POLICY: &str = "goblin.eager-text-and-protected-values.v1";
+
+/// Capture source-literal placeholders exactly once. Resolver results are plain text,
+/// never scanned again. Double braces escape placeholders; JSON/code braces are literal.
+pub fn snapshot(
+    template: &str,
+    mut resolve: impl FnMut(&str, Option<&str>) -> Result<String, String>,
+) -> Result<String, String> {
+    let mut output = String::new();
+    let mut cursor = 0;
+    let mut escaped_openings = 0;
+    while cursor < template.len() {
+        let remaining = &template[cursor..];
+        if remaining.starts_with("{{") {
+            output.push('{');
+            escaped_openings += 1;
+            cursor += 2;
+        } else if remaining.starts_with("}}") && escaped_openings > 0 {
+            output.push('}');
+            escaped_openings -= 1;
+            cursor += 2;
+        } else if let Some(opened) = remaining.strip_prefix('{') {
+            if let Some(end) = remaining.find('}') {
+                let field = &remaining[1..end];
+                let (name, spec) = field
+                    .split_once(':')
+                    .map_or((field, None), |(name, spec)| (name, Some(spec)));
+                if template_name(name) {
+                    output.push_str(&resolve(name, spec)?);
+                    cursor += end + 1;
+                } else if name
+                    .chars()
+                    .next()
+                    .is_some_and(|ch| ch.is_alphabetic() || ch == '_')
+                {
+                    return Err(format!(
+                        "Invalid text interpolation {{{field}}}. Use {{{{ and }}}} for literal placeholders."
+                    ));
+                } else {
+                    output.push('{');
+                    cursor += 1;
+                }
+            } else {
+                if template_name(opened.split(':').next().unwrap_or("")) {
+                    return Err(
+                        "Unclosed text interpolation. Use {{ for a literal opening brace.".into(),
+                    );
+                }
+                output.push('{');
+                cursor += 1;
+            }
+        } else {
+            let ch = remaining.chars().next().unwrap();
+            output.push(ch);
+            cursor += ch.len_utf8();
+        }
+        if output.len() > MAX_TEXT_BYTES {
+            return Err(format!("Text result exceeds {MAX_TEXT_BYTES} UTF-8 bytes."));
+        }
+    }
+    bounded(output)
+}
+
+fn template_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.chars().enumerate().all(|(index, ch)| {
+            ch == '_'
+                || if index == 0 {
+                    ch.is_alphabetic()
+                } else {
+                    ch.is_alphanumeric()
+                }
+        })
+}
 
 pub fn bounded(value: String) -> Result<String, String> {
     if value.len() > MAX_TEXT_BYTES {

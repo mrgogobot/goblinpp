@@ -206,7 +206,7 @@ function vocabularyEntries(lexicon, runtimeVocabulary = {}) {
       entries.push({
         spelling: alias,
         kind: "constant",
-        detail: constant.detail || constant.canonical_id,
+        detail: `${constant.detail || constant.canonical_id}. Read-only registered constant; cannot be assigned or shadowed.`,
       });
     }
   }

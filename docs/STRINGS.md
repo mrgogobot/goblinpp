@@ -18,6 +18,10 @@ print("answer = {answer}")
 
 `+` joins two text values; it still adds two quantities. Mixing text and a quantity is an error: use `to_text(value)` explicitly. `to_text` renders quantities, Booleans, or text for labels—not lossless serialization of scientific values. It refuses arrays; use `str_join` for an array of text. `len(text)` counts Unicode scalar values—not UTF-8 bytes or user-perceived grapheme clusters. Thus `len("π")` is 1, while `len("é")` (letter plus combining mark) is 2. `len(array)` still counts elements. Text operations are case-sensitive, do not normalize Unicode, and do not change existing source hashing rules.
 
+Since alpha.20, source-literal placeholders capture values immediately, once.
+Stored/user/data text is never expanded again during output. Use `"{{name}}"`
+for literal `{name}`. See [protected values and migration](PROTECTED_VALUES.md).
+
 The `g_strings` built-ins are:
 
 | Call | Result |

@@ -1,6 +1,6 @@
-# Goblin++ for Visual Studio Code 0.1.14 (unreleased)
+# Goblin++ for Visual Studio Code 0.1.15 (local, unreleased)
 
-Editor support for the Goblin++ Rust engine **0.1.0-alpha.19** (unreleased tables/modules/native I/O stage). This extension keeps the existing `goblinpp-project.goblinpp` identity, so it updates the earlier VS Code extension rather than creating a second language mode.
+Editor support for the Goblin++ Rust engine **0.1.0-alpha.20** (protected values). Constant help marks names read-only; append help requires consuming its independent copy, and prompts document immediate template capture. This extension keeps the existing `goblinpp-project.goblinpp` identity, updating the earlier extension rather than creating a second language mode.
 
 Completions and highlighting include `import`, CSV/TSV readers, and the existing
 FITS/output calls, now available in compiled runs. Use the engine's
@@ -18,7 +18,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.14.vsix` once that package has been built and reviewed. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.15.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

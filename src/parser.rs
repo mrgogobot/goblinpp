@@ -109,6 +109,100 @@ pub fn reserved_function_name(name: &str) -> bool {
         || is_unit(name)
 }
 
+/// Execution checks are intentionally separate from syntax/canonical parsing:
+/// historical receipts must remain verifiable without executing their programs.
+pub fn validate_execution(program: &Program) -> Result<()> {
+    validate_statements(&program.statements)
+}
+
+pub fn validate_statement(statement: &Stmt) -> Result<()> {
+    validate_statements(std::slice::from_ref(statement))
+}
+
+pub fn require_writable_name(name: &str) -> Result<()> {
+    if resolve(name).is_some() {
+        return Err(GoblinError::parse(format!(
+            "{name} is a registered constant and cannot be assigned or shadowed. Choose a different variable name."
+        )));
+    }
+    Ok(())
+}
+
+fn value_only_builtin(name: &str) -> bool {
+    // Effectful calls and user-defined functions may intentionally be statements.
+    // All registered value-returning builtins must have their result consumed.
+    reserved_function_name(name)
+        && !matches!(
+            name,
+            "input"
+                | "print"
+                | "printf"
+                | "write_text"
+                | "write_csv"
+                | "write_tsv"
+                | "write_json"
+                | "plot_fits_histogram"
+                | "plot_fits_scatter"
+        )
+        && resolve(name).is_none()
+        && !is_unit(name)
+        && !name.starts_with("__goblin_")
+        || matches!(name, "sum" | "mean")
+}
+
+fn validate_statements(statements: &[Stmt]) -> Result<()> {
+    for statement in statements {
+        match statement {
+            Stmt::Assign { name, .. } | Stmt::IndexAssign { name, .. } => {
+                require_writable_name(name)?
+            }
+            Stmt::Function { name, params, body } => {
+                require_writable_name(name)?;
+                for param in params {
+                    require_writable_name(param)?;
+                }
+                validate_statements(body)?;
+            }
+            Stmt::For { variable, body, .. } | Stmt::ForEach { variable, body, .. } => {
+                require_writable_name(variable)?;
+                validate_statements(body)?;
+            }
+            Stmt::While { body, .. } => validate_statements(body)?,
+            Stmt::If {
+                branches,
+                else_body,
+            } => {
+                for (_, body) in branches {
+                    validate_statements(body)?;
+                }
+                if let Some(body) = else_body {
+                    validate_statements(body)?;
+                }
+            }
+            Stmt::Switch { cases, default, .. } => {
+                for (_, body) in cases {
+                    validate_statements(body)?;
+                }
+                if let Some(body) = default {
+                    validate_statements(body)?;
+                }
+            }
+            Stmt::Expression(Expr::Call { name, .. }) if value_only_builtin(name) => {
+                return Err(GoblinError::parse(format!(
+                    "Discarded result of {name}(). Assign, return, print, or otherwise use its value. {}",
+                    if name == "append" {
+                        "append() returns an independent copy; use a = append(a, value)."
+                    } else {
+                        "This builtin does not mutate its arguments."
+                    }
+                )));
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
 #[derive(Debug, Clone)]
 pub struct ParsedSource {
     pub program: Program,

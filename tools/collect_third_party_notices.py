@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 
@@ -110,7 +111,7 @@ def main() -> None:
     lines = [
         "# Third-party notices",
         "",
-        "This notice bundle accompanies the Goblin++ 0.1.0-alpha.17 macOS arm64 binary.",
+        f"This notice bundle accompanies the Goblin++ {tomllib.loads((ROOT / 'Cargo.toml').read_text())['package']['version']} macOS arm64 binary.",
         "It was collected offline from the exact `Cargo.lock` normal-dependency tree",
         f"for `{TARGET}` and from the active Rust standard-library documentation.",
         "It records upstream terms; it does not replace them or constitute legal advice.",

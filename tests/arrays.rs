@@ -40,11 +40,11 @@ fn arrays_copy_slice_index_append_and_loop_agree_across_engines() {
 
 #[test]
 fn empty_open_and_chained_slices_are_independent() {
-    let parsed = parse_source("a = []\na = append(a, \"red\")\na = append(a, \"blue\")\nb = a[:]\nb[0] = \"green\"\nc = a[1:][0]\nseal a\nseal b\nseal c\n").unwrap();
+    let parsed = parse_source("a = []\na = append(a, \"red\")\na = append(a, \"blue\")\nb = a[:]\nb[0] = \"green\"\npicked = a[1:][0]\nseal a\nseal b\nseal picked\n").unwrap();
     let result = Evaluation::new(".").eval_program(&parsed.program).unwrap();
     assert_eq!(result.sealed["a"].render(), "[red, blue]");
     assert_eq!(result.sealed["b"].render(), "[green, blue]");
-    assert_eq!(result.sealed["c"].render(), "blue");
+    assert_eq!(result.sealed["picked"].render(), "blue");
 }
 
 #[test]
