@@ -12,6 +12,7 @@ final class GoblinVocabularyTest {
         assertTrue(GoblinVocabulary.find("h").detail().contains("Read-only"));
         assertTrue(GoblinVocabulary.find("append").detail().contains("Discarded"));
         assertTrue(GoblinVocabulary.find("input").detail().contains("capture immediately"));
+        assertTrue(GoblinVocabulary.find("to_text").detail().contains("round-trips, including -0"));
     }
     @Test
     void loadsCurrentEditorVocabulary() {

@@ -1,4 +1,35 @@
-# Alpha.20 protected values (local, unreleased)
+# Alpha.21 lossless numeric text (local, unreleased)
+
+- Rust: 170 passed, 0 failed, no filtered tests in the final full run of
+  `cargo test --locked --offline --all-targets` on macOS arm64/Rust 1.92.0.
+  Formatting, warning-denying Clippy and whitespace checks pass.
+- VS Code 0.1.16: 16 passed, 0 failed, none skipped; actual engine
+  check/run/compile/verify gates and round-trip completion help included.
+- JetBrains 0.3.6: 13 passed, 0 failed; installer builds offline against
+  cached IntelliJ 2024.3.7/JDK 21. No new live CLion/PyCharm test or
+  multi-version compatibility claim is made.
+- Five new Rust gates check 100,000 deterministic finite f64 bit patterns,
+  including signed zero, subnormals, extremes and notation boundaries;
+  both-engine 32-value print/template/to_text/parse round trips, CSV/TSV/text
+  bytes, JSON/seals and independent verification; unchanged explicit
+  precision, unitful SI output, numeric refusals, alpha.20 freeze revision
+  enforcement and preserved protocol-violation evidence.
+- The untouched, SHA-256-verified alpha.20 local binary reproduced truncated
+  numeric text and a false round-trip comparison. Its real preserved run
+  independently verifies under alpha.21 without rewriting old evidence.
+- Existing energy canonical hashing, dimensions, old receipt/registry
+  compatibility, scientific functions and paranoid custody gates pass.
+
+These are local results, not external CI, exhaustive enumeration of all f64
+values, arbitrary precision or cross-platform deterministic maths. No
+dependencies were added. GBL-004 is implemented; GBL-005 onward remain queued.
+See [the numeric contract and migration guide](NUMERIC_TEXT.md).
+`tools/verify_local.py <package-receipt>` additionally checks artifact hashes,
+ZIP/inventory integrity and an isolated install, running five examples in
+both modes with independent verification. Package-validation output is
+reported separately after creating the immutable archive.
+
+## Previous stage: Alpha.20 protected values
 
 - Rust: 165 passed, 0 failed, using `cargo test --locked --offline --all-targets`
   on macOS arm64 with Rust 1.92.0. Formatting, warning-denying Clippy and

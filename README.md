@@ -1,9 +1,10 @@
-# Goblin++ Rust Engine 0.1.0-alpha.20 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.21 (local, unreleased)
 
-Alpha.20 fixes protected constant names, discarded value-only builtin calls,
-and delayed string interpolation. Source string placeholders now capture
-values immediately, once. See [the migration guide](docs/PROTECTED_VALUES.md)
-before updating an existing frozen project. Historical receipts remain verifiable.
+Alpha.21 makes default numeric text lossless for the stored finite floating-point
+value, including signed zero. Explicit formats such as `.3f` still round labels.
+See [numeric text and migration](docs/NUMERIC_TEXT.md) before updating an existing
+frozen project. Historical receipts remain verifiable. Alpha.20's protected
+constants, consumed copy-based append, and immediate string capture are retained.
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
@@ -24,6 +25,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
 - [Statistics basics: sum and mean](docs/STATISTICS.md)
 - [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
+- [Lossless numeric text and explicit presentation precision](docs/NUMERIC_TEXT.md)
 
 The ordinary command interprets a saved `.gbl` file:
 

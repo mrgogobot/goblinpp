@@ -566,11 +566,7 @@ fn interpolate(template: &str, env: &HashMap<String, Value>, argc: usize) -> Res
     }})
 }}
 fn format_number(value: f64) -> String {{
-    if value == 0.0 {{ return "0".into(); }}
-    if value.abs() >= 1e15 || value.abs() < 1e-4 {{
-        let raw = format!("{{value:.14e}}"); let (mantissa, exponent) = raw.split_once('e').unwrap();
-        format!("{{}}e{{:+}}", mantissa.trim_end_matches('0').trim_end_matches('.'), exponent.parse::<i32>().unwrap())
-    }} else {{ format!("{{value:.15}}").trim_end_matches('0').trim_end_matches('.').to_string() }}
+    goblin_text::format_number(value)
 }}
 fn format_numeric(value: f64, spec: &str) -> Option<String> {{
     let digits = spec.strip_prefix('.')?;

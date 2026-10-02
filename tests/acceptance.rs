@@ -11,7 +11,7 @@ use tempfile::tempdir;
 const ENERGY: &str = "GO_PARANOID\n\nmass = 1 kg\nenergy = mass * c^2\n\nprint(\"Energy = {energy}\")\nseal energy\n";
 
 #[test]
-fn rust_interpreter_matches_reference_energy_contract() {
+fn energy_preserves_reference_numeric_and_canonical_contract_with_roundtrip_text() {
     let root = tempdir().unwrap();
     let source = root.path().join("energy.gbl");
     fs::write(&source, ENERGY).unwrap();
@@ -26,7 +26,7 @@ fn rust_interpreter_matches_reference_energy_contract() {
     assert_eq!(receipt["execution"]["engine"], "rust-interpreter");
     assert_eq!(
         fs::read_to_string(run.join("stdout.log")).unwrap(),
-        "Energy = 8.98755178736818e+16 J\n"
+        "Energy = 8.987551787368176e+16 J\n"
     );
     assert!(verify_run(run).unwrap().verified);
 }

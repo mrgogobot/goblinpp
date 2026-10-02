@@ -1,6 +1,7 @@
 # Goblin++ for JetBrains IDEs
 
-Plugin 0.3.5 accompanies engine alpha.20. Completion help marks constants
+Plugin 0.3.6 accompanies engine alpha.21. Completion help documents lossless
+default numeric text and signed zero, and marks constants
 read-only, requires consuming `append` results, and documents immediate
 source-template capture. See `docs/PROTECTED_VALUES.md` in the engine package.
 

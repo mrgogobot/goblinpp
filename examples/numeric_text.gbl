@@ -1,0 +1,17 @@
+GO_PARANOID
+
+# Default text preserves the stored floating-point value, not a rounded label.
+value = 0.12345678901234567
+saved = to_text(value)
+restored = parse_number(saved)
+same = value == restored
+print("saved = {saved}; restored exactly = {same}")
+print("rounded label = {value:.3f}")
+
+negative_zero = -0
+print("signed zero = {negative_zero}")
+write_csv("numbers.csv", 2, "original", "restored", value, restored)
+write_text("numbers.txt", saved)
+write_json("numbers.json", "original", value, "restored", restored)
+seal value
+seal restored

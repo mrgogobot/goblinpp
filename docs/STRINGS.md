@@ -16,7 +16,7 @@ answer = number * 2
 print("answer = {answer}")
 ```
 
-`+` joins two text values; it still adds two quantities. Mixing text and a quantity is an error: use `to_text(value)` explicitly. `to_text` renders quantities, Booleans, or text for labels—not lossless serialization of scientific values. It refuses arrays; use `str_join` for an array of text. `len(text)` counts Unicode scalar values—not UTF-8 bytes or user-perceived grapheme clusters. Thus `len("π")` is 1, while `len("é")` (letter plus combining mark) is 2. `len(array)` still counts elements. Text operations are case-sensitive, do not normalize Unicode, and do not change existing source hashing rules.
+`+` joins two text values; it still adds two quantities. Mixing text and a quantity is an error: use `to_text(value)` explicitly. Since alpha.21, default finite numeric text round-trips the stored f64, including signed zero. Unitless text can be read back with `parse_number`; unitful text includes SI units and is not accepted by that function. See [numeric text](NUMERIC_TEXT.md). `to_text` also renders Booleans or text, but refuses arrays; use `str_join` for an array of text. `len(text)` counts Unicode scalar values—not UTF-8 bytes or user-perceived grapheme clusters. Thus `len("π")` is 1, while `len("é")` (letter plus combining mark) is 2. `len(array)` still counts elements. Text operations are case-sensitive, do not normalize Unicode, and do not change existing source hashing rules.
 
 Since alpha.20, source-literal placeholders capture values immediately, once.
 Stored/user/data text is never expanded again during output. Use `"{{name}}"`

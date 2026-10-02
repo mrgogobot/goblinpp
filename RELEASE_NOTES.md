@@ -1,4 +1,20 @@
-# 0.1.0-alpha.20 (local, unreleased, protected values)
+# 0.1.0-alpha.21 (local, unreleased, lossless numeric text)
+
+- One shared shortest-round-trip formatter for default finite numeric text in
+  both engines: print, eager placeholders, to_text, text/CSV/TSV cells and arrays.
+  Signed zero is preserved. Explicit presentation precision remains unchanged.
+- JSON/sealed serialization and exact-bit native manifests remain intact.
+  Nonfinite and unsafe integer input refusals are retained.
+- The hashed semantics policy advances to round-trip-numbers.v2. Historical
+  evidence still verifies; alpha.20 and older frozen execution requires an
+  explicit revision. Output hashes may change.
+- VS Code 0.1.16 and JetBrains 0.3.6 include matching completion help.
+
+See `docs/NUMERIC_TEXT.md` and `examples/numeric_text.gbl`. No dependencies
+were added. Cross-platform math, compound-unit literals and GBL-005 onward
+remain queued. This is not an arbitrary-precision or exact-integer feature.
+
+## Previous stage: 0.1.0-alpha.20 (protected values)
 
 - Every registered constant alias is read-only, including `h` (Planck's
   constant). Assignments are refused before evaluating their right-hand

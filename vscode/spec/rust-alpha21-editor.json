@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.20",
+  "runtime": "goblin++ 0.1.0-alpha.21",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
     {
@@ -171,7 +171,7 @@
     {
       "spelling": "to_text",
       "kind": "function",
-      "detail": "Render a quantity, Boolean, or text for labels; arrays are refused and scientific precision is not guaranteed.",
+      "detail": "Render quantity, Boolean, or text; default finite numeric text round-trips, including -0. Unitless numbers can use parse_number; unitful text includes SI units. Arrays are refused.",
       "snippet": "to_text(${1:value})"
     },
     {

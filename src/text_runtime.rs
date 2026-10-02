@@ -2,7 +2,23 @@
 // Keep its public functions independent of the Goblin++ crate.
 pub const MAX_TEXT_BYTES: usize = 1_048_576;
 pub const MAX_TEXT_PARTS: usize = 100_000;
-pub const SEMANTICS_POLICY: &str = "goblin.eager-text-and-protected-values.v1";
+pub const SEMANTICS_POLICY: &str = "goblin.eager-text-and-roundtrip-numbers.v2";
+
+/// Shortest round-trip decimal text for finite f64 values, including signed zero.
+/// Scientific notation also avoids parse_number's exact-integer input guard for
+/// large floating-point values. Explicit presentation precision is separate.
+pub fn format_number(value: f64) -> String {
+    if value != 0.0 && (value.abs() >= 1e15 || value.abs() < 1e-4) {
+        let raw = format!("{value:e}");
+        if let Some((mantissa, exponent)) = raw.split_once('e') {
+            let exponent: i32 = exponent.parse().expect("Rust f64 exponent");
+            return format!("{mantissa}e{exponent:+}");
+        }
+        raw
+    } else {
+        value.to_string()
+    }
+}
 
 /// Capture source-literal placeholders exactly once. Resolver results are plain text,
 /// never scanned again. Double braces escape placeholders; JSON/code braces are literal.

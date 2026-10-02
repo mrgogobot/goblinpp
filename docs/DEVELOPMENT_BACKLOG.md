@@ -6,7 +6,7 @@ Logged 2026-10-02 from Malin Hess's WB-1 experience. Baseline:
 
 This document records work to investigate, fix, or add. **None of these items
 is marked implemented merely by creating this backlog.** Alpha.20 implements
-GBL-001 through GBL-003; the rest remain queued. No released tag or asset
+GBL-001 through GBL-003; alpha.21 implements GBL-004. The rest remain queued. No released tag or asset
 should be overwritten. WB-1/WB-2 are the user's workflow labels; the complete
 workflow, catalogue fixtures, and independent expected results have not been
 reviewed in this logging pass.
@@ -36,7 +36,7 @@ Evidence labels:
 | GBL-001 | 1 | Refuse assignments to registered constants | Implemented alpha.20; both engines covered |
 | GBL-002 | 1 | Prevent silently discarded pure-call results | Implemented alpha.20 for direct value-only builtin statements |
 | GBL-003 | 1 | Make stored strings independent of later interpolation | Implemented alpha.20; user chose immediate capture |
-| GBL-004 | 1 | Lossless default number-to-text formatting | Reproduced; source-confirmed |
+| GBL-004 | 1 | Lossless default number-to-text formatting | Implemented alpha.21; bit-level/default export and both-engine gates |
 | GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Platform difference reported; current policy inspected |
 | GBL-006 | 2 | Multi-column FITS cuts and subset export | Single-cut statistics exist; requested extension absent |
 | GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Source-confirmed gap in requested builtins |
@@ -188,14 +188,20 @@ value = 0.12345678901234567
 text = to_text(value)
 restored = parse_number(text)
 same = value == restored
-print("{text}; {same}") # Currently 0.123456789012346; false.
+print("{text}; {same}") # Alpha.19/20: 0.123456789012346; false.
 ```
 
-The current formatter uses 15 significant digits in scientific notation,
+The alpha.19/20 formatter uses 15 significant digits in scientific notation,
 but 15 **decimal places** in its fixed-format branch. Neither is a general
 f64 round-trip guarantee. There are separate interpreter/generated formatter
 implementations. JSON output and receipt serialization have distinct paths;
 do not assume every sealed value is already truncated in the same way.
+
+Alpha.21 uses one shared shortest-round-trip formatter; the example now
+prints `0.12345678901234566; true`. Signed zero is preserved. Explicit
+precision remains rounded presentation. New freezes record the formatting
+policy epoch; old frozen execution requires revision, not receipt rewriting.
+See [the contract](NUMERIC_TEXT.md) and `tests/numeric_text.rs`.
 
 - Use shortest round-trip decimal formatting for default numeric text and
   machine-readable exports. Up to 17 significant digits may be necessary;

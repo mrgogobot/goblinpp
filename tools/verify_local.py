@@ -55,7 +55,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text"]:
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)
@@ -66,6 +66,11 @@ def main() -> None:
                 if example == "protected_values":
                     assert "captured = 1; current = 2" in run.stdout
                     assert (root / directory / "outputs/snapshots.txt").read_text() == "1\niteration = 0\niteration = 1\niteration = 2\n"
+                if example == "numeric_text":
+                    assert "saved = 0.12345678901234566; restored exactly = true" in run.stdout
+                    assert "rounded label = 0.123" in run.stdout
+                    assert "signed zero = -0" in run.stdout
+                    assert (root / directory / "outputs/numbers.txt").read_text() == "0.12345678901234566\n"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

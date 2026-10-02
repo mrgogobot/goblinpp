@@ -64,7 +64,9 @@ recursively expanded. Escape a source-literal search pattern such as
 
 The execution rules changed even though source syntax/canonical hashes did not.
 New run and freeze receipts hash the policy
-`goblin.eager-text-and-protected-values.v1` in `language_semantics`.
+`goblin.eager-text-and-protected-values.v1` in `language_semantics` for alpha.20.
+Alpha.21 supersedes this with `goblin.eager-text-and-roundtrip-numbers.v2`
+to record lossless default numeric formatting; see [numeric text](NUMERIC_TEXT.md).
 Alpha.19 and earlier run evidence remains independently verifiable; verifying
 it checks historical integrity, not whether it would produce the same result now.
 

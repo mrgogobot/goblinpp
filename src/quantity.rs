@@ -560,31 +560,7 @@ impl Display for Quantity {
 }
 
 pub fn format_number(value: f64) -> String {
-    if value == 0.0 {
-        return "0".to_string();
-    }
-    let scientific = value.abs() >= 1e15 || value.abs() < 1e-4;
-    if scientific {
-        // Match Python's `.15g`: fifteen significant digits total.
-        let mut rendered = format!("{value:.14e}");
-        if let Some(index) = rendered.find('e') {
-            let mut mantissa = rendered[..index]
-                .trim_end_matches('0')
-                .trim_end_matches('.')
-                .to_string();
-            if mantissa == "-0" {
-                mantissa = "0".into();
-            }
-            let exponent: i32 = rendered[index + 1..].parse().unwrap_or(0);
-            rendered = format!("{mantissa}e{exponent:+}");
-        }
-        rendered
-    } else {
-        format!("{value:.15}")
-            .trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
-    }
+    crate::text_runtime::format_number(value)
 }
 
 pub fn format_dimension(dimension: Dimension) -> String {

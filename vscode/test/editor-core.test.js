@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha20-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha21-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,7 +127,7 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.20 runtime features", () => {
+test("completion combines legacy spellings with alpha.21 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
   assert.equal(entries.length, 230);
   assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 230);
@@ -148,6 +148,7 @@ test("completion combines legacy spellings with alpha.20 runtime features", () =
     { spelling: "π", kind: "constant", detail: "math.pi. Read-only registered constant; cannot be assigned or shadowed." },
   );
   assert.match(entries.find((entry) => entry.spelling === "append").detail, /Discarded results are refused/);
+  assert.match(entries.find((entry) => entry.spelling === "to_text").detail, /round-trips, including -0/);
   assert.match(entries.find((entry) => entry.spelling === "input").detail, /capture immediately/);
   assert.match(entries.find((entry) => entry.spelling === "km").detail, /SI factor 1000/);
   assert(entries.some((entry) => entry.spelling === "fits_column_mean"));
@@ -288,10 +289,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.20 language coloring and extension identity are internally consistent", () => {
+test("alpha.21 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.15");
+  assert.equal(manifest.version, "0.1.16");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
