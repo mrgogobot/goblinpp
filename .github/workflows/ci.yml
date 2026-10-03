@@ -24,11 +24,42 @@ jobs:
       - name: Format
         run: cargo fmt --all -- --check
       - name: Test
+        env:
+          GOBLIN_MATH_REPORT_PATH: ${{ github.workspace }}/target/math-evidence/report.json
         run: cargo test --locked
+      - name: Preserve measured math evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: math-evidence-${{ matrix.os }}-${{ github.run_attempt }}
+          path: target/math-evidence/
+          if-no-files-found: error
+          retention-days: 30
       - name: Lint
         run: cargo clippy --locked --all-targets -- -D warnings
       - name: Build release executable
         run: cargo build --locked --release
+
+  math-evidence:
+    name: Cross-platform numerical evidence
+    needs: rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use current stable Rust
+        run: rustup update stable
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: math-evidence-*
+          path: target/platform-evidence
+      - name: Build exact evidence verifier
+        run: cargo build --locked
+      - name: Test report gate
+        run: python3 -m unittest discover -s tools/tests
+      - name: Compare measured platforms and engines
+        run: >-
+          python3 tools/compare_math_reports.py
+          --latest-per-platform target/platform-evidence
+          --goblinpp target/debug/goblinpp --require-macos-linux
 
   vscode:
     name: VS Code extension tests

@@ -19,3 +19,5 @@ goblin-native-outputs-*/
 /jetbrains/.intellijPlatform/
 /jetbrains/build/
 /jetbrains/.idea/
+**/__pycache__/
+*.pyc

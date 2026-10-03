@@ -148,6 +148,7 @@ fn value_only_builtin(name: &str) -> bool {
         && !is_unit(name)
         && !name.starts_with("__goblin_")
         || matches!(name, "sum" | "mean")
+        || crate::numeric_comparison::is_function(name)
 }
 
 fn validate_statements(statements: &[Stmt]) -> Result<()> {
@@ -157,6 +158,13 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 require_writable_name(name)?
             }
             Stmt::Function { name, params, body } => {
+                // Keep historical canonical parsing possible, but prevent a new
+                // builtin from silently overriding a user function at execution.
+                if crate::numeric_comparison::is_function(name) {
+                    return Err(GoblinError::parse(format!(
+                        "{name} is a registered builtin function and cannot be redefined. Rename the user function before executing under alpha.22 or later."
+                    )));
+                }
                 require_writable_name(name)?;
                 for param in params {
                     require_writable_name(param)?;

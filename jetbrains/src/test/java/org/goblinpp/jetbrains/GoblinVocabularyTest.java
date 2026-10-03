@@ -16,6 +16,9 @@ final class GoblinVocabularyTest {
     }
     @Test
     void loadsCurrentEditorVocabulary() {
+        assertEquals("function", GoblinVocabulary.find("is_close").kind());
+        assertTrue(GoblinVocabulary.find("is_close").detail().contains("no defaults"));
+        assertTrue(GoblinVocabulary.find("same_bits").detail().contains("sign of zero"));
         assertTrue(GoblinVocabulary.entries().size() >= 100);
         assertEquals("function", GoblinVocabulary.find("sqrt").kind());
         assertEquals("function", GoblinVocabulary.find("sum").kind());

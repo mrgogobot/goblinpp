@@ -621,7 +621,7 @@ impl Evaluation {
             | "log10" | "sin" | "cos" | "tan" | "asin" | "acos" | "atan" | "atan2" | "sind"
             | "cosd" | "tand" | "sinr" | "cosr" | "tanr" | "asind" | "acosd" | "atand"
             | "asinr" | "acosr" | "atanr" | "atan2d" | "atan2r" | "deg2rad" | "rad2deg"
-            | "hypot" => self.eval_math_call(name, args),
+            | "hypot" | "is_close" | "same_bits" => self.eval_math_call(name, args),
             name if crate::science::is_function(name) => {
                 crate::science::require_arity(name, args.len())?;
                 crate::science::call(name, self.eval_args(args)?)
@@ -1167,7 +1167,9 @@ impl Evaluation {
                 args.len()
             )));
         }
-        let expected = if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot") {
+        let expected = if name == "is_close" {
+            4
+        } else if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot" | "same_bits") {
             2
         } else if minimum == 0 {
             1
@@ -1210,6 +1212,31 @@ impl Evaluation {
         };
 
         match name {
+            "is_close" | "same_bits" => {
+                if first.dimension != values[1].dimension {
+                    return Err(GoblinError::dimension(format!(
+                        "{name}() requires matching operand dimensions."
+                    )));
+                }
+                if name == "same_bits" {
+                    return Ok(Value::Bool(
+                        first.value_si.to_bits() == values[1].value_si.to_bits(),
+                    ));
+                }
+                if values[2].dimension != first.dimension || values[3].dimension != DIMENSIONLESS {
+                    return Err(GoblinError::dimension(
+                        "is_close() requires an absolute tolerance with the operands' dimensions and a dimensionless relative tolerance.",
+                    ));
+                }
+                crate::numeric_comparison::is_close(
+                    first.value_si,
+                    values[1].value_si,
+                    values[2].value_si,
+                    values[3].value_si,
+                )
+                .map(Value::Bool)
+                .map_err(GoblinError::numeric)
+            }
             "abs" => Quantity::new(first.value_si.abs(), first.dimension).map(Value::Quantity),
             "sqrt" => first.checked_sqrt().map(Value::Quantity),
             "min" | "max" => {

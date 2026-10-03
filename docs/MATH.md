@@ -1,5 +1,9 @@
 # Scientific mathematics in Goblin++ 0.1.0-alpha.14
 
+Alpha.22 additionally provides dimension-aware `is_close` (four explicit
+arguments, no default tolerance) and `same_bits` (including signed zero).
+See [numeric reproducibility and comparison](NUMERIC_REPRODUCIBILITY.md).
+
 The scientific-math built-ins execute in both the Rust interpreter and the
 native compiler. Their results remain ordinary Goblin++ quantities and may be
 printed, placed in arrays, returned from `g_func`, or sealed.

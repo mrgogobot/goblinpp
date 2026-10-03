@@ -137,6 +137,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "schema": "goblin.freeze-receipt.v1",
         "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
+        "math_policy": crate::math_policy::policy(),
         "created_at": timestamp(),
         "policy": "EXACT_SOURCE_BYTES_AND_CANONICAL_PROGRAM",
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": sha256_bytes(&bytes) },

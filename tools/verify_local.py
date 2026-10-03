@@ -55,7 +55,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison"]:
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)

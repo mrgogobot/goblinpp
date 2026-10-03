@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod audit;
 pub mod chemistry;
+pub mod comparison;
 pub mod compiler;
 pub mod constants;
 pub mod custody;
@@ -14,7 +15,9 @@ pub mod inline_rust;
 pub mod interaction;
 pub mod ledger;
 pub mod lexer;
+pub mod math_policy;
 pub mod modules;
+pub mod numeric_comparison;
 pub mod output;
 pub mod parser;
 pub mod quantity;

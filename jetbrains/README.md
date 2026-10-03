@@ -1,6 +1,8 @@
 # Goblin++ for JetBrains IDEs
 
-Plugin 0.3.6 accompanies engine alpha.21. Completion help documents lossless
+Plugin 0.3.7 accompanies engine alpha.22. Completion includes `is_close` with
+four explicit arguments and no defaults, plus `same_bits` including signed zero.
+See `docs/NUMERIC_REPRODUCIBILITY.md` in the engine package. Help retains lossless
 default numeric text and signed zero, and marks constants
 read-only, requires consuming `append` results, and documents immediate
 source-template capture. See `docs/PROTECTED_VALUES.md` in the engine package.

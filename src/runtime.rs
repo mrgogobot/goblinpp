@@ -62,6 +62,8 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     let mut receipt = json!({
         "schema": "goblin.run-receipt.v2", "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
+        "math_policy": crate::math_policy::policy(),
+        "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
         "paranoid_mode": false, "paranoid_postflight": Value::Null,
@@ -164,6 +166,8 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             let binary = run_dir.join("program-native");
             let compilation = compile(&current, &binary, &options.allowed_inline_rust)?;
             receipt["execution"]["compiler"] = compilation_json(&compilation);
+            receipt["math_environment"]["native_compiler"] = json!(compilation.rustc_version);
+            receipt["math_environment"]["native_binary_sha256"] = json!(compilation.binary_sha256);
             let absolute_binary = binary.canonicalize()?;
             let native_results = run_dir.join("native-results.tsv");
             let absolute_native_results = run_dir.canonicalize()?.join("native-results.tsv");
@@ -571,6 +575,14 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             return Err(protocol(
                 "LANGUAGE_SEMANTICS_CHANGED_AFTER_FREEZE",
                 "This source was frozen under different language semantics. Historical evidence remains verifiable. Create an explicit revision and freeze the child before running with this interpreter.",
+            ));
+        }
+        if !crate::math_policy::frozen_policy_matches(report.receipt.as_ref().unwrap()) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("MATH_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "MATH_POLICY_CHANGED_AFTER_FREEZE",
+                "The declared math policy differs from the frozen policy. Historical evidence remains verifiable. Create an explicit revision to adopt a changed policy.",
             ));
         }
         return Ok(());

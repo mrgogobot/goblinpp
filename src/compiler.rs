@@ -190,6 +190,7 @@ fn build_data_program(
         ("inline_rust", include_str!("inline_rust.rs")),
         ("interaction", include_str!("interaction.rs")),
         ("lexer", include_str!("lexer.rs")),
+        ("numeric_comparison", include_str!("numeric_comparison.rs")),
         ("output", include_str!("output.rs")),
         ("parser", include_str!("parser.rs")),
         ("quantity", include_str!("quantity.rs")),
@@ -304,6 +305,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
+    let numeric_comparison = include_str!("numeric_comparison.rs");
     let compiled_science_runtime = include_str!("compiled_science_runtime.rs");
     let statistics_runtime = include_str!("statistics_runtime.rs");
     let compiled_chemistry_runtime = include_str!("compiled_chemistry_runtime.rs");
@@ -365,6 +367,9 @@ mod goblin_text {{
 {text_runtime}
 }}
 {compiled_text_runtime}
+mod goblin_numeric_comparison {{
+{numeric_comparison}
+}}
 {compiled_math_runtime}
 mod goblin_statistics {{
 {statistics_runtime}
@@ -645,6 +650,7 @@ fn main() {{ if let Err(error) = goblin_main() {{ eprintln!("GOBLIN NATIVE ERROR
         compiled_text_runtime = compiled_text_runtime,
         compiled_chemistry_runtime = compiled_chemistry_runtime,
         compiled_math_runtime = compiled_math_runtime,
+        numeric_comparison = numeric_comparison,
     ))
 }
 
@@ -1031,6 +1037,8 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                     | "deg2rad"
                     | "rad2deg"
                     | "hypot"
+                    | "is_close"
+                    | "same_bits"
             ) =>
         {
             format!(

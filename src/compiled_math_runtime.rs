@@ -9,7 +9,9 @@ fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
             values.len()
         ));
     }
-    let expected = if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot") {
+    let expected = if name == "is_close" {
+        4
+    } else if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot" | "same_bits") {
         2
     } else if minimum == 0 {
         1
@@ -42,6 +44,18 @@ fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
     };
 
     match name {
+        "is_close" | "same_bits" => {
+            if first_dim != quantities[1].1 {
+                return Err(format!("{name}() requires matching operand dimensions."));
+            }
+            if name == "same_bits" {
+                return Ok(Value::Bool(first.to_bits() == quantities[1].0.to_bits()));
+            }
+            if quantities[2].1 != first_dim || quantities[3].1 != ZERO {
+                return Err("is_close() requires an absolute tolerance with the operands' dimensions and a dimensionless relative tolerance.".into());
+            }
+            goblin_numeric_comparison::is_close(first, quantities[1].0, quantities[2].0, quantities[3].0).map(Value::Bool)
+        }
         "abs" => Value::q(first.abs(), first_dim),
         "sqrt" => {
             if first < 0.0 {

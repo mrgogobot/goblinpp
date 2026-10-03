@@ -1,0 +1,31 @@
+{
+  "schema": "goblin.platform-math-fixtures.v1",
+  "description": "Named finite results and deliberately explicit engineering-test tolerances, not universal scientific tolerances. Expected values are analytic identities or rounded mathematical reference values; exact cases use IEEE bits.",
+  "cases": [
+    {"name":"root_exact","expression":"sqrt(81)","expected":9.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
+    {"name":"length_exact","expression":"sqrt((3 m)^2)","expected":3.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
+    {"name":"diagonal_exact","expression":"hypot(3 m, 4 m)","expected":5.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
+    {"name":"signed_root_zero","expression":"sqrt(-0)","expected":-0.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
+    {"name":"root_tiny","expression":"sqrt(4e-300)","expected":2e-150,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"root_subnormal","expression":"sqrt(5e-324)","expected":2.2227587494850775e-162,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"large_hypot","expression":"hypot(1e308, 1e308)","expected":1.4142135623730951e308,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"sine_one","expression":"sinr(1)","expected":0.8414709848078965,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"cosine_one","expression":"cosr(1)","expected":0.5403023058681398,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"tangent_one","expression":"tanr(1)","expected":1.5574077246549023,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"sine_degrees","expression":"sind(30)","expected":0.5,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"cosine_degrees","expression":"cosd(60)","expected":0.5,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"tangent_degrees","expression":"tand(45)","expected":1.0,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"inverse_sine","expression":"asind(0.5)","expected":30.0,"absolute":1e-12,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"inverse_cosine","expression":"acosd(0.5)","expected":60.0,"absolute":1e-12,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"inverse_tangent","expression":"atanr(1)","expected":0.7853981633974483,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"inverse_boundary","expression":"asinr(0.9999999999999999)","expected":1.5707963118937354,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"direction_positive","expression":"atan2r(1 m, 1 m)","expected":0.7853981633974483,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"direction_negative","expression":"atan2d(-1 m, -1 m)","expected":-135.0,"absolute":1e-12,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"exponential_one","expression":"exp(1)","expected":2.718281828459045,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"logarithm_two","expression":"ln(2)","expected":0.6931471805599453,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"logarithm_tiny","expression":"ln(1e-300)","expected":-690.7755278982137,"absolute":2e-12,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"decades_exact","expression":"log10(1000)","expected":3.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
+    {"name":"convert_radians","expression":"deg2rad(180)","expected":3.141592653589793,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"convert_degrees","expression":"rad2deg(pi)","expected":180.0,"absolute":1e-12,"relative":2e-15,"exact":false,"dimension":[0,0,0,0,0,0]}
+  ]
+}

@@ -6,7 +6,9 @@ Logged 2026-10-02 from Malin Hess's WB-1 experience. Baseline:
 
 This document records work to investigate, fix, or add. **None of these items
 is marked implemented merely by creating this backlog.** Alpha.20 implements
-GBL-001 through GBL-003; alpha.21 implements GBL-004. The rest remain queued. No released tag or asset
+GBL-001 through GBL-003; alpha.21 implements GBL-004. Alpha.22 implements the
+GBL-005 policy/comparison stage; measured cross-platform CI validation is pending.
+GBL-006 onward remain queued. No released tag or asset
 should be overwritten. WB-1/WB-2 are the user's workflow labels; the complete
 workflow, catalogue fixtures, and independent expected results have not been
 reviewed in this logging pass.
@@ -37,7 +39,7 @@ Evidence labels:
 | GBL-002 | 1 | Prevent silently discarded pure-call results | Implemented alpha.20 for direct value-only builtin statements |
 | GBL-003 | 1 | Make stored strings independent of later interpolation | Implemented alpha.20; user chose immediate capture |
 | GBL-004 | 1 | Lossless default number-to-text formatting | Implemented alpha.21; bit-level/default export and both-engine gates |
-| GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Platform difference reported; current policy inspected |
+| GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; platform CI pending |
 | GBL-006 | 2 | Multi-column FITS cuts and subset export | Single-cut statistics exist; requested extension absent |
 | GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Source-confirmed gap in requested builtins |
 | GBL-008 | 2 | Seeded, named, cross-platform RNG | Requested addition; no current RNG dependency/API found |
@@ -215,6 +217,13 @@ See [the contract](NUMERIC_TEXT.md) and `tests/numeric_text.rs`.
   because output hashes will change; old preserved runs must still verify.
 
 ### GBL-005 — Cross-platform math and comparison policy
+
+**Alpha.22:** retains the platform backend with explicit no-bitwise-guarantee
+policy, hashes build identity, adds dimension-aware explicit-tolerance comparison
+and a 25-case two-engine platform gate. Historical metadata stays historical;
+exact verification remains exact. See [policy](NUMERIC_REPRODUCIBILITY.md).
+The macOS/Linux CI comparison is pending; no deterministic backend is claimed.
+The following preserves the original report and acceptance requirements.
 
 User reports last-digit trigonometric differences between macOS arm64 and
 Linux x86. This two-platform difference was **not reproduced in this pass**.
@@ -395,6 +404,22 @@ with 1.91; this has not been verified here and the exact build path matters
 - Acceptance: equivalence to the uncompressed scientific data, corrupt/large
   inputs, compressed-byte changes, preserved independent verification,
   original-file postflight checks, and native/interpreter parity.
+
+## Documentation and outreach notes
+
+### DOC-001 — Goblin++ merchandise link
+
+Requested by Malin Hess on 2026-10-03. Include the following optional link in
+a future documentation update to help spread the word about Goblin++:
+
+- [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk)
+- Suggested placement: a short merchandise/community section in the main README
+  and a link in the next documentation package.
+- Keep merchandise separate from installation and scientific instructions;
+  no purchase is required to use Goblin++.
+
+Status: noted for the next documentation update, not yet added to published
+documentation or existing release archives.
 
 ## Gates shared by all implementation work
 

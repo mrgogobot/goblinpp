@@ -216,6 +216,16 @@
     ],
     "description": "Full-table half-open selection with optional positive weights. Result is [selected, used, weight sum, mean]."
   },
+  "Explicit tolerance comparison": {
+    "prefix": "isclose",
+    "body": "${1:acceptable} = is_close(${2:observed}, ${3:expected}, ${4:absolute_tolerance}, ${5:relative_tolerance})",
+    "description": "All four arguments required. Absolute tolerance matches operand dimensions; relative tolerance is dimensionless."
+  },
+  "Exact floating-point bits": {
+    "prefix": "samebits",
+    "body": "${1:identical} = same_bits(${2:observed}, ${3:expected})",
+    "description": "Compare finite f64 bits of matching dimensions, including the sign of zero; not evidence verification."
+  },
   "CSV result": {
     "prefix": "writecsv",
     "body": "write_csv(\"${1:summary.csv}\", 2, \"name\", \"value\", \"${2:result}\", ${3:value})",

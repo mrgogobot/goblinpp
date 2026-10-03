@@ -1,4 +1,23 @@
-# 0.1.0-alpha.21 (local, unreleased, lossless numeric text)
+# 0.1.0-alpha.22 (local, unreleased, explicit numerical comparison)
+
+- `is_close(a, b, absolute_tolerance, relative_tolerance)` requires four explicit
+  arguments; dimensions, finiteness and nonnegative tolerances are checked in
+  both engines. `same_bits(a, b)` includes the sign of zero.
+- Read-only `compare-value` requires exact verified successful runs and two
+  explicit tolerance flags; scalar-only numeric agreement is never evidence
+  verification or scientific validation. `diff` remains exact.
+- New receipts hash math policy, launcher build/binary identity and native
+  compiler/binary identity. New freezes pin policy; historical evidence and
+  undeclared legacy policy are not rewritten.
+- A shared 25-case fixture and CI artifact gate measure both engines on actual
+  macOS arm64/Linux x86_64. Cross-platform results remain pending until CI passes.
+- VS Code 0.1.17 and JetBrains 0.3.7 include comparison completion and help.
+- Packaging retains the Chinese documentation snapshot and community-review
+  proposals unchanged. No dependencies or deterministic math backend added.
+
+See `docs/NUMERIC_REPRODUCIBILITY.md` and `examples/numeric_comparison.gbl`.
+
+## Previous stage: 0.1.0-alpha.21 (lossless numeric text)
 
 - One shared shortest-round-trip formatter for default finite numeric text in
   both engines: print, eager placeholders, to_text, text/CSV/TSV cells and arrays.

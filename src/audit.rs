@@ -28,6 +28,8 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub math_policy_same: bool,
+    pub math_environment_same: bool,
     pub language_semantics_same: bool,
     pub source_bytes_same: bool,
     pub canonical_program_same: bool,
@@ -646,6 +648,9 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         && module_sources(&left) == module_sources(&right);
     let language_semantics_same =
         at(&left, &["language_semantics"]) == at(&right, &["language_semantics"]);
+    let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
+    let math_environment_same =
+        at(&left, &["math_environment"]) == at(&right, &["math_environment"]);
     let canonical_program_same =
         at(&left, &["canonical_source", "sha256"]) == at(&right, &["canonical_source", "sha256"]);
     let sealed_artifacts_same = normalized_artifacts(&left) == normalized_artifacts(&right);
@@ -680,6 +685,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let different_named_sources = at(&left, &["source", "path"]) != at(&right, &["source", "path"]);
     let classification = if !language_semantics_same {
         "LANGUAGE_SEMANTICS_CHANGE"
+    } else if !math_policy_same {
+        "MATH_POLICY_CHANGE"
     } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
@@ -694,6 +701,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        math_policy_same,
+        math_environment_same,
         language_semantics_same,
         source_bytes_same,
         canonical_program_same,

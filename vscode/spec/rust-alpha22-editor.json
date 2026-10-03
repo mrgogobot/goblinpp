@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.21",
+  "runtime": "goblin++ 0.1.0-alpha.22",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
     {
@@ -441,6 +441,18 @@
       "kind": "function",
       "detail": "Hypotenuse of two quantities with matching dimensions.",
       "snippet": "hypot(${1:x}, ${2:y})"
+    },
+    {
+      "spelling": "is_close",
+      "kind": "function",
+      "detail": "Compare quantities with matching dimensions using explicit absolute and dimensionless relative tolerances. All four arguments required; no defaults. Does not verify evidence or establish scientific validity.",
+      "snippet": "is_close(${1:observed}, ${2:expected}, ${3:absolute_tolerance}, ${4:relative_tolerance})"
+    },
+    {
+      "spelling": "same_bits",
+      "kind": "function",
+      "detail": "Compare exact finite f64 bits of two quantities with matching dimensions, including the sign of zero. Not an artifact hash or cross-platform guarantee.",
+      "snippet": "same_bits(${1:observed}, ${2:expected})"
     },
     {
       "spelling": "au2m",

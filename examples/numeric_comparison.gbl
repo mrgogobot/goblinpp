@@ -1,0 +1,16 @@
+GO_PARANOID
+
+observed = 1.000000000001 m
+expected = 1 m
+absolute_tolerance = 2e-12 m
+relative_tolerance = 1e-12
+equal = observed == expected
+identical_bits = same_bits(observed, expected)
+acceptable = is_close(observed, expected, absolute_tolerance, relative_tolerance)
+
+print("numeric equality = {equal}; identical bits = {identical_bits}")
+print("within explicitly chosen tolerance = {acceptable}")
+seal observed
+seal absolute_tolerance
+seal relative_tolerance
+seal acceptable

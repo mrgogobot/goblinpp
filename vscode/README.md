@@ -1,6 +1,6 @@
 # Goblin++ for Visual Studio Code 0.1.16 (local, unreleased)
 
-Editor support for the Goblin++ Rust engine **0.1.0-alpha.21** (lossless default numeric text). Completion help documents round-trip numeric text and signed zero; read-only constants, consumed append copies and immediate template capture remain. This extension keeps the existing `goblinpp-project.goblinpp` identity, updating the earlier extension rather than creating a second language mode.
+Editor support 0.1.17 for the Goblin++ Rust engine **0.1.0-alpha.22**. Completion and snippets include `is_close` with four explicit arguments and `same_bits`, keeping tolerance comparisons separate from exact evidence verification. Lossless numeric text, read-only constants, consumed append copies and immediate template capture remain. This extension keeps the existing `goblinpp-project.goblinpp` identity.
 
 Completions and highlighting include `import`, CSV/TSV readers, and the existing
 FITS/output calls, now available in compiled runs. Use the engine's
