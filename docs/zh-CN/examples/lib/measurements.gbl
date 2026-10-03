@@ -1,0 +1,13 @@
+# Libraries contain functions and imports, not executable top-level statements.
+g_func average_length(numbers) {
+    lengths = []
+    for number in numbers {
+        lengths = append(lengths, number * 1 m)
+    }
+    return mean(lengths)
+}
+
+g_func length_report(value) {
+    write_text("length_report.txt", "Mean measured length = {value}")
+    return value
+}

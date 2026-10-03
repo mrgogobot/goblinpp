@@ -1,0 +1,21 @@
+GO_PARANOID
+
+values = [1, 2, 3, 4, 5, 6]
+sum = 0
+
+for value in values {
+    if value % 2 != 0 {
+        continue
+    }
+    if value > 4 {
+        break
+    }
+    sum = sum + value
+}
+
+limit = parse_integer("10")
+within_limit = sum <= limit and not sum == 0
+
+print("even sum = {sum}; within limit = {within_limit}")
+seal sum
+seal within_limit

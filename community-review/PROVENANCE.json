@@ -1,0 +1,18 @@
+{
+  "schema": "goblin.community-review.v1",
+  "date": "2026-10-03",
+  "files": [
+    {
+      "file": "zh_CN.md",
+      "sha256": "733c7bc4391905a3eab9285494c54fedf2858b96a0030522b4dbf07c987983a3",
+      "origin": "User-provided DeepSeek review, received 2026-10-03",
+      "status": "Unverified review/proposed rewrite; not an official tutorial or accepted errata"
+    },
+    {
+      "file": "ERRATA_zh-CN.md",
+      "sha256": "5cf28f0d17658d12990f30297c045ddecaa2eb52ffbf665be879fba2fcd99a6b",
+      "origin": "User-provided DeepSeek review, received 2026-10-03",
+      "status": "Unverified review/proposed rewrite; not an official tutorial or accepted errata"
+    }
+  ]
+}

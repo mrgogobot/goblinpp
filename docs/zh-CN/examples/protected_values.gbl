@@ -1,0 +1,21 @@
+GO_PARANOID
+
+# h remains Planck's constant. Use descriptive names, not constant aliases.
+height = 2 m
+print("height = {height}; Planck constant = {h}")
+
+samples = []
+for i in range(3) {
+    samples = append(samples, "iteration = {i}")
+}
+
+x = 1
+saved = "{x}"
+x = 2
+print("captured = {saved}; current = {x}")
+print(samples)
+print("literal placeholder = {{x}}")
+write_text("snapshots.txt", saved, samples[0], samples[1], samples[2])
+seal saved
+seal samples
+seal h

@@ -1,0 +1,24 @@
+GO_PARANOID
+
+samples = 12
+accepted = 9
+fraction = accepted / samples
+
+if fraction >= 0.75 {
+    verdict = "meets threshold"
+} else if fraction >= 0.5 {
+    verdict = "review"
+} else {
+    verdict = "below threshold"
+}
+
+switch verdict {
+    case "meets threshold" { code = 1 }
+    case "review" { code = 2 }
+    default { code = 3 }
+}
+
+print("accepted fraction = {fraction:.3f}")
+print("verdict = {verdict}; code = {code}")
+seal fraction
+seal code

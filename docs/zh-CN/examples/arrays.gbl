@@ -1,0 +1,19 @@
+GO_PARANOID
+
+measurements = [1 kg, 2 kg, 3 kg, 4 kg]
+selected = measurements[1:3]
+selected[0] = 20 kg
+extended = append(measurements, 5 kg)
+
+total = 0 kg
+for i in range(len(measurements)) {
+    total = total + measurements[i]
+}
+
+print("original = {measurements}")
+print("independent slice = {selected}")
+print("extended copy = {extended}")
+print("total = {total}")
+seal measurements
+seal selected
+seal total

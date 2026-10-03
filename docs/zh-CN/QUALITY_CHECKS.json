@@ -1,0 +1,13 @@
+{
+  "translation_documents": 40,
+  "unchanged_fenced_blocks": 121,
+  "pdf_pages": 28,
+  "pdf_numbered_sections": 46,
+  "checks": "Code-block byte identity, headings/table coverage, inline tokens, preserved link targets, local links, PDF text/section coverage and page glyph bounds. Visual rendering reviewed separately.",
+  "problems": [],
+  "visual_review": {
+    "all_pages": "28 pages reviewed in rendered contact sheets",
+    "individual_page_checks": [1, 10, 26],
+    "result": "No observed clipping, overlap, missing Chinese glyphs or broken tables"
+  }
+}

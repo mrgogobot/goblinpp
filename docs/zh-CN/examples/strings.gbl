@@ -1,0 +1,15 @@
+GO_PARANOID
+
+name = str_trim("  Ada π  ")
+label = "Researcher: " + name
+characters = len(name)
+has_pi = str_contains(name, "π")
+parts = str_split("red,green,blue", ",")
+colors = str_join(" / ", parts)
+samples = parse_number(" 12 ")
+accepted = parse_number("9")
+fraction = accepted / samples
+
+print("{label}; characters={characters}; has_pi={has_pi}")
+print("colors={colors}; accepted fraction={fraction:.3f}")
+seal fraction

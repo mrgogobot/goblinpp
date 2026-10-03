@@ -1,0 +1,314 @@
+{
+  "schema": "goblin.lexicon.v0",
+  "spec_version": "0",
+  "language_version": "0.0.7",
+  "status": "normative",
+  "source_encoding": "UTF-8",
+  "case_sensitive": true,
+  "line_endings": {
+    "accepted": [
+      "LF"
+    ],
+    "final_newline_required": false
+  },
+  "display_normalization": {
+    "²": "^2",
+    "³": "^3",
+    "≤": "<=",
+    "≥": ">=",
+    "≠": "!="
+  },
+  "display_normalization_scope": "code_only_excluding_strings_and_comments",
+  "tokens": {
+    "discarded_whitespace": {
+      "pattern": "[ \\t]+",
+      "characters": [
+        "SPACE",
+        "TAB"
+      ]
+    },
+    "comment": {
+      "introducer": "#",
+      "terminator": "LF_OR_EOF",
+      "emitted": false
+    },
+    "newline": {
+      "pattern": "\\n+",
+      "emitted_kind": "NEWLINE",
+      "consecutive_lines_collapsed": true
+    },
+    "number": {
+      "pattern": "(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?",
+      "examples": [
+        "0",
+        "1.",
+        ".5",
+        "6.022e23",
+        "1E-9"
+      ],
+      "not_supported": [
+        "digit separators",
+        "hexadecimal",
+        "NaN",
+        "Infinity"
+      ]
+    },
+    "string": {
+      "delimiter": "DOUBLE_QUOTE",
+      "escape_rules": "JSON",
+      "multiline": false,
+      "single_quoted": false
+    },
+    "identifier": {
+      "pattern": "[A-Za-z_πħωΩΔΣλμσθ∇∂][A-Za-z0-9_πħωΩΔΣλμσθ∇∂]*",
+      "ascii_start": "A-Z a-z _",
+      "ascii_continue": "A-Z a-z 0-9 _",
+      "additional_code_points": [
+        "π",
+        "ħ",
+        "ω",
+        "Ω",
+        "Δ",
+        "Σ",
+        "λ",
+        "μ",
+        "σ",
+        "θ",
+        "∇",
+        "∂"
+      ]
+    },
+    "operators": [
+      "<=",
+      ">=",
+      "!=",
+      "==",
+      "=",
+      "+",
+      "-",
+      "*",
+      "/",
+      "^",
+      "(",
+      ")",
+      ","
+    ],
+    "end_of_file_kind": "EOF"
+  },
+  "vocabulary": {
+    "statements": [
+      {
+        "spelling": "GO_PARANOID",
+        "kind": "directive",
+        "forms": [
+          "GO_PARANOID",
+          "GO_PARANOID()"
+        ],
+        "case_sensitive": true
+      },
+      {
+        "spelling": "seal",
+        "kind": "statement",
+        "form": "seal IDENTIFIER",
+        "case_sensitive": true
+      }
+    ],
+    "functions": [
+      {
+        "spelling": "print",
+        "kind": "builtin",
+        "arguments": "zero_or_more",
+        "returns": "dimensionless_zero"
+      },
+      {
+        "spelling": "printf",
+        "kind": "builtin",
+        "arguments": "format_string_then_zero_or_more_values",
+        "format_rules": "Python_percent_formatting",
+        "returns": "dimensionless_zero"
+      }
+    ],
+    "constants": [
+      {
+        "canonical_id": "math.pi",
+        "aliases": [
+          "pi",
+          "π"
+        ]
+      },
+      {
+        "canonical_id": "physical.speed_of_light",
+        "aliases": [
+          "c",
+          "speed_of_light"
+        ]
+      },
+      {
+        "canonical_id": "physical.planck_constant",
+        "aliases": [
+          "h",
+          "planck_constant"
+        ]
+      },
+      {
+        "canonical_id": "physical.reduced_planck_constant",
+        "aliases": [
+          "hbar",
+          "ħ"
+        ]
+      },
+      {
+        "canonical_id": "physical.gravitational_constant",
+        "aliases": [
+          "G",
+          "gravitational_constant"
+        ]
+      },
+      {
+        "canonical_id": "physical.boltzmann_constant",
+        "aliases": [
+          "k_B",
+          "boltzmann_constant"
+        ]
+      },
+      {
+        "canonical_id": "physical.avogadro_constant",
+        "aliases": [
+          "N_A",
+          "avogadro_constant"
+        ]
+      }
+    ],
+    "units": [
+      {
+        "spelling": "kg",
+        "dimension": [1, 0, 0, 0, 0],
+        "si_factor": 1.0
+      },
+      {
+        "spelling": "g",
+        "dimension": [1, 0, 0, 0, 0],
+        "si_factor": 0.001
+      },
+      {
+        "spelling": "m",
+        "dimension": [0, 1, 0, 0, 0],
+        "si_factor": 1.0
+      },
+      {
+        "spelling": "km",
+        "dimension": [0, 1, 0, 0, 0],
+        "si_factor": 1000.0
+      },
+      {
+        "spelling": "s",
+        "dimension": [0, 0, 1, 0, 0],
+        "si_factor": 1.0
+      },
+      {
+        "spelling": "K",
+        "dimension": [0, 0, 0, 1, 0],
+        "si_factor": 1.0
+      },
+      {
+        "spelling": "mol",
+        "dimension": [0, 0, 0, 0, 1],
+        "si_factor": 1.0
+      },
+      {
+        "spelling": "J",
+        "dimension": [1, 2, -2, 0, 0],
+        "si_factor": 1.0
+      }
+    ],
+    "future_reserved_words": []
+  },
+  "grammar_boundaries": {
+    "active_operators": [
+      "=",
+      "+",
+      "-",
+      "*",
+      "/",
+      "^",
+      "(",
+      ")",
+      ","
+    ],
+    "tokenized_but_unsupported_operators": [
+      "<=",
+      ">=",
+      "!=",
+      "=="
+    ],
+    "statement_separator": "NEWLINE_OR_EOF",
+    "semicolon_supported": false,
+    "implicit_multiplication_starts": [
+      "NUMBER",
+      "IDENTIFIER",
+      "LEFT_PARENTHESIS"
+    ],
+    "quantity_literal": "NUMBER immediately followed by a known unit identifier",
+    "operator_precedence_low_to_high": [
+      ["+", "-"],
+      ["*", "/", "implicit multiplication"],
+      ["^"],
+      ["unary +", "unary -"]
+    ],
+    "power_associativity": "right",
+    "assignment_target": "IDENTIFIER",
+    "seal_target": "IDENTIFIER"
+  },
+  "print_interpolation": {
+    "applies_to": "print with exactly one string argument",
+    "placeholder_pattern": "\\{([A-Za-z_][A-Za-z0-9_]*)(?::([^}]+))?\\}",
+    "format_specification": "Python format mini-language applied to SI numeric value",
+    "unicode_identifier_placeholders_supported": false
+  },
+  "canonical_equivalences": [
+    {
+      "left": "²",
+      "right": "^2",
+      "scope": "display normalization"
+    },
+    {
+      "left": "³",
+      "right": "^3",
+      "scope": "display normalization"
+    },
+    {
+      "left": "pi",
+      "right": "π",
+      "scope": "registered constant"
+    },
+    {
+      "left": "hbar",
+      "right": "ħ",
+      "scope": "registered constant"
+    },
+    {
+      "left": "explicit *",
+      "right": "implicit multiplication",
+      "scope": "parsed AST"
+    },
+    {
+      "left": "print",
+      "right": "printf",
+      "scope": "canonical call name only",
+      "warning": "Runtime formatting rules differ; argument ASTs and output must still be compared."
+    }
+  ],
+  "nonfeatures": [
+    "comparison expressions",
+    "boolean literals",
+    "conditional statements",
+    "loops",
+    "user-defined functions",
+    "imports",
+    "lists",
+    "dictionaries",
+    "single-quoted strings",
+    "semicolon statement separators",
+    "unit expressions inside literals"
+  ]
+}

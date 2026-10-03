@@ -1,0 +1,27 @@
+GO_PARANOID
+
+# The bundled sample has a primary image and a binary-table extension.
+hdus = fits_hdu_count("sample.fits")
+image_pixels = fits_count("sample.fits", 0)
+image_mean = fits_mean("sample.fits", 0)
+
+table_name = fits_header("sample.fits", 1, "EXTNAME")
+rows = fits_rows("sample.fits", 1)
+columns = fits_columns("sample.fits", 1)
+first_object = fits_column("sample.fits", 1, "OBJECT", 0)
+valid_redshifts = fits_column_valid_count("sample.fits", 1, "Z")
+mean_redshift = fits_column_mean("sample.fits", 1, "Z")
+
+print("HDUs = {hdus}")
+print("image pixels = {image_pixels}")
+print("image mean = {image_mean}")
+print("table = {table_name}")
+print("rows = {rows}")
+print("columns = {columns}")
+print("first object = {first_object}")
+print("valid redshifts = {valid_redshifts}")
+print("mean redshift = {mean_redshift}")
+
+seal image_mean
+seal mean_redshift
+seal first_object

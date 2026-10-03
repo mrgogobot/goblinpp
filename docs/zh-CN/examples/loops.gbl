@@ -1,0 +1,22 @@
+GO_PARANOID
+
+# range(stop), range(start, stop), and range(start, stop, step)
+# use Python-style half-open bounds. Braces make the body explicit.
+
+sum = 0
+for number in range(1, 6) {
+    sum = sum + number
+}
+
+countdown = 3
+while countdown > 0 {
+    print("countdown = {countdown}")
+    countdown = countdown - 1
+}
+
+finished = countdown == 0
+print("sum from 1 to 5 = {sum}")
+print("finished = {finished}")
+
+seal sum
+seal finished

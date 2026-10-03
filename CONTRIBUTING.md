@@ -4,6 +4,16 @@ Thank you for helping make scientific computation easier to inspect. This is an
 alpha project: a passing test is evidence for a specific behavior, not proof of
 scientific validity or full compatibility with the earlier Python interpreter.
 
+Chinese-language documentation feedback is welcome. Start with the
+[Simplified Chinese reader guide](docs/zh-CN/START_HERE.md) and the
+[community review guidance](community-review/README.md). Include the document
+path, section, original wording, proposed wording and supporting evidence.
+Keep code, operators, identifiers and command syntax unchanged in translation;
+proposed programming corrections require a separate, tested review.
+
+欢迎用中文报告文档问题。请注明文件路径、章节、原句、建议译文和核对依据。
+翻译不改变关键字、函数名、单位、运算符或命令语法；代码问题应另行报告并验证。
+
 Before proposing a change, read [the porting matrix](docs/PORTING_MATRIX.md) and
 [the security boundaries](docs/SECURITY.md). Explain the behavior you intend to
 change, add or update positive and negative tests, and state which claims the

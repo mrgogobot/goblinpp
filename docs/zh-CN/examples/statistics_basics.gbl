@@ -1,0 +1,10 @@
+GO_PARANOID
+
+measurements = [10 m, 11 m, 12 m]
+total = sum(measurements)
+average = mean(measurements)
+
+print("total = {total}")
+print("average = {average}")
+seal total
+seal average

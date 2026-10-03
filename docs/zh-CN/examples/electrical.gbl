@@ -1,0 +1,45 @@
+GO_PARANOID
+
+# An ideal DC resistor supplied with 12 volts.
+supply = 12 V
+resistor = 4.7 kΩ
+current = ee_current(supply, resistor)
+power = ee_power(supply, current)
+current_mA = ee_in_unit(current, "mA")
+power_mW = ee_in_unit(power, "mW")
+print("load current = {current_mA:.3f} mA")
+print("load power = {power_mW:.3f} mW")
+
+# Ideal passive components.
+series = ee_series_resistance([1 kohm, 2.2 kohm, 470 ohm])
+parallel = ee_parallel_resistance([1 kohm, 1 kohm])
+tau = ee_rc_time_constant(10 kohm, 100 µF)
+stored = ee_capacitor_energy(100 µF, supply)
+series_kohm = ee_in_unit(series, "kohm")
+parallel_ohm = ee_in_unit(parallel, "ohm")
+print("series = {series_kohm:.3f} kohm; parallel = {parallel_ohm:.1f} ohm")
+print("RC time constant = {tau}; capacitor energy = {stored}")
+
+# Choose signs explicitly: entering currents positive, leaving negative.
+node_currents = [3 mA, -2.001 mA, -1 mA]
+node_residual = ee_kcl_residual(node_currents)
+node_balanced = ee_kcl_balanced(node_currents, 0.01 mA)
+
+# Traversing one chosen loop: rise positive, drops negative.
+loop_voltages = [12 V, -7 V, -5 V]
+loop_residual = ee_kvl_residual(loop_voltages)
+loop_balanced = ee_kvl_balanced(loop_voltages, 0.001 V)
+residual_mA = ee_in_unit(node_residual, "mA")
+print("KCL residual = {residual_mA:.6f} mA; balanced = {node_balanced}")
+print("KVL residual = {loop_residual}; balanced = {loop_balanced}")
+
+seal current
+seal power
+seal series
+seal parallel
+seal tau
+seal stored
+seal node_residual
+seal loop_residual
+seal node_balanced
+seal loop_balanced

@@ -1,0 +1,8 @@
+GO_PARANOID
+
+mass = 1 kg
+energy = mass * c^2
+
+print("Energy = {energy}")
+seal energy
+

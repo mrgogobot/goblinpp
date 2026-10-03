@@ -1,0 +1,7 @@
+# Everyday Goblin++: no GO_PARANOID or seal directive is required.
+samples = 12
+accepted = 9
+fraction = accepted / samples
+
+print("accepted fraction = {fraction:.3f}")
+write_text("answer.txt", "fraction = {fraction:.3f}")

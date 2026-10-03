@@ -1,0 +1,1454 @@
+{
+  "schema": "goblin.editor-vocabulary.v1",
+  "runtime": "goblin++ 0.1.0-alpha.19",
+  "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
+  "statements": [
+    {
+      "spelling": "import",
+      "kind": "statement",
+      "detail": "Statically import local .gbl g_func libraries; no top-level execution or hidden inline Rust. Paths stay below the entry source directory.",
+      "snippet": "import \"${1:lib/analysis.gbl}\""
+    },
+    {
+      "spelling": "GO_PARANOID",
+      "kind": "statement",
+      "detail": "Optional stricter evidence mode: postflight source observation and receipt self-check; not a sandbox."
+    },
+    {
+      "spelling": "seal",
+      "kind": "statement",
+      "detail": "Optionally snapshot a named value as a separate typed run artifact.",
+      "snippet": "seal ${1:value}"
+    },
+    {
+      "spelling": "g_func",
+      "kind": "statement",
+      "detail": "Declare a top-level user function with local copy-value arguments; every reached path must return.",
+      "snippet": "g_func ${1:name}(${2:value}) {\n    return ${3:value}\n}"
+    },
+    {
+      "spelling": "return",
+      "kind": "statement",
+      "detail": "Return a value from g_func, including inside a branch or loop.",
+      "snippet": "return ${1:value}"
+    },
+    {
+      "spelling": "for",
+      "kind": "statement",
+      "detail": "Iterate a half-open integer range or independent array value; 1,000,000 total loop-body iterations per run.",
+      "snippet": "for ${1:i} in range(${2:0}, ${3:10}) {\n    ${4:print(\"{i}\")}\n}"
+    },
+    {
+      "spelling": "in",
+      "kind": "statement",
+      "detail": "Connects a for-loop variable to range(...) or an array expression."
+    },
+    {
+      "spelling": "range",
+      "kind": "statement",
+      "detail": "Half-open integer bounds used only in for ... in range(...)."
+    },
+    {
+      "spelling": "while",
+      "kind": "statement",
+      "detail": "Repeat while a Boolean condition is true; subject to the shared loop limit.",
+      "snippet": "while ${1:condition} {\n    ${2:statement}\n}"
+    },
+    {
+      "spelling": "break",
+      "kind": "statement",
+      "detail": "Exit the nearest containing for or while loop."
+    },
+    {
+      "spelling": "continue",
+      "kind": "statement",
+      "detail": "Start the next iteration of the nearest containing for or while loop."
+    },
+    {
+      "spelling": "and",
+      "kind": "statement",
+      "detail": "Short-circuit Boolean conjunction."
+    },
+    {
+      "spelling": "or",
+      "kind": "statement",
+      "detail": "Short-circuit Boolean disjunction."
+    },
+    {
+      "spelling": "not",
+      "kind": "statement",
+      "detail": "Boolean negation."
+    },
+    {
+      "spelling": "if",
+      "kind": "statement",
+      "detail": "Execute a branch when its condition is Boolean true.",
+      "snippet": "if ${1:condition} {\n    ${2:statement}\n} else {\n    ${3:statement}\n}"
+    },
+    {
+      "spelling": "else",
+      "kind": "statement",
+      "detail": "Optional if fallback; `else if` tests another Boolean condition."
+    },
+    {
+      "spelling": "switch",
+      "kind": "statement",
+      "detail": "Evaluate a selector once, then execute the first exact, dimension-aware matching case without fallthrough.",
+      "snippet": "switch ${1:value} {\n    case ${2:label} {\n        ${3:statement}\n    }\n    default {\n        ${4:statement}\n    }\n}"
+    },
+    {
+      "spelling": "case",
+      "kind": "statement",
+      "detail": "A lazily evaluated switch label. The first exact match wins."
+    },
+    {
+      "spelling": "default",
+      "kind": "statement",
+      "detail": "Optional final switch branch if no case matches."
+    },
+    {
+      "spelling": "argc",
+      "kind": "statement",
+      "detail": "Read-only count of program arguments, including argv(0)."
+    },
+    {
+      "spelling": "true",
+      "kind": "statement",
+      "detail": "Boolean true literal."
+    },
+    {
+      "spelling": "false",
+      "kind": "statement",
+      "detail": "Boolean false literal."
+    },
+    {
+      "spelling": "RUST_INLINE_BEGIN",
+      "kind": "statement",
+      "detail": "Starts arbitrary native Rust; compiled mode and exact SHA-256 authorization required.",
+      "snippet": "RUST_INLINE_BEGIN\n${1:// reviewed Rust code}\nRUST_INLINE_END"
+    },
+    {
+      "spelling": "RUST_INLINE_END",
+      "kind": "statement",
+      "detail": "Ends an inline Rust block."
+    }
+  ],
+  "functions": [
+    {"spelling":"csv_rows", "kind":"function", "detail":"Count data rows in a UTF-8 CSV with a unique nonempty header; header is excluded.", "snippet":"csv_rows(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_columns", "kind":"function", "detail":"Count CSV header columns; ragged rows are refused.", "snippet":"csv_columns(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_headers", "kind":"function", "detail":"Return CSV header names as an independent text array.", "snippet":"csv_headers(\"${1:measurements.csv}\")"},
+    {"spelling":"csv_column", "kind":"function", "detail":"Read an exact case-sensitive header as text; no inferred numbers or silent missing-value policy.", "snippet":"csv_column(\"${1:measurements.csv}\", \"${2:label}\")"},
+    {"spelling":"csv_numbers", "kind":"function", "detail":"Explicit finite dimensionless numeric CSV column; blank, malformed or nonfinite cells fail instead of being dropped. Assign physical units explicitly.", "snippet":"csv_numbers(\"${1:measurements.csv}\", \"${2:length}\")"},
+    {"spelling":"tsv_rows", "kind":"function", "detail":"Count data rows in a UTF-8 tab-separated table; header is excluded.", "snippet":"tsv_rows(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_columns", "kind":"function", "detail":"Count TSV header columns; ragged rows are refused.", "snippet":"tsv_columns(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_headers", "kind":"function", "detail":"Return TSV header names as an independent text array.", "snippet":"tsv_headers(\"${1:measurements.tsv}\")"},
+    {"spelling":"tsv_column", "kind":"function", "detail":"Read an exact case-sensitive TSV header as text, preserving empty fields.", "snippet":"tsv_column(\"${1:measurements.tsv}\", \"${2:label}\")"},
+    {"spelling":"tsv_numbers", "kind":"function", "detail":"Read a finite dimensionless numeric TSV column; missing or invalid numbers fail explicitly.", "snippet":"tsv_numbers(\"${1:measurements.tsv}\", \"${2:value}\")"},
+    {
+      "spelling": "input",
+      "kind": "function",
+      "detail": "Prompt for one text line; the answer is preserved in interaction evidence. Do not enter secrets.",
+      "snippet": "input(\"${1:Prompt: }\")"
+    },
+    {
+      "spelling": "argv",
+      "kind": "function",
+      "detail": "Read one zero-based text argument. argv(0) is the program path; use -- to pass arguments to goblin++.",
+      "snippet": "argv(${1:1})"
+    },
+    {
+      "spelling": "len",
+      "kind": "function",
+      "detail": "Count array elements or Unicode scalar values in text.",
+      "snippet": "len(${1:value})"
+    },
+    {
+      "spelling": "append",
+      "kind": "function",
+      "detail": "Return a new array with one appended item; the original remains unchanged.",
+      "snippet": "append(${1:values}, ${2:item})"
+    },
+    {
+      "spelling": "to_text",
+      "kind": "function",
+      "detail": "Render a quantity, Boolean, or text for labels; arrays are refused and scientific precision is not guaranteed.",
+      "snippet": "to_text(${1:value})"
+    },
+    {
+      "spelling": "parse_number",
+      "kind": "function",
+      "detail": "Explicitly parse finite, unitless decimal text; invalid or oversized plain integers fail.",
+      "snippet": "parse_number(${1:text})"
+    },
+    {
+      "spelling": "parse_integer",
+      "kind": "function",
+      "detail": "Parse signed or unsigned decimal integer text within the exact f64 range.",
+      "snippet": "parse_integer(${1:text})"
+    },
+    {
+      "spelling": "sum",
+      "kind": "function",
+      "detail": "Compensated sum of a non-empty numeric array; preserves its dimension, refuses overflow and never skips values.",
+      "snippet": "sum(${1:values})"
+    },
+    {
+      "spelling": "mean",
+      "kind": "function",
+      "detail": "Scaled compensated arithmetic mean of a non-empty numeric array; preserves its dimension and never skips values.",
+      "snippet": "mean(${1:values})"
+    },
+    {
+      "spelling": "str_trim",
+      "kind": "function",
+      "detail": "Remove surrounding Unicode whitespace from text.",
+      "snippet": "str_trim(${1:text})"
+    },
+    {
+      "spelling": "str_contains",
+      "kind": "function",
+      "detail": "Case-sensitive text substring test.",
+      "snippet": "str_contains(${1:text}, ${2:needle})"
+    },
+    {
+      "spelling": "str_replace",
+      "kind": "function",
+      "detail": "Replace all non-overlapping text matches; search text cannot be empty.",
+      "snippet": "str_replace(${1:text}, ${2:old}, ${3:new})"
+    },
+    {
+      "spelling": "str_split",
+      "kind": "function",
+      "detail": "Split text on a nonempty separator, preserving empty fields.",
+      "snippet": "str_split(${1:text}, ${2:separator})"
+    },
+    {
+      "spelling": "str_join",
+      "kind": "function",
+      "detail": "Join a one-dimensional text array with a separator.",
+      "snippet": "str_join(${1:separator}, ${2:parts})"
+    },
+    {
+      "spelling": "print",
+      "kind": "function",
+      "detail": "Append an interpolated text line to hashed run stdout."
+    },
+    {
+      "spelling": "printf",
+      "kind": "function",
+      "detail": "Append formatted numeric output to hashed run stdout."
+    },
+    {
+      "spelling": "abs",
+      "kind": "function",
+      "detail": "Absolute magnitude while preserving the input dimension.",
+      "snippet": "abs(${1:value})"
+    },
+    {
+      "spelling": "sqrt",
+      "kind": "function",
+      "detail": "Real square root; requires a non-negative value and even unit exponents.",
+      "snippet": "sqrt(${1:value})"
+    },
+    {
+      "spelling": "min",
+      "kind": "function",
+      "detail": "Smallest of two or more quantities with matching dimensions.",
+      "snippet": "min(${1:first}, ${2:second})"
+    },
+    {
+      "spelling": "max",
+      "kind": "function",
+      "detail": "Largest of two or more quantities with matching dimensions.",
+      "snippet": "max(${1:first}, ${2:second})"
+    },
+    {
+      "spelling": "floor",
+      "kind": "function",
+      "detail": "Floor of one dimensionless value.",
+      "snippet": "floor(${1:value})"
+    },
+    {
+      "spelling": "ceil",
+      "kind": "function",
+      "detail": "Ceiling of one dimensionless value.",
+      "snippet": "ceil(${1:value})"
+    },
+    {
+      "spelling": "round",
+      "kind": "function",
+      "detail": "Round one dimensionless value; halfway cases move away from zero.",
+      "snippet": "round(${1:value})"
+    },
+    {
+      "spelling": "exp",
+      "kind": "function",
+      "detail": "Natural exponential of one dimensionless value.",
+      "snippet": "exp(${1:value})"
+    },
+    {
+      "spelling": "ln",
+      "kind": "function",
+      "detail": "Natural logarithm of a positive dimensionless value.",
+      "snippet": "ln(${1:value})"
+    },
+    {
+      "spelling": "log10",
+      "kind": "function",
+      "detail": "Base-10 logarithm of a positive dimensionless value.",
+      "snippet": "log10(${1:value})"
+    },
+    {
+      "spelling": "sin",
+      "kind": "function",
+      "detail": "Deprecated radians alias; use sinr or sind. Emits G302 once per run.",
+      "snippet": "sin(${1:radians})"
+    },
+    {
+      "spelling": "cos",
+      "kind": "function",
+      "detail": "Deprecated radians alias; use cosr or cosd. Emits G302 once per run.",
+      "snippet": "cos(${1:radians})"
+    },
+    {
+      "spelling": "tan",
+      "kind": "function",
+      "detail": "Deprecated radians alias; use tanr or tand. Emits G302 once per run.",
+      "snippet": "tan(${1:radians})"
+    },
+    {
+      "spelling": "asin",
+      "kind": "function",
+      "detail": "Deprecated radians-result alias; use asinr or asind. Emits G302 once per run.",
+      "snippet": "asin(${1:value})"
+    },
+    {
+      "spelling": "acos",
+      "kind": "function",
+      "detail": "Deprecated radians-result alias; use acosr or acosd. Emits G302 once per run.",
+      "snippet": "acos(${1:value})"
+    },
+    {
+      "spelling": "atan",
+      "kind": "function",
+      "detail": "Deprecated radians-result alias; use atanr or atand. Emits G302 once per run.",
+      "snippet": "atan(${1:value})"
+    },
+    {
+      "spelling": "atan2",
+      "kind": "function",
+      "detail": "Deprecated radians-result alias; use atan2r or atan2d. Emits G302 once per run.",
+      "snippet": "atan2(${1:y}, ${2:x})"
+    },
+    {
+      "spelling": "sind",
+      "kind": "function",
+      "detail": "Sine of a dimensionless numeric angle measured in degrees.",
+      "snippet": "sind(${1:degrees})"
+    },
+    {
+      "spelling": "cosd",
+      "kind": "function",
+      "detail": "Cosine of a dimensionless numeric angle measured in degrees.",
+      "snippet": "cosd(${1:degrees})"
+    },
+    {
+      "spelling": "tand",
+      "kind": "function",
+      "detail": "Tangent of a dimensionless numeric angle measured in degrees.",
+      "snippet": "tand(${1:degrees})"
+    },
+    {
+      "spelling": "sinr",
+      "kind": "function",
+      "detail": "Sine of a dimensionless numeric angle measured in radians.",
+      "snippet": "sinr(${1:radians})"
+    },
+    {
+      "spelling": "cosr",
+      "kind": "function",
+      "detail": "Cosine of a dimensionless numeric angle measured in radians.",
+      "snippet": "cosr(${1:radians})"
+    },
+    {
+      "spelling": "tanr",
+      "kind": "function",
+      "detail": "Tangent of a dimensionless numeric angle measured in radians.",
+      "snippet": "tanr(${1:radians})"
+    },
+    {
+      "spelling": "asind",
+      "kind": "function",
+      "detail": "Inverse sine with a numeric result measured in degrees.",
+      "snippet": "asind(${1:value})"
+    },
+    {
+      "spelling": "acosd",
+      "kind": "function",
+      "detail": "Inverse cosine with a numeric result measured in degrees.",
+      "snippet": "acosd(${1:value})"
+    },
+    {
+      "spelling": "atand",
+      "kind": "function",
+      "detail": "Inverse tangent with a numeric result measured in degrees.",
+      "snippet": "atand(${1:value})"
+    },
+    {
+      "spelling": "asinr",
+      "kind": "function",
+      "detail": "Inverse sine with a numeric result measured in radians.",
+      "snippet": "asinr(${1:value})"
+    },
+    {
+      "spelling": "acosr",
+      "kind": "function",
+      "detail": "Inverse cosine with a numeric result measured in radians.",
+      "snippet": "acosr(${1:value})"
+    },
+    {
+      "spelling": "atanr",
+      "kind": "function",
+      "detail": "Inverse tangent with a numeric result measured in radians.",
+      "snippet": "atanr(${1:value})"
+    },
+    {
+      "spelling": "atan2d",
+      "kind": "function",
+      "detail": "Quadrant-aware atan2(y, x) for matching dimensions; result is degrees.",
+      "snippet": "atan2d(${1:y}, ${2:x})"
+    },
+    {
+      "spelling": "atan2r",
+      "kind": "function",
+      "detail": "Quadrant-aware atan2(y, x) for matching dimensions; result is radians.",
+      "snippet": "atan2r(${1:y}, ${2:x})"
+    },
+    {
+      "spelling": "deg2rad",
+      "kind": "function",
+      "detail": "Convert a dimensionless numeric angle from degrees to radians.",
+      "snippet": "deg2rad(${1:degrees})"
+    },
+    {
+      "spelling": "rad2deg",
+      "kind": "function",
+      "detail": "Convert a dimensionless numeric angle from radians to degrees.",
+      "snippet": "rad2deg(${1:radians})"
+    },
+    {
+      "spelling": "hypot",
+      "kind": "function",
+      "detail": "Hypotenuse of two quantities with matching dimensions.",
+      "snippet": "hypot(${1:x}, ${2:y})"
+    },
+    {
+      "spelling": "au2m",
+      "kind": "function",
+      "detail": "Convert a dimensionless number of astronomical units to SI metres.",
+      "snippet": "au2m(${1:astronomical_units})"
+    },
+    {
+      "spelling": "m2au",
+      "kind": "function",
+      "detail": "Convert an SI length to a dimensionless number of astronomical units.",
+      "snippet": "m2au(${1:length})"
+    },
+    {
+      "spelling": "pc2m",
+      "kind": "function",
+      "detail": "Convert a dimensionless number of parsecs to SI metres.",
+      "snippet": "pc2m(${1:parsecs})"
+    },
+    {
+      "spelling": "m2pc",
+      "kind": "function",
+      "detail": "Convert an SI length to a dimensionless number of parsecs.",
+      "snippet": "m2pc(${1:length})"
+    },
+    {
+      "spelling": "ly2m",
+      "kind": "function",
+      "detail": "Convert a dimensionless number of light-years to SI metres.",
+      "snippet": "ly2m(${1:light_years})"
+    },
+    {
+      "spelling": "m2ly",
+      "kind": "function",
+      "detail": "Convert an SI length to a dimensionless number of light-years.",
+      "snippet": "m2ly(${1:length})"
+    },
+    {
+      "spelling": "magnitude",
+      "kind": "function",
+      "detail": "Euclidean magnitude of a non-empty homogeneous numeric vector.",
+      "snippet": "magnitude(${1:vector})"
+    },
+    {
+      "spelling": "dot",
+      "kind": "function",
+      "detail": "Dot product of equal-length homogeneous numeric vectors.",
+      "snippet": "dot(${1:left}, ${2:right})"
+    },
+    {
+      "spelling": "cross",
+      "kind": "function",
+      "detail": "Right-handed cross product of two three-component vectors.",
+      "snippet": "cross(${1:left}, ${2:right})"
+    },
+    {
+      "spelling": "polar2cartesiand",
+      "kind": "function",
+      "detail": "Convert polar radius and degree azimuth to [x, y].",
+      "snippet": "polar2cartesiand(${1:radius}, ${2:azimuth_degrees})"
+    },
+    {
+      "spelling": "polar2cartesianr",
+      "kind": "function",
+      "detail": "Convert polar radius and radian azimuth to [x, y].",
+      "snippet": "polar2cartesianr(${1:radius}, ${2:azimuth_radians})"
+    },
+    {
+      "spelling": "cartesian_radius",
+      "kind": "function",
+      "detail": "Radius of a two- or three-component Cartesian length vector.",
+      "snippet": "cartesian_radius(${1:coordinates})"
+    },
+    {
+      "spelling": "cartesian_azimuthd",
+      "kind": "function",
+      "detail": "Cartesian azimuth from +x toward +y, returned in degrees.",
+      "snippet": "cartesian_azimuthd(${1:coordinates})"
+    },
+    {
+      "spelling": "cartesian_azimuthr",
+      "kind": "function",
+      "detail": "Cartesian azimuth from +x toward +y, returned in radians.",
+      "snippet": "cartesian_azimuthr(${1:coordinates})"
+    },
+    {
+      "spelling": "cartesian_inclinationd",
+      "kind": "function",
+      "detail": "Three-dimensional inclination from +z, returned in degrees.",
+      "snippet": "cartesian_inclinationd(${1:coordinates})"
+    },
+    {
+      "spelling": "cartesian_inclinationr",
+      "kind": "function",
+      "detail": "Three-dimensional inclination from +z, returned in radians.",
+      "snippet": "cartesian_inclinationr(${1:coordinates})"
+    },
+    {
+      "spelling": "spherical2cartesiand",
+      "kind": "function",
+      "detail": "Convert radius, degree inclination from +z, and degree azimuth from +x to [x, y, z].",
+      "snippet": "spherical2cartesiand(${1:radius}, ${2:inclination_degrees}, ${3:azimuth_degrees})"
+    },
+    {
+      "spelling": "spherical2cartesianr",
+      "kind": "function",
+      "detail": "Convert radius, radian inclination from +z, and radian azimuth from +x to [x, y, z].",
+      "snippet": "spherical2cartesianr(${1:radius}, ${2:inclination_radians}, ${3:azimuth_radians})"
+    },
+    {
+      "spelling": "velocity",
+      "kind": "function",
+      "detail": "Scalar or vector displacement divided by strictly positive elapsed time.",
+      "snippet": "velocity(${1:displacement}, ${2:elapsed_time})"
+    },
+    {
+      "spelling": "velocity_add_galilean",
+      "kind": "function",
+      "detail": "Galilean addition of two scalar velocities or equal-length velocity vectors.",
+      "snippet": "velocity_add_galilean(${1:first}, ${2:second})"
+    },
+    {
+      "spelling": "velocity_add_relativistic_collinear",
+      "kind": "function",
+      "detail": "One-dimensional special-relativistic velocity addition; not a general frame transform.",
+      "snippet": "velocity_add_relativistic_collinear(${1:first}, ${2:second})"
+    },
+    {
+      "spelling": "angular_velocityd",
+      "kind": "function",
+      "detail": "Degree displacement per positive elapsed time, returned as radians per second.",
+      "snippet": "angular_velocityd(${1:degrees}, ${2:elapsed_time})"
+    },
+    {
+      "spelling": "angular_velocityr",
+      "kind": "function",
+      "detail": "Radian displacement per positive elapsed time.",
+      "snippet": "angular_velocityr(${1:radians}, ${2:elapsed_time})"
+    },
+    {
+      "spelling": "tangential_velocity",
+      "kind": "function",
+      "detail": "Tangential speed r times angular velocity.",
+      "snippet": "tangential_velocity(${1:radius}, ${2:angular_velocity})"
+    },
+    {
+      "spelling": "centripetal_acceleration",
+      "kind": "function",
+      "detail": "Centripetal acceleration r times angular velocity squared.",
+      "snippet": "centripetal_acceleration(${1:radius}, ${2:angular_velocity})"
+    },
+    {
+      "spelling": "angular_momentum",
+      "kind": "function",
+      "detail": "Right-handed r cross p for three-component position and momentum vectors.",
+      "snippet": "angular_momentum(${1:position}, ${2:momentum})"
+    },
+    {
+      "spelling": "angular_momentum_from_velocity",
+      "kind": "function",
+      "detail": "Right-handed r cross mass-times-velocity for three-component vectors.",
+      "snippet": "angular_momentum_from_velocity(${1:position}, ${2:mass}, ${3:velocity})"
+    },
+    {
+      "spelling": "chem_registry_version",
+      "kind": "function",
+      "detail": "Return the exact versioned chemistry registry identity preserved in scientific evidence.",
+      "snippet": "chem_registry_version()"
+    },
+    {
+      "spelling": "chem_atomic_number",
+      "kind": "function",
+      "detail": "Return the atomic number for an exact, case-sensitive element symbol in the scoped registry.",
+      "snippet": "chem_atomic_number(\"${1:C}\")"
+    },
+    {
+      "spelling": "chem_atomic_weight",
+      "kind": "function",
+      "detail": "Return the registry's dimensionless abridged standard atomic weight for an exact element symbol.",
+      "snippet": "chem_atomic_weight(\"${1:O}\")"
+    },
+    {
+      "spelling": "chem_molar_mass",
+      "kind": "function",
+      "detail": "Calculate molar mass from element symbols, positive integer counts, and parentheses; charges, isotopes, brackets, and hydrate dots are refused.",
+      "snippet": "chem_molar_mass(\"${1:H2O}\")"
+    },
+    {
+      "spelling": "chem_moles",
+      "kind": "function",
+      "detail": "Calculate amount from non-negative mass and positive molar mass with dimensional checks.",
+      "snippet": "chem_moles(${1:mass}, ${2:molar_mass})"
+    },
+    {
+      "spelling": "chem_mass",
+      "kind": "function",
+      "detail": "Calculate mass from non-negative amount and positive molar mass with dimensional checks.",
+      "snippet": "chem_mass(${1:amount}, ${2:molar_mass})"
+    },
+    {
+      "spelling": "chem_concentration",
+      "kind": "function",
+      "detail": "Calculate amount concentration from non-negative amount and positive volume.",
+      "snippet": "chem_concentration(${1:amount}, ${2:volume})"
+    },
+    {
+      "spelling": "chem_dilution",
+      "kind": "function",
+      "detail": "Calculate C2 = C1 V1 / V2; final volume must be positive and no smaller than initial volume.",
+      "snippet": "chem_dilution(${1:concentration}, ${2:initial_volume}, ${3:final_volume})"
+    },
+    {
+      "spelling": "fits_hdu_count",
+      "kind": "function",
+      "detail": "Count FITS HDUs; imported input is read-only and hashed in a run.",
+      "snippet": "fits_hdu_count(\"${1:file.fits}\")"
+    },
+    {
+      "spelling": "fits_header",
+      "kind": "function",
+      "detail": "Read a FITS header card from a zero-based HDU.",
+      "snippet": "fits_header(\"${1:file.fits}\", ${2:0}, \"${3:EXTNAME}\")"
+    },
+    {
+      "spelling": "fits_axis",
+      "kind": "function",
+      "detail": "Read a one-based FITS image axis index in a zero-based HDU."
+    },
+    {
+      "spelling": "fits_count",
+      "kind": "function",
+      "detail": "Count image pixels in a FITS HDU."
+    },
+    {
+      "spelling": "fits_pixel",
+      "kind": "function",
+      "detail": "Read a zero-based image pixel from a FITS HDU."
+    },
+    {
+      "spelling": "fits_mean",
+      "kind": "function",
+      "detail": "Calculate the mean of supported FITS image pixels."
+    },
+    {
+      "spelling": "fits_rows",
+      "kind": "function",
+      "detail": "Count rows in a fixed-width FITS binary table."
+    },
+    {
+      "spelling": "fits_columns",
+      "kind": "function",
+      "detail": "Count columns in a fixed-width FITS binary table."
+    },
+    {
+      "spelling": "fits_column",
+      "kind": "function",
+      "detail": "Read one zero-based row from a FITS binary-table column."
+    },
+    {
+      "spelling": "fits_column_valid_count",
+      "kind": "function",
+      "detail": "Count non-null numeric values in a FITS binary-table column."
+    },
+    {
+      "spelling": "fits_column_mean",
+      "kind": "function",
+      "detail": "Mean of supported non-null numeric FITS column values."
+    },
+    {
+      "spelling": "fits_column_min",
+      "kind": "function",
+      "detail": "Minimum of supported non-null numeric FITS column values."
+    },
+    {
+      "spelling": "fits_column_max",
+      "kind": "function",
+      "detail": "Maximum of supported non-null numeric FITS column values."
+    },
+    {
+      "spelling": "fits_select_stats",
+      "kind": "function",
+      "detail": "Scan a half-open numeric FITS selection; returns [selected rows, used rows, weight sum, mean]. Optional weights must be positive.",
+      "snippet": "fits_select_stats(\"${1:file.fits}\", ${2:1}, \"${3:Z}\", ${4:0.4}, ${5:0.6}, \"${6:Z}\", \"${7:WEIGHT}\")"
+    },
+    {
+      "spelling": "write_text",
+      "kind": "function",
+      "detail": "Write .txt or .md under RUN_DIR/outputs; GO_PARANOID and seal are optional.",
+      "snippet": "write_text(\"${1:summary.txt}\", \"${2:result = {value}}\")"
+    },
+    {
+      "spelling": "write_csv",
+      "kind": "function",
+      "detail": "Write a bounded CSV under RUN_DIR/outputs; first row is the header.",
+      "snippet": "write_csv(\"${1:summary.csv}\", ${2:2}, \"${3:name}\", \"${4:value}\", \"${5:result}\", ${6:value})"
+    },
+    {
+      "spelling": "write_tsv",
+      "kind": "function",
+      "detail": "Write a bounded TSV under RUN_DIR/outputs; first row is the header."
+    },
+    {
+      "spelling": "write_json",
+      "kind": "function",
+      "detail": "Write a JSON object under RUN_DIR/outputs with unique keys.",
+      "snippet": "write_json(\"${1:summary.json}\", \"${2:value}\", ${3:value})"
+    },
+    {
+      "spelling": "plot_fits_histogram",
+      "kind": "function",
+      "detail": "Deterministic sampled FITS histogram; SVG or PNG, not a full-population claim."
+    },
+    {
+      "spelling": "plot_fits_scatter",
+      "kind": "function",
+      "detail": "Deterministic sampled FITS scatter plot; SVG or PNG."
+    },
+    {
+      "spelling": "ee_voltage",
+      "kind": "function",
+      "detail": "Ohm law V = I R; current and non-negative resistance produce voltage.",
+      "snippet": "ee_voltage(${1:current}, ${2:resistance})"
+    },
+    {
+      "spelling": "ee_current",
+      "kind": "function",
+      "detail": "Ohm law I = V / R; resistance must be strictly positive.",
+      "snippet": "ee_current(${1:voltage}, ${2:resistance})"
+    },
+    {
+      "spelling": "ee_resistance",
+      "kind": "function",
+      "detail": "Ohm law R = V / I; nonzero current and a non-negative resulting resistance are required.",
+      "snippet": "ee_resistance(${1:voltage}, ${2:current})"
+    },
+    {
+      "spelling": "ee_power",
+      "kind": "function",
+      "detail": "P = V I under the passive sign convention; positive absorbs, negative delivers power.",
+      "snippet": "ee_power(${1:voltage}, ${2:current})"
+    },
+    {
+      "spelling": "ee_power_i2r",
+      "kind": "function",
+      "detail": "Resistor dissipation I squared times non-negative resistance.",
+      "snippet": "ee_power_i2r(${1:current}, ${2:resistance})"
+    },
+    {
+      "spelling": "ee_power_v2r",
+      "kind": "function",
+      "detail": "Resistor dissipation V squared divided by strictly positive resistance.",
+      "snippet": "ee_power_v2r(${1:voltage}, ${2:resistance})"
+    },
+    {
+      "spelling": "ee_energy",
+      "kind": "function",
+      "detail": "Constant signed power times non-negative duration.",
+      "snippet": "ee_energy(${1:power}, ${2:duration})"
+    },
+    {
+      "spelling": "ee_charge",
+      "kind": "function",
+      "detail": "Constant signed current times non-negative duration.",
+      "snippet": "ee_charge(${1:current}, ${2:duration})"
+    },
+    {
+      "spelling": "ee_series_resistance",
+      "kind": "function",
+      "detail": "Sum a non-empty array of non-negative resistances.",
+      "snippet": "ee_series_resistance(${1:resistances})"
+    },
+    {
+      "spelling": "ee_parallel_resistance",
+      "kind": "function",
+      "detail": "Equivalent parallel resistance of a non-empty array of strictly positive resistances.",
+      "snippet": "ee_parallel_resistance(${1:resistances})"
+    },
+    {
+      "spelling": "ee_rc_time_constant",
+      "kind": "function",
+      "detail": "Ideal RC time constant R C; resistance and capacitance must be non-negative.",
+      "snippet": "ee_rc_time_constant(${1:resistance}, ${2:capacitance})"
+    },
+    {
+      "spelling": "ee_capacitor_energy",
+      "kind": "function",
+      "detail": "Ideal stored energy one-half C V squared; capacitance must be non-negative.",
+      "snippet": "ee_capacitor_energy(${1:capacitance}, ${2:voltage})"
+    },
+    {
+      "spelling": "ee_inductor_energy",
+      "kind": "function",
+      "detail": "Ideal stored energy one-half L I squared; inductance must be non-negative.",
+      "snippet": "ee_inductor_energy(${1:inductance}, ${2:current})"
+    },
+    {
+      "spelling": "ee_kcl_residual",
+      "kind": "function",
+      "detail": "Signed current sum at an explicitly chosen node; zero means balance to floating-point precision.",
+      "snippet": "ee_kcl_residual(${1:signed_currents})"
+    },
+    {
+      "spelling": "ee_kvl_residual",
+      "kind": "function",
+      "detail": "Signed voltage sum around an explicitly chosen loop; zero means balance to floating-point precision.",
+      "snippet": "ee_kvl_residual(${1:signed_voltages})"
+    },
+    {
+      "spelling": "ee_kcl_balanced",
+      "kind": "function",
+      "detail": "Test absolute signed-current residual against a non-negative current tolerance.",
+      "snippet": "ee_kcl_balanced(${1:signed_currents}, ${2:tolerance})"
+    },
+    {
+      "spelling": "ee_kvl_balanced",
+      "kind": "function",
+      "detail": "Test absolute signed-voltage residual against a non-negative voltage tolerance.",
+      "snippet": "ee_kvl_balanced(${1:signed_voltages}, ${2:tolerance})"
+    },
+    {
+      "spelling": "ee_in_unit",
+      "kind": "function",
+      "detail": "Return a dimensionless reporting number in an explicitly named compatible electrical unit.",
+      "snippet": "ee_in_unit(${1:quantity}, \"${2:kΩ}\")"
+    }
+  ],
+  "constants": [
+    {
+      "canonical_id": "physical.molar_gas_constant",
+      "aliases": [
+        "R",
+        "molar_gas_constant"
+      ],
+      "detail": "Molar gas constant; exact derived SI relation."
+    },
+    {
+      "canonical_id": "physical.atomic_mass_constant",
+      "aliases": [
+        "m_u",
+        "atomic_mass_constant"
+      ],
+      "detail": "Atomic mass constant; CODATA-2022 measured value."
+    }
+  ],
+  "units": [
+    {
+      "spelling": "L",
+      "dimension": [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "mL",
+      "dimension": [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "uL",
+      "dimension": [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-9
+    },
+    {
+      "spelling": "µL",
+      "dimension": [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-9
+    },
+    {
+      "spelling": "nm",
+      "dimension": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-9
+    },
+    {
+      "spelling": "pm",
+      "dimension": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-12
+    },
+    {
+      "spelling": "angstrom",
+      "dimension": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-10
+    },
+    {
+      "spelling": "Å",
+      "dimension": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1e-10
+    },
+    {
+      "spelling": "Pa",
+      "dimension": [
+        1,
+        -1,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "kPa",
+      "dimension": [
+        1,
+        -1,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "bar",
+      "dimension": [
+        1,
+        -1,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 100000
+    },
+    {
+      "spelling": "atm",
+      "dimension": [
+        1,
+        -1,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 101325
+    },
+    {
+      "spelling": "Da",
+      "dimension": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1.66053906892e-27
+    },
+    {
+      "spelling": "A",
+      "dimension": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mA",
+      "dimension": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "uA",
+      "dimension": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "µA",
+      "dimension": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "C",
+      "dimension": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "V",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -1
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mV",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -1
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "kV",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -1
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "ohm",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "Ω",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "kohm",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "kΩ",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "Mohm",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1000000
+    },
+    {
+      "spelling": "MΩ",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1000000
+    },
+    {
+      "spelling": "F",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mF",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "uF",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "µF",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "nF",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 1e-9
+    },
+    {
+      "spelling": "pF",
+      "dimension": [
+        -1,
+        -2,
+        4,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 1e-12
+    },
+    {
+      "spelling": "H",
+      "dimension": [
+        1,
+        2,
+        -2,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mH",
+      "dimension": [
+        1,
+        2,
+        -2,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "uH",
+      "dimension": [
+        1,
+        2,
+        -2,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "µH",
+      "dimension": [
+        1,
+        2,
+        -2,
+        0,
+        0,
+        -2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "W",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mW",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "kW",
+      "dimension": [
+        1,
+        2,
+        -3,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "S",
+      "dimension": [
+        -1,
+        -2,
+        3,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "mS",
+      "dimension": [
+        -1,
+        -2,
+        3,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.001
+    },
+    {
+      "spelling": "uS",
+      "dimension": [
+        -1,
+        -2,
+        3,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "µS",
+      "dimension": [
+        -1,
+        -2,
+        3,
+        0,
+        0,
+        2
+      ],
+      "si_factor": 0.000001
+    },
+    {
+      "spelling": "Hz",
+      "dimension": [
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1
+    },
+    {
+      "spelling": "kHz",
+      "dimension": [
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1000
+    },
+    {
+      "spelling": "MHz",
+      "dimension": [
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0
+      ],
+      "si_factor": 1000000
+    }
+  ]
+}

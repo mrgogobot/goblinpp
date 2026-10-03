@@ -1,0 +1,19 @@
+GO_PARANOID
+import "lib/measurements.gbl"
+
+# Numeric conversion is explicit; units come from our experimental protocol.
+numbers = csv_numbers("measurements.csv", "length_m")
+names = csv_column("measurements.csv", "sample")
+rows = csv_rows("measurements.csv")
+average = average_length(numbers)
+length_report(average)
+
+tsv_values = tsv_numbers("measurements.tsv", "value")
+tsv_average = mean(tsv_values)
+
+print("rows = {rows}; samples = {names}")
+print("average length = {average}; TSV average = {tsv_average}")
+write_json("measurements.json", "rows", rows, "average_length", average)
+write_csv("measurements_summary.csv", 2, "metric", "value", "rows", rows, "average_length", average)
+seal average
+seal tsv_average

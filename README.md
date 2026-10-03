@@ -19,6 +19,8 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 
 ## Downloads and documentation
 
+- [简体中文：安装、学习与参考 / Simplified Chinese reader guide](docs/zh-CN/START_HERE.md)
+- [Community translation review (unverified proposals)](community-review/README.md)
 - [Goblin++ Alpha.12 Day-One Tutorial](docs/tutorial/Goblin++_Alpha12_Day-One_Tutorial.pdf)
 - [Install the VS Code extension](vscode/README.md)
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)

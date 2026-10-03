@@ -1,0 +1,43 @@
+GO_PARANOID
+
+# Explicit astronomical distance conversion.
+sun_distance = au2m(1)
+print("one astronomical unit = {sun_distance}")
+
+# Homogeneous, dimension-aware vectors.
+displacement = [3 m, 4 m, 0 m]
+distance = magnitude(displacement)
+motion = velocity(displacement, 2 s)
+print("distance = {distance}; velocity = {motion}")
+
+# Spherical convention: radius, inclination from +z, azimuth from +x.
+position = spherical2cartesiand(10 m, 90, 45)
+azimuth = cartesian_azimuthd(position)
+inclination = cartesian_inclinationd(position)
+print("position = {position}")
+print("azimuth = {azimuth} degrees; inclination = {inclination} degrees")
+
+# Explicit rotational model.
+omega = angular_velocityd(360, 4 s)
+tangent_speed = tangential_velocity(2 m, omega)
+inward_acceleration = centripetal_acceleration(2 m, omega)
+print("omega = {omega}; tangent speed = {tangent_speed}")
+print("centripetal acceleration = {inward_acceleration}")
+
+# Explicit velocity models: Galilean and collinear special relativity.
+ordinary_sum = velocity_add_galilean(velocity(10 m, 2 s), velocity(4 m, 2 s))
+relativistic_sum = velocity_add_relativistic_collinear(c / 2, c / 2)
+print("Galilean sum = {ordinary_sum}")
+print("collinear relativistic sum = {relativistic_sum}")
+
+zero_velocity = velocity(0 m, 1 s)
+y_velocity = velocity(3 m, 1 s)
+L = angular_momentum_from_velocity([1 m, 0 m, 0 m], 2 kg, [zero_velocity, y_velocity, zero_velocity])
+print("angular momentum = {L}")
+
+seal sun_distance
+seal motion
+seal position
+seal inward_acceleration
+seal relativistic_sum
+seal L
