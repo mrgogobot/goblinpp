@@ -9,6 +9,8 @@ No new dependencies were added. Alpha.22's exact verification, explicit numeric
 tolerances and measured macOS/Linux fixture gate are retained; this new stage
 still needs its own cross-platform CI validation.
 
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
 Goblin++ is an evidence-first scientific language. This release begins the audited migration from the Python 0.0.7 reference implementation to a native Rust engine.
