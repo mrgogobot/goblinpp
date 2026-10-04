@@ -1,0 +1,17 @@
+GO_PARANOID
+
+# Explicit cuts; FITS units are reported, not inferred or converted.
+lower = fits_where("Z", ">=", 0)
+upper = fits_where("Z", "<", 3)
+has_quality = fits_where("QUALITY", "is_valid")
+cut = fits_all([lower, upper, has_quality])
+
+# Column order is explicit; original catalogue row order is preserved.
+selected = fits_export_csv("subset.csv", "sample.fits", 1, ["OBJECT", "Z", "QUALITY"], cut)
+fits_export_tsv("subset.tsv", "sample.fits", 1, ["OBJECT", "Z", "QUALITY"], cut)
+first_quality = fits_column_text("sample.fits", 1, "QUALITY", 0)
+
+print("selected rows = {selected}; first quality = {first_quality}")
+print("Subset files are hashed under RUN_DIR/outputs. This is not physical blinding.")
+seal selected
+seal first_quality

@@ -36,7 +36,7 @@ java {
 def generatedResources = layout.buildDirectory.dir('generated-resources')
 
 tasks.register('generateGoblinVocabulary') {
-    def editorSpec = file('../vscode/spec/rust-alpha22-editor.json')
+    def editorSpec = file('../vscode/spec/rust-alpha23-editor.json')
     def lexiconSpec = file('../vscode/spec/lexicon.v0.json')
     inputs.files(editorSpec, lexiconSpec)
     outputs.dir(generatedResources)

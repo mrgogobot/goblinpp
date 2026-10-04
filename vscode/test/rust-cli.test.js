@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.22 CLI check, run, and verify contracts", {
+test("actual alpha.23 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.22 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.22/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.23/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -102,6 +102,19 @@ test("actual alpha.22 CLI check, run, and verify contracts", {
   const selectionVerify = invoke(core.goblinArgs("verify", selectionRunDir));
   assert.equal(selectionVerify.status, 0);
   assert.match(selectionVerify.stdout, /VERIFICATION_STATUS=PASS/);
+
+  const subset = path.join(root, "subset.gbl");
+  fs.writeFileSync(subset, 'GO_PARANOID\nlow = fits_where("Z", ">=", 0)\nhigh = fits_where("Z", "<", 3)\ncut = fits_all([low, high])\ncount = fits_export_csv("subset.csv", "sample.fits", 1, ["OBJECT", "Z"], cut)\nprint("selected = {count}")\nseal count\n');
+  assert.equal(invoke(core.goblinArgs("check", subset, ["--json"])).status, 0);
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", subset, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    assert.match(executed.stdout, /selected = 2/);
+    const dir = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    assert(dir);
+    assert.equal(fs.readFileSync(path.join(dir, "outputs/subset.csv"), "utf8"), "OBJECT,Z\nGALAXY,0.125\nQSO,2.25\n");
+    assert.equal(invoke(core.goblinArgs("verify", dir)).status, 0);
+  }
 
   const library = path.join(root, "library.gbl");
   fs.writeFileSync(library, 'g_func measured_mean(numbers) { return mean(numbers) * 1 m }\n');

@@ -1,4 +1,29 @@
-# 0.1.0-alpha.22 (local, unreleased, explicit numerical comparison)
+# 0.1.0-alpha.23 (local, unreleased, combined FITS extraction)
+
+- Versioned `fits_where`, `fits_all` and `fits_any` predicates support explicit
+  scalar-column comparisons, nested AND/OR, and null/valid tests.
+- `fits_export_csv` / `fits_export_tsv` project selected columns in original
+  row order and record source hash, cuts, schema, counts and null policy in
+  generated artifact metadata. Outputs stay inside the run and are hashed.
+- Unscaled signed 64-bit FITS IDs are selected/exported without f64 conversion;
+  `fits_column_text` reads them exactly. Existing numeric FITS access refuses
+  unsafe integer cells. This is not a general exact integer arithmetic type.
+- FITS scaling preserves signed zero when the physical offset is zero. This
+  fixes a round-trip regression found while testing the subset exporter.
+- Bounded 8 MiB scans work beyond array/loop limits; generated output remains
+  bounded to 64 MiB and is not a streaming writer. Empty selections produce
+  header-only files; unsupported types/scales and ambiguous exports refuse.
+- Interpreter and compiled support share the same extraction helpers. New
+  predicates do not prevent historical canonical source verification.
+- VS Code 0.1.18 and JetBrains 0.3.8 include matching completion and help.
+- No new dependencies. Historical Chinese/community-review material is unchanged.
+  Extraction retains full input evidence and is not physical blinding.
+
+See `docs/FITS_SUBSETS.md`, `examples/fits_subset.gbl` and `docs/WB3_ROADMAP.md`.
+Statistics, seeded RNG and GO_MAD remain future stages. No claim of full WB-3
+validation is made.
+
+## Previous stage: 0.1.0-alpha.22 (explicit numerical comparison)
 
 - `is_close(a, b, absolute_tolerance, relative_tolerance)` requires four explicit
   arguments; dimensions, finiteness and nonnegative tolerances are checked in

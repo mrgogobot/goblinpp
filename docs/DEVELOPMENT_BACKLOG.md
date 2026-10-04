@@ -7,11 +7,17 @@ Logged 2026-10-02 from Malin Hess's WB-1 experience. Baseline:
 This document records work to investigate, fix, or add. **None of these items
 is marked implemented merely by creating this backlog.** Alpha.20 implements
 GBL-001 through GBL-003; alpha.21 implements GBL-004. Alpha.22 implements the
-GBL-005 policy/comparison stage; measured cross-platform CI validation is pending.
-GBL-006 onward remain queued. No released tag or asset
+GBL-005 policy/comparison stage; measured cross-platform CI validation passed
+in Source checks #27 on the published alpha.22 source commit
+`c3fff61a74cb3a1e4535d9c308bb23ce4e812691`. This is a finite fixture gate,
+not a universal bitwise math guarantee.
+Alpha.23 implements the GBL-006 CSV/TSV extraction stage locally; a general
+exact-integer arithmetic type and FITS subset writer remain pending.
+GBL-007 onward remain queued unless noted. No released tag or asset
 should be overwritten. WB-1/WB-2 are the user's workflow labels; the complete
 workflow, catalogue fixtures, and independent expected results have not been
-reviewed in this logging pass.
+reviewed in this logging pass. The 2026-10-04 WB-3 additions and proposed
+strict research policy are logged in [WB3_ROADMAP.md](WB3_ROADMAP.md).
 
 ## Order and evidence
 
@@ -39,8 +45,8 @@ Evidence labels:
 | GBL-002 | 1 | Prevent silently discarded pure-call results | Implemented alpha.20 for direct value-only builtin statements |
 | GBL-003 | 1 | Make stored strings independent of later interpolation | Implemented alpha.20; user chose immediate capture |
 | GBL-004 | 1 | Lossless default number-to-text formatting | Implemented alpha.21; bit-level/default export and both-engine gates |
-| GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; platform CI pending |
-| GBL-006 | 2 | Multi-column FITS cuts and subset export | Single-cut statistics exist; requested extension absent |
+| GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; macOS/Linux CI gate passed |
+| GBL-006 | 2 | Multi-column FITS cuts and subset export | Alpha.23 local: combined scalar cuts, exact unscaled i64 IDs and CSV/TSV export; FITS writing/blinding not implemented |
 | GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Source-confirmed gap in requested builtins |
 | GBL-008 | 2 | Seeded, named, cross-platform RNG | Requested addition; no current RNG dependency/API found |
 | GBL-009 | 2 | Declarable audited loop budget | Fixed cap source-confirmed |
@@ -49,9 +55,23 @@ Evidence labels:
 | GBL-012 | 2 | Larger or streaming input and array capacity | Current limits source-confirmed |
 | GBL-013 | 3 | Compound unit literals matching rendered units | Previously reproduced; existing next-build note |
 | GBL-014 | 3 | Explicit deliberate refusal | Requested addition; no `refuse` builtin found |
-| GBL-015 | 3 | Exact 64-bit catalogue integers | Current f64 representation and parse limits inspected |
+| GBL-015 | 3 | Exact 64-bit catalogue integers | Alpha.23 exact unscaled i64 FITS selection/text/export; general integer value/arithmetic type still queued |
 | GBL-016 | 3 | Validate and explain minimum Rust version | Manifest says 1.92; 1.91 success is user-reported |
 | GBL-017 | 3 | Gzip scientific input with original-file custody | Requested addition; gzip support not found |
+| GBL-018 | WB-3 P0 | Matrix primitives and checked vector normalization | dot/cross/magnitude exist; matrices and norm/unit APIs queued |
+| GBL-019 | WB-3 P0 | Covariance validation, Cholesky and multivariate sampling | Requires matrix, unit and RNG contracts; queued |
+| GBL-020 | WB-3 P1 | Deterministic ID-based row partitioning | Requires exact ID encoding and versioned hash mapping; queued |
+| GBL-021 | WB-3 P1 | Enforced allowed-column access and blind execution boundary | Not provided by GO_PARANOID; queued design/security gates |
+| GBL-022 | WB-3 | Versioned science regression suite | Eight entropic runs and WB-1 proposed; fixtures/results not yet inspected |
+| GBL-023 | WB-3 | GO_MAD strict research policy profile | Proposed name and contract only; not syntax or implemented isolation |
+| GBL-024 | WB-3 P1 | Explicit constants namespace | Silent h collision fixed alpha.20; namespace design remains queued |
+| GBL-025 | WB-3 P2 | Exact-source-ID table joins | Requires table and ID semantics; queued |
+
+WB-3 promotes GBL-006/007/008/009/012 to P0; adds ECDF to GBL-007;
+promotes GBL-013 to P1; and retains bootstrap as P1 dependent on GBL-008.
+These are workflow priorities, not claims that the existing correctness
+regressions or exact-ID dependencies may be skipped. See the roadmap for
+acceptance gates and already-implemented distinctions.
 
 ## Tier 1: silent or misleading results
 
@@ -222,7 +242,10 @@ See [the contract](NUMERIC_TEXT.md) and `tests/numeric_text.rs`.
 policy, hashes build identity, adds dimension-aware explicit-tolerance comparison
 and a 25-case two-engine platform gate. Historical metadata stays historical;
 exact verification remains exact. See [policy](NUMERIC_REPRODUCIBILITY.md).
-The macOS/Linux CI comparison is pending; no deterministic backend is claimed.
+The macOS/Linux CI comparison passed in Source checks #27 for the published
+alpha.22 commit; no deterministic backend is claimed. Published provenance is
+at https://github.com/mrgogobot/goblinpp/releases/tag/v0.1.0-alpha.22 and
+https://zenodo.org/records/23126818.
 The following preserves the original report and acceptance requirements.
 
 User reports last-digit trigonometric differences between macOS arm64 and
@@ -249,6 +272,14 @@ differences, but that is not a numerical tolerance policy.
 
 ### GBL-006 — Multi-column FITS selection and subset export
 
+**Alpha.23 local:** implemented explicit scalar comparisons and nested AND/OR,
+null/valid tests, stable-order CSV/TSV projection, exact unscaled signed i64
+ID transport and recorded extraction policy/counts. Both engines and direct
+native failure paths are covered. See [FITS_SUBSETS.md](FITS_SUBSETS.md).
+General exact integer arithmetic, a FITS writer, streaming output, formal
+allowed-column enforcement and real WB workflow validation remain pending.
+The bullets below retain the original acceptance targets.
+
 `fits_select_stats` currently supports a single selection column with a
 half-open interval, target statistics, and optional weights. It does not
 provide a general combined predicate and writable selected table.
@@ -270,6 +301,10 @@ provide a general combined predicate and writable selected table.
   quantile interpolation, population/sample convention (or explicit `ddof`),
   ordering, finite-value policy, empty/singleton behaviour, and dimensions.
   Specify whether `sort` returns a copy; do not introduce hidden mutation.
+- WB-3 P0 adds ECDF: specify right-continuous `count(x_i <= x) / n`, treatment
+  of ties, finite inputs, compatible dimensions, query ordering and empty-data
+  refusal. A weighted ECDF needs a separate explicit weight contract; do not
+  silently substitute it for the unweighted distribution.
 - Bootstrap is a follow-on using GBL-008: specify resampling unit, replacement,
   statistic, repetitions, interval method, and provenance. It is not a
   scientifically valid default for every dependent or weighted dataset.
@@ -365,6 +400,11 @@ design/precedence and compatibility gates in [NEXT_BUILD.md](NEXT_BUILD.md).
 
 ### GBL-015 — Exact 64-bit integers
 
+**Alpha.23 interim transport:** unscaled signed i64 FITS IDs are compared and
+exported exactly, and `fits_column_text` returns exact decimal text. Numeric
+FITS access refuses unsafe integer cells. This does not implement the general
+integer type or unsigned/scaled integer representation described below.
+
 Numeric values currently use f64; `parse_integer` also returns f64 and rejects
 integer text beyond the safe exact range. A floating-point quantity is not
 an exact 64-bit ID container. Users report this blocks Gaia catalogue IDs.
@@ -404,6 +444,19 @@ with 1.91; this has not been verified here and the exact build path matters
 - Acceptance: equivalence to the uncompressed scientific data, corrupt/large
   inputs, compressed-byte changes, preserved independent verification,
   original-file postflight checks, and native/interpreter parity.
+
+## WB-3 extensions (logged 2026-10-04)
+
+Detailed requirements, dependencies, missing evidence and the proposed
+`GO_MAD` boundary are in [WB3_ROADMAP.md](WB3_ROADMAP.md). GBL-018 through
+GBL-025 are planned work only. No runtime, editor vocabulary, receipt schema,
+or scientific test result is changed by recording them.
+
+The proposed science fixtures must preserve measured outputs and declare
+independently justified tolerances before a new candidate is tested. Existing
+run bytes still verify exactly; reference agreement is a separate gate. Do
+not round authoritative seals, infer a constants namespace from alpha.20's
+protection, or infer physical blinding from an access log.
 
 ## Documentation and outreach notes
 

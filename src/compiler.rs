@@ -186,6 +186,7 @@ fn build_data_program(
         ("error", include_str!("error.rs")),
         ("evaluator", include_str!("evaluator.rs")),
         ("fits", include_str!("fits.rs")),
+        ("fits_selection", include_str!("fits_selection.rs")),
         ("hashing", include_str!("hashing.rs")),
         ("inline_rust", include_str!("inline_rust.rs")),
         ("interaction", include_str!("interaction.rs")),
@@ -210,7 +211,9 @@ fn build_data_program(
         ),
     ];
     for (name, contents) in modules {
-        lib.push_str(&format!("pub mod {name};\n"));
+        if name != "fits_selection" {
+            lib.push_str(&format!("pub mod {name};\n"));
+        }
         files.push((format!("src/{name}.rs"), contents.into()));
     }
     files.push(("src/lib.rs".into(), lib));

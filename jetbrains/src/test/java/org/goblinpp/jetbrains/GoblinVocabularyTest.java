@@ -30,6 +30,10 @@ final class GoblinVocabularyTest {
         assertTrue(GoblinVocabulary.find("sum").detail().contains("non-empty"));
         assertTrue(GoblinVocabulary.find("mean").snippet().contains("values"));
         assertEquals("function", GoblinVocabulary.find("cross").kind());
+        for (String name : new String[]{"fits_where", "fits_all", "fits_any", "fits_column_text", "fits_export_csv", "fits_export_tsv"}) {
+            assertEquals("function", GoblinVocabulary.find(name).kind());
+            assertTrue(!GoblinVocabulary.find(name).snippet().isEmpty());
+        }
         assertEquals("function", GoblinVocabulary.find("chem_molar_mass").kind());
         assertEquals("function", GoblinVocabulary.find("ee_current").kind());
         assertEquals("function", GoblinVocabulary.find("ee_kcl_balanced").kind());

@@ -75,7 +75,8 @@ pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 pub fn is_data_function(name: &str) -> bool {
-    crate::delimited::is_function(name)
+    crate::fits::is_selection_function(name)
+        || crate::delimited::is_function(name)
         || matches!(
             name,
             "fits_header"
@@ -804,6 +805,74 @@ impl Evaluation {
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let fits = self.load_fits(&path, format!("columns:hdu={hdu}"))?;
                 Quantity::scalar(fits.column_count(hdu)? as f64).map(Value::Quantity)
+            }
+            "fits_column_text" => {
+                require_args(name, args, 4)?;
+                let values = self.eval_args(args)?;
+                let path = values[0].text(name)?.to_string();
+                let hdu = integer_scalar(&values[1], name)? as usize;
+                let column = values[2].text(name)?.to_string();
+                let row = integer_scalar(&values[3], name)? as usize;
+                let fits = self.load_fits(&path, serde_json::json!({"operation": name, "hdu": hdu, "column": column, "row": row, "serialization": "exact_scalar_text"}).to_string())?;
+                Ok(Value::Text(fits.column_text(hdu, &column, row)?))
+            }
+            "fits_where" => {
+                require_args_one_of(name, args, &[2, 3])?;
+                let values = self.eval_args(args)?;
+                let column = values[0].text(name)?;
+                let op = values[1].text(name)?;
+                let value = values.get(2).map(|value| match value {
+                    Value::Text(s) => Ok(crate::fits::FilterValue::Text(s.clone())),
+                    Value::Bool(b) => Ok(crate::fits::FilterValue::Boolean(*b)),
+                    Value::Quantity(q) if q.dimension == DIMENSIONLESS => Ok(crate::fits::FilterValue::Number(q.value_si)),
+                    _ => Err(GoblinError::data("fits_where() bounds must be scalar dimensionless numbers, text or Booleans; FITS units are not automatically interpreted.")),
+                }).transpose()?;
+                Ok(Value::Text(crate::fits::filter_where(column, op, value)?))
+            }
+            "fits_all" | "fits_any" => {
+                require_args(name, args, 1)?;
+                let values = self.eval_args(args)?;
+                let Value::Array(items) = &values[0] else {
+                    return Err(GoblinError::data(
+                        "fits_all()/fits_any() requires an array of filters.",
+                    ));
+                };
+                let filters = items
+                    .iter()
+                    .map(|v| v.text(name).map(str::to_string))
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(Value::Text(crate::fits::filter_group(
+                    &filters,
+                    name == "fits_all",
+                )?))
+            }
+            "fits_export_csv" | "fits_export_tsv" => {
+                require_args(name, args, 5)?;
+                let values = self.eval_args(args)?;
+                let output_name = values[0].text(name)?.to_string();
+                let path = values[1].text(name)?.to_string();
+                let hdu = integer_scalar(&values[2], name)? as usize;
+                let Value::Array(items) = &values[3] else {
+                    return Err(GoblinError::data(
+                        "FITS export projection must be an array of column names.",
+                    ));
+                };
+                let columns = items
+                    .iter()
+                    .map(|v| v.text(name).map(str::to_string))
+                    .collect::<Result<Vec<_>>>()?;
+                let filter = crate::fits::filter_from_text(values[4].text(name)?)?;
+                let access = serde_json::json!({"operation": name, "hdu": hdu, "projection": columns, "filter": filter, "output": output_name}).to_string();
+                let fits = self.load_fits(&path, access)?;
+                let (artifact, rows) = fits.export_subset(
+                    &output_name,
+                    hdu,
+                    &columns,
+                    &filter,
+                    name == "fits_export_tsv",
+                )?;
+                self.add_output(artifact)?;
+                Quantity::scalar(rows as f64).map(Value::Quantity)
             }
             "fits_column" => {
                 require_args_one_of(name, args, &[4, 5])?;

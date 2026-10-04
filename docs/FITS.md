@@ -122,4 +122,9 @@ The first evidence-grade run over a large FITS file reads the file to hash it an
 
 ## Explicit limits
 
+Alpha.23 adds [combined cuts and exact-ID CSV/TSV subset export](FITS_SUBSETS.md).
+Use `fits_column_text` for unscaled signed 64-bit IDs. Numeric access refuses
+unsafe integers rather than rounding; general integer arithmetic and FITS
+subset writing are not implemented. The subset projection is not physical blinding.
+
 This release does not read ASCII-table values, random groups, tile-compressed images, bit arrays, complex values, or variable-length array heaps. It reports those structures where possible and refuses unsupported access. WCS, declared FITS units, uncertainty models, filters, and catalogue-specific semantics are not interpreted.

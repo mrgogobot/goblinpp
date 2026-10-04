@@ -143,12 +143,16 @@ fn value_only_builtin(name: &str) -> bool {
                 | "write_json"
                 | "plot_fits_histogram"
                 | "plot_fits_scatter"
+                | "fits_export_csv"
+                | "fits_export_tsv"
         )
         && resolve(name).is_none()
         && !is_unit(name)
         && !name.starts_with("__goblin_")
         || matches!(name, "sum" | "mean")
         || crate::numeric_comparison::is_function(name)
+        || (crate::fits::is_selection_function(name)
+            && !matches!(name, "fits_export_csv" | "fits_export_tsv"))
 }
 
 fn validate_statements(statements: &[Stmt]) -> Result<()> {
@@ -160,9 +164,11 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
             Stmt::Function { name, params, body } => {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
-                if crate::numeric_comparison::is_function(name) {
+                if crate::numeric_comparison::is_function(name)
+                    || crate::fits::is_selection_function(name)
+                {
                     return Err(GoblinError::parse(format!(
-                        "{name} is a registered builtin function and cannot be redefined. Rename the user function before executing under alpha.22 or later."
+                        "{name} is a registered builtin function and cannot be redefined. Rename the user function before executing under this runtime."
                     )));
                 }
                 require_writable_name(name)?;

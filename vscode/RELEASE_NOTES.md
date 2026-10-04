@@ -1,4 +1,12 @@
-# VS Code extension 0.1.14 (unreleased)
+# VS Code extension 0.1.18 (local, unreleased)
+
+Updated for Rust alpha.23 with highlighting, completion, help and snippets for
+`fits_where`, `fits_all`, `fits_any`, `fits_column_text`, `fits_export_csv` and
+`fits_export_tsv`. Help distinguishes exact ID text from integer arithmetic and
+subset extraction from physical blinding. No execution semantics live in the editor.
+Previous alpha.22 comparison and alpha.21 lossless-text help is retained.
+
+## Previous stage: 0.1.14
 
 Updated for Rust alpha.19: `import`, ten explicit CSV/TSV reader completions,
 snippets and function help, plus syntax highlighting. Existing FITS and output

@@ -1,12 +1,13 @@
-# Goblin++ Rust Engine 0.1.0-alpha.22 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.23 (local, unreleased)
 
-Alpha.22 adds explicit, dimension-aware `is_close` and `same_bits` comparisons,
-hashed math backend/build identity, read-only sealed-value comparison and shared
-cross-platform regression fixtures. Hash verification remains exact; scientific
-tolerances are never implicit. See [numerical reproducibility](docs/NUMERIC_REPRODUCIBILITY.md).
-Cross-platform validation awaits measured CI results. Lossless text, protected
-constants and immediate string capture are retained; historical receipts remain
-verifiable. No deterministic math backend or new dependency was added.
+Alpha.23 adds combined FITS cuts and selected-column CSV/TSV export in both
+engines, preserving unscaled signed 64-bit catalogue IDs as exact text. Unsafe
+numeric ID access refuses instead of rounding. See [FITS subsets](docs/FITS_SUBSETS.md)
+and `examples/fits_subset.gbl`. Extraction is not physical blinding; `GO_MAD`,
+general integer arithmetic, distribution statistics and seeded RNG remain queued.
+No new dependencies were added. Alpha.22's exact verification, explicit numeric
+tolerances and measured macOS/Linux fixture gate are retained; this new stage
+still needs its own cross-platform CI validation.
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 

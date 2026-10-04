@@ -55,7 +55,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset"]:
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)
@@ -71,6 +71,13 @@ def main() -> None:
                     assert "rounded label = 0.123" in run.stdout
                     assert "signed zero = -0" in run.stdout
                     assert (root / directory / "outputs/numbers.txt").read_text() == "0.12345678901234566\n"
+                if example == "fits_subset":
+                    report = json.loads((root / directory / "receipt.json").read_text())
+                    exported = [item for item in report["generated_artifacts"] if item["producer"].startswith("fits_export_")]
+                    assert len(exported) == 2
+                    assert all(item["metadata"]["physical_blinding"] is False for item in exported)
+                    assert all(item["metadata"]["input_rows"] == 3 for item in exported)
+                    assert "OBJECT,Z,QUALITY\n" in (root / directory / "outputs/subset.csv").read_text()
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

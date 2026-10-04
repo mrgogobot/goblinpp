@@ -143,7 +143,7 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 232);
+    assert.equal(items.length, 238);
     assert(items.some((item) => item.label === "csv_numbers" && item.kind === 2));
     assert(items.some((item) => item.label === "tsv_column" && item.kind === 2));
     assert(items.some((item) => item.label === "import"));
@@ -153,6 +153,9 @@ test("extension activates and registers commands and language providers", async 
     assert(items.some((item) => item.label === "km" && item.kind === 4));
     assert(items.some((item) => item.label === "fits_mean" && item.kind === 2));
     assert(items.some((item) => item.label === "fits_select_stats" && item.kind === 2));
+    for (const name of ["fits_where", "fits_all", "fits_any", "fits_column_text", "fits_export_csv", "fits_export_tsv"]) {
+      assert(items.some((item) => item.label === name && item.kind === 2));
+    }
     assert(items.some((item) => item.label === "sind" && item.kind === 2));
     assert(items.some((item) => item.label === "sinr" && item.kind === 2));
     assert.match(items.find((item) => item.label === "for").insertText.value, /range/);

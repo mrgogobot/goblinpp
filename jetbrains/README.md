@@ -1,6 +1,8 @@
 # Goblin++ for JetBrains IDEs
 
-Plugin 0.3.7 accompanies engine alpha.22. Completion includes `is_close` with
+Plugin 0.3.8 accompanies engine alpha.23. Completion includes explicit FITS
+predicate builders, CSV/TSV subset export and exact catalogue-ID text access.
+See `docs/FITS_SUBSETS.md`; projection is not physical blinding. It retains `is_close` with
 four explicit arguments and no defaults, plus `same_bits` including signed zero.
 See `docs/NUMERIC_REPRODUCIBILITY.md` in the engine package. Help retains lossless
 default numeric text and signed zero, and marks constants
@@ -36,7 +38,7 @@ engine: the plugin does not reimplement scientific execution or custody rules.
 - an explicit executable override under **Settings | Tools | Goblin++**
 
 The editor vocabulary is generated at build time from
-[`../vscode/spec/rust-alpha19-editor.json`](../vscode/spec/rust-alpha19-editor.json)
+[`../vscode/spec/rust-alpha23-editor.json`](../vscode/spec/rust-alpha23-editor.json)
 and [`../vscode/spec/lexicon.v0.json`](../vscode/spec/lexicon.v0.json). This keeps
 the JetBrains plugin aligned with the reviewed Goblin++ editor contract instead
 of maintaining another hand-copied keyword list.

@@ -1,6 +1,6 @@
 # Goblin++ for Visual Studio Code 0.1.16 (local, unreleased)
 
-Editor support 0.1.17 for the Goblin++ Rust engine **0.1.0-alpha.22**. Completion and snippets include `is_close` with four explicit arguments and `same_bits`, keeping tolerance comparisons separate from exact evidence verification. Lossless numeric text, read-only constants, consumed append copies and immediate template capture remain. This extension keeps the existing `goblinpp-project.goblinpp` identity.
+Editor support 0.1.18 for the Goblin++ Rust engine **0.1.0-alpha.23**. Completion and snippets include `fits_where`, `fits_all`, `fits_any`, `fits_column_text` and CSV/TSV subset exports. Large unscaled catalogue IDs stay exact text; extraction is not physical blinding. Existing explicit comparisons, lossless numeric text and protected values remain. This extension keeps the existing `goblinpp-project.goblinpp` identity.
 
 Completions and highlighting include `import`, CSV/TSV readers, and the existing
 FITS/output calls, now available in compiled runs. Use the engine's

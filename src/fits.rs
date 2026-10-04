@@ -11,6 +11,12 @@ use std::sync::Arc;
 const CARD_BYTES: usize = 80;
 const BLOCK_BYTES: usize = 2880;
 
+#[path = "fits_selection.rs"]
+mod selection;
+pub use selection::{
+    FilterValue, FitsFilter, filter_from_text, filter_group, filter_where, is_selection_function,
+};
+
 #[derive(Debug, Clone)]
 enum DataSource {
     File { file: Arc<File>, len: u64 },
@@ -1118,6 +1124,12 @@ fn decode_table_value(bytes: &[u8], column: &ColumnLayout, row: usize) -> Result
     if raw_integer.is_some_and(|value| Some(value) == column.public.null) {
         return Ok(ColumnValue::Null);
     }
+    if raw_integer.is_some_and(|value| value.unsigned_abs() > 9_007_199_254_740_991) {
+        return Err(GoblinError::data(format!(
+            "FITS column {} row {row} contains an integer outside the safe f64 integer range. Use fits_column_text() or fits_export_csv()/fits_export_tsv() to preserve the exact ID.",
+            column.public.name
+        )));
+    }
     let raw = match column.code {
         'E' => f32::from_be_bytes(bytes[..4].try_into().unwrap()) as f64,
         'D' => f64::from_be_bytes(bytes[..8].try_into().unwrap()),
@@ -1411,7 +1423,12 @@ fn read_integer(bytes: &[u8], bitpix: i32) -> Option<i64> {
 }
 
 fn scale_value(raw: f64, scale: f64, zero: f64, context: &str) -> Result<f64> {
-    let physical = raw * scale + zero;
+    // A zero offset is a no-op, not an addition which erases the sign of -0.
+    let physical = if zero == 0.0 {
+        raw * scale
+    } else {
+        raw * scale + zero
+    };
     if !physical.is_finite() && !physical.is_nan() {
         return Err(GoblinError::data(format!(
             "{context} produced an infinite value."

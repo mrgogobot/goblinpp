@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha22-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha23-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,10 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.22 runtime features", () => {
+test("completion combines legacy spellings with alpha.23 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 232);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 232);
+  assert.equal(entries.length, 238);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 238);
   assert.equal(entries.find((item) => item.spelling === "import").kind, "statement");
   for (const prefix of ["csv", "tsv"]) {
     for (const suffix of ["rows", "columns", "headers", "column", "numbers"]) {
@@ -289,10 +289,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.22 language coloring and extension identity are internally consistent", () => {
+test("alpha.23 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.17");
+  assert.equal(manifest.version, "0.1.18");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -300,6 +300,10 @@ test("alpha.22 language coloring and extension identity are internally consisten
     assert(comparisons.test(spelling));
   }
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+  for (const spelling of ["fits_where", "fits_all", "fits_any", "fits_column_text", "fits_export_csv", "fits_export_tsv"]) {
+    assert(builtins.test(`${spelling}(`));
+    assert(runtimeVocabulary.functions.some((entry) => entry.spelling === spelling && entry.snippet));
+  }
   for (const spelling of ["sum", "mean"]) {
     assert(builtins.test(`${spelling}(`));
   }
