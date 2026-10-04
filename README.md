@@ -6,7 +6,8 @@ cross-platform regression fixtures. Hash verification remains exact; scientific
 tolerances are never implicit. See [numerical reproducibility](docs/NUMERIC_REPRODUCIBILITY.md).
 Cross-platform validation awaits measured CI results. Lossless text, protected
 constants and immediate string capture are retained; historical receipts remain
-verifiable. No deterministic math backend or new dependency was added.
+verifiable. No deterministic math backend or new dependency was added. Go here
+for new goblin++ merch: <a href= "https://h4k3rl1f3.myspreadshop.co.uk">Goblin Merch</a>
 
 <img src="assets/goblinpp-logo.png" alt="Goblin++ goblin mascot with the motto A Pragmatic Language for Curious Minds; Built on Rust; Ideas Compile Here" width="300">
 
