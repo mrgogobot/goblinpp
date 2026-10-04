@@ -574,23 +574,42 @@ impl Evaluation {
     }
 
     fn eval_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+        // Evaluate arguments before entering the large scientific-I/O dispatch
+        // frame. No builtin work frame may remain live during user recursion.
+        // Keep arity/unknown-name errors ahead of argument side effects, too.
+        if self.functions.contains_key(name) {
+            return self.eval_user_function(name, args);
+        }
+        if let Some((radians, degrees)) = legacy_angle_replacements(name) {
+            let warning = legacy_angle_warning(name, radians, degrees);
+            if !self.warnings.contains(&warning) {
+                self.warnings.push(warning);
+            }
+        }
+        validate_builtin_arity(name, args)?;
+        let values = self.eval_args(args)?;
+        self.eval_builtin_call(name, &values)
+    }
+
+    #[inline(never)]
+    fn eval_builtin_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
         if crate::delimited::is_function(name) {
             return self.eval_table_call(name, args);
         }
         match name {
             "len" => {
                 require_args(name, args, 1)?;
-                let value = self.eval_expr(&args[0])?;
+                let value = &args[0];
                 let length = match value {
                     Value::Array(items) => items.len(),
-                    Value::Text(text) => text_runtime::length(&text),
+                    Value::Text(text) => text_runtime::length(text),
                     _ => return Err(GoblinError::new("G203", "len() requires an array or text.")),
                 };
                 Quantity::scalar(length as f64).map(Value::Quantity)
             }
             "to_text" => {
                 require_args(name, args, 1)?;
-                let value = self.eval_expr(&args[0])?;
+                let value = &args[0];
                 if matches!(value, Value::Array(_)) {
                     return Err(GoblinError::new(
                         "G203",
@@ -603,14 +622,14 @@ impl Evaluation {
             }
             "parse_number" => {
                 require_args(name, args, 1)?;
-                let value = self.eval_expr(&args[0])?;
+                let value = &args[0];
                 let value = value.text(name)?;
                 let number = text_runtime::parse_number(value).map_err(GoblinError::numeric)?;
                 Quantity::scalar(number).map(Value::Quantity)
             }
             "parse_integer" => {
                 require_args(name, args, 1)?;
-                let value = self.eval_expr(&args[0])?;
+                let value = &args[0];
                 let value = value.text(name)?;
                 let number = text_runtime::parse_integer(value).map_err(GoblinError::numeric)?;
                 Quantity::scalar(number).map(Value::Quantity)
@@ -625,20 +644,20 @@ impl Evaluation {
             | "hypot" | "is_close" | "same_bits" => self.eval_math_call(name, args),
             name if crate::science::is_function(name) => {
                 crate::science::require_arity(name, args.len())?;
-                crate::science::call(name, self.eval_args(args)?)
+                crate::science::call(name, args.to_vec())
             }
             name if crate::chemistry::is_function(name) => {
                 crate::chemistry::require_arity(name, args.len())?;
-                crate::chemistry::call(name, self.eval_args(args)?)
+                crate::chemistry::call(name, args.to_vec())
             }
             name if crate::electrical::is_function(name) => {
                 crate::electrical::require_arity(name, args.len())?;
-                crate::electrical::call(name, self.eval_args(args)?)
+                crate::electrical::call(name, args.to_vec())
             }
             "append" => {
                 require_args(name, args, 2)?;
-                let array = self.eval_expr(&args[0])?;
-                let value = self.eval_expr(&args[1])?;
+                let array = args[0].clone();
+                let value = args[1].clone();
                 let Value::Array(mut items) = array else {
                     return Err(GoblinError::new("G203", "append() requires an array."));
                 };
@@ -655,13 +674,12 @@ impl Evaluation {
             }
             "argv" => {
                 require_args(name, args, 1)?;
-                let index = integer_scalar(&self.eval_expr(&args[0])?, name)? as usize;
+                let index = integer_scalar(&args[0], name)? as usize;
                 Ok(Value::Text(self.interaction.argv(index)?.to_string()))
             }
             "input" => {
                 require_args_one_of(name, args, &[0, 1])?;
-                let prompt = if let Some(expr) = args.first() {
-                    let value = self.eval_expr(expr)?;
+                let prompt = if let Some(value) = args.first() {
                     value.text(name)?.to_string()
                 } else {
                     String::new()
@@ -669,10 +687,7 @@ impl Evaluation {
                 Ok(Value::Text(self.interaction.input(prompt)?))
             }
             "print" => {
-                let values = args
-                    .iter()
-                    .map(|arg| self.eval_expr(arg))
-                    .collect::<Result<Vec<_>>>()?;
+                let values = args;
                 let text = if values.len() == 1 {
                     match &values[0] {
                         Value::Text(text) => text.clone(),
@@ -695,10 +710,7 @@ impl Evaluation {
                         "printf() requires a format string.",
                     ));
                 }
-                let values = args
-                    .iter()
-                    .map(|arg| self.eval_expr(arg))
-                    .collect::<Result<Vec<_>>>()?;
+                let values = args;
                 let format = values[0]
                     .text("printf()")
                     .map_err(|_| GoblinError::new("G000", "printf() requires a format string."))?;
@@ -710,7 +722,7 @@ impl Evaluation {
             }
             "fits_header" => {
                 require_args_one_of(name, args, &[2, 3])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let (hdu, key) = if values.len() == 2 {
                     (0, values[1].text(name)?.to_string())
@@ -725,7 +737,7 @@ impl Evaluation {
             }
             "fits_axis" => {
                 require_args_one_of(name, args, &[2, 3])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let (hdu, axis) = if values.len() == 2 {
                     (0, integer_scalar(&values[1], name)? as usize)
@@ -740,7 +752,7 @@ impl Evaluation {
             }
             "fits_count" => {
                 require_args_one_of(name, args, &[1, 2])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = if values.len() == 1 {
                     0
@@ -752,7 +764,7 @@ impl Evaluation {
             }
             "fits_pixel" => {
                 require_args_one_of(name, args, &[2, 3])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let (hdu, index) = if values.len() == 2 {
                     (0, integer_scalar(&values[1], name)? as usize)
@@ -773,7 +785,7 @@ impl Evaluation {
             }
             "fits_mean" => {
                 require_args_one_of(name, args, &[1, 2])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = if values.len() == 1 {
                     0
@@ -785,14 +797,14 @@ impl Evaluation {
             }
             "fits_hdu_count" => {
                 require_args(name, args, 1)?;
-                let path = self.eval_expr(&args[0])?;
+                let path = &args[0];
                 let path = path.text(name)?.to_string();
                 let fits = self.load_fits(&path, "hdu-count".into())?;
                 Quantity::scalar(fits.hdu_count() as f64).map(Value::Quantity)
             }
             "fits_rows" => {
                 require_args(name, args, 2)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let fits = self.load_fits(&path, format!("rows:hdu={hdu}"))?;
@@ -800,7 +812,7 @@ impl Evaluation {
             }
             "fits_columns" => {
                 require_args(name, args, 2)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let fits = self.load_fits(&path, format!("columns:hdu={hdu}"))?;
@@ -808,7 +820,7 @@ impl Evaluation {
             }
             "fits_column_text" => {
                 require_args(name, args, 4)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let column = values[2].text(name)?.to_string();
@@ -818,7 +830,7 @@ impl Evaluation {
             }
             "fits_where" => {
                 require_args_one_of(name, args, &[2, 3])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let column = values[0].text(name)?;
                 let op = values[1].text(name)?;
                 let value = values.get(2).map(|value| match value {
@@ -831,7 +843,7 @@ impl Evaluation {
             }
             "fits_all" | "fits_any" => {
                 require_args(name, args, 1)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let Value::Array(items) = &values[0] else {
                     return Err(GoblinError::data(
                         "fits_all()/fits_any() requires an array of filters.",
@@ -848,7 +860,7 @@ impl Evaluation {
             }
             "fits_export_csv" | "fits_export_tsv" => {
                 require_args(name, args, 5)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let output_name = values[0].text(name)?.to_string();
                 let path = values[1].text(name)?.to_string();
                 let hdu = integer_scalar(&values[2], name)? as usize;
@@ -876,7 +888,7 @@ impl Evaluation {
             }
             "fits_column" => {
                 require_args_one_of(name, args, &[4, 5])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let column = values[2].text(name)?.to_string();
@@ -902,7 +914,7 @@ impl Evaluation {
             | "fits_column_min"
             | "fits_column_max" => {
                 require_args(name, args, 3)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let column = values[2].text(name)?.to_string();
@@ -919,7 +931,7 @@ impl Evaluation {
             }
             "fits_select_stats" => {
                 require_args_one_of(name, args, &[6, 7])?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let path = values[0].text(name)?.to_string();
                 let hdu = integer_scalar(&values[1], name)? as usize;
                 let selection = values[2].text(name)?.to_string();
@@ -972,7 +984,7 @@ impl Evaluation {
                         args.len()
                     )));
                 }
-                let values = self.eval_args(args)?;
+                let values = args;
                 let name = values[0].text(name)?.to_string();
                 let extension = output::extension(&name)?;
                 let media_type = match extension.as_str() {
@@ -1006,7 +1018,7 @@ impl Evaluation {
                         "{name}() requires a filename, column count, and at least one complete row."
                     )));
                 }
-                let values = self.eval_args(args)?;
+                let values = args;
                 let file_name = values[0].text(name)?.to_string();
                 let columns = usize::try_from(integer_scalar(&values[1], name)?)
                     .map_err(|_| GoblinError::artifact("Column count is too large."))?;
@@ -1061,7 +1073,7 @@ impl Evaluation {
                         args.len()
                     )));
                 }
-                let values = self.eval_args(args)?;
+                let values = args;
                 let file_name = values[0].text(name)?.to_string();
                 if output::extension(&file_name)? != "json" {
                     return Err(GoblinError::artifact("write_json() output must use .json."));
@@ -1090,7 +1102,7 @@ impl Evaluation {
             }
             "plot_fits_histogram" => {
                 require_args(name, args, 7)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let output_name = values[0].text(name)?.to_string();
                 let path = values[1].text(name)?.to_string();
                 let hdu = integer_scalar(&values[2], name)? as usize;
@@ -1128,7 +1140,7 @@ impl Evaluation {
             }
             "plot_fits_scatter" => {
                 require_args(name, args, 7)?;
-                let values = self.eval_args(args)?;
+                let values = args;
                 let output_name = values[0].text(name)?.to_string();
                 let path = values[1].text(name)?.to_string();
                 let hdu = integer_scalar(&values[2], name)? as usize;
@@ -1166,11 +1178,11 @@ impl Evaluation {
                 self.add_output(artifact)?;
                 Ok(Value::Text(output_name))
             }
-            _ => self.eval_user_function(name, args),
+            _ => Err(unknown(name)),
         }
     }
 
-    fn eval_string_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+    fn eval_string_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
         let expected = match name {
             "str_trim" => 1,
             "str_contains" | "str_split" | "str_join" => 2,
@@ -1178,7 +1190,7 @@ impl Evaluation {
             _ => return Err(unknown(name)),
         };
         require_args(name, args, expected)?;
-        let values = self.eval_args(args)?;
+        let values = args;
         let result = match name {
             "str_trim" => Value::Text(
                 text_runtime::bounded(values[0].text(name)?.trim().to_string())
@@ -1222,13 +1234,7 @@ impl Evaluation {
         Ok(result)
     }
 
-    fn eval_math_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
-        if let Some((radians, degrees)) = legacy_angle_replacements(name) {
-            let warning = legacy_angle_warning(name, radians, degrees);
-            if !self.warnings.contains(&warning) {
-                self.warnings.push(warning);
-            }
-        }
+    fn eval_math_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
         let minimum = if matches!(name, "min" | "max") { 2 } else { 0 };
         if minimum != 0 && args.len() < minimum {
             return Err(GoblinError::parse(format!(
@@ -1251,9 +1257,8 @@ impl Evaluation {
                 args.len()
             )));
         }
-        let values = self
-            .eval_args(args)?
-            .into_iter()
+        let values = args
+            .iter()
             .map(|value| value.quantity(name))
             .collect::<Result<Vec<_>>>()?;
 
@@ -1513,7 +1518,7 @@ impl Evaluation {
             .collect()
     }
 
-    fn eval_table_call(&mut self, name: &str, args: &[Expr]) -> Result<Value> {
+    fn eval_table_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
         let operation = name.split_once('_').unwrap().1;
         require_args(
             name,
@@ -1524,7 +1529,7 @@ impl Evaluation {
                 1
             },
         )?;
-        let values = self.eval_args(args)?;
+        let values = args;
         let requested = values[0].text(name)?;
         let path = if Path::new(requested).is_absolute() {
             PathBuf::from(requested)
@@ -1684,7 +1689,126 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
     )
 }
 
-fn require_args(name: &str, args: &[Expr], expected: usize) -> Result<()> {
+/// Validate before evaluating arguments; never silently change refusal ordering
+/// or prompt/write side effects while keeping the dispatch frame off the stack.
+fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::delimited::is_function(name) {
+        let operation = name.split_once('_').unwrap().1;
+        return require_args(
+            name,
+            args,
+            if matches!(operation, "column" | "numbers") {
+                2
+            } else {
+                1
+            },
+        );
+    }
+    if crate::science::is_function(name) {
+        return crate::science::require_arity(name, args.len());
+    }
+    if crate::chemistry::is_function(name) {
+        return crate::chemistry::require_arity(name, args.len());
+    }
+    if crate::electrical::is_function(name) {
+        return crate::electrical::require_arity(name, args.len());
+    }
+    match name {
+        "len" | "to_text" | "parse_number" | "parse_integer" | "argv" | "str_trim"
+        | "fits_hdu_count" | "fits_all" | "fits_any" => require_args(name, args, 1),
+        "append" | "str_contains" | "str_split" | "str_join" | "fits_rows" | "fits_columns" => {
+            require_args(name, args, 2)
+        }
+        "str_replace"
+        | "fits_column_valid_count"
+        | "fits_column_mean"
+        | "fits_column_min"
+        | "fits_column_max" => require_args(name, args, 3),
+        "fits_column_text" => require_args(name, args, 4),
+        "fits_export_csv" | "fits_export_tsv" => require_args(name, args, 5),
+        "plot_fits_histogram" | "plot_fits_scatter" => require_args(name, args, 7),
+        "fits_header" | "fits_axis" | "fits_pixel" | "fits_where" => {
+            require_args_one_of(name, args, &[2, 3])
+        }
+        "fits_count" | "fits_mean" => require_args_one_of(name, args, &[1, 2]),
+        "fits_column" => require_args_one_of(name, args, &[4, 5]),
+        "fits_select_stats" => require_args_one_of(name, args, &[6, 7]),
+        "input" => require_args_one_of(name, args, &[0, 1]),
+        "print" => Ok(()),
+        "printf" => {
+            if args.is_empty() {
+                Err(GoblinError::new(
+                    "G000",
+                    "printf() requires a format string.",
+                ))
+            } else {
+                Ok(())
+            }
+        }
+        "write_text" => {
+            if args.len() < 2 {
+                Err(GoblinError::parse(format!(
+                    "write_text() requires a filename and at least one value, got {} argument(s).",
+                    args.len()
+                )))
+            } else {
+                Ok(())
+            }
+        }
+        "write_csv" | "write_tsv" => {
+            if args.len() < 4 {
+                Err(GoblinError::parse(format!(
+                    "{name}() requires a filename, column count, and at least one complete row."
+                )))
+            } else {
+                Ok(())
+            }
+        }
+        "write_json" => {
+            if args.len() < 3 || args.len().is_multiple_of(2) {
+                Err(GoblinError::parse(format!(
+                    "write_json() requires a filename followed by one or more key/value pairs, got {} argument(s).",
+                    args.len()
+                )))
+            } else {
+                Ok(())
+            }
+        }
+        "min" | "max" => {
+            if args.len() < 2 {
+                Err(GoblinError::parse(format!(
+                    "{name}() expects at least 2 arguments, got {}.",
+                    args.len()
+                )))
+            } else {
+                Ok(())
+            }
+        }
+        "abs" | "sqrt" | "floor" | "ceil" | "round" | "exp" | "ln" | "log10" | "sin" | "cos"
+        | "tan" | "asin" | "acos" | "atan" | "atan2" | "sind" | "cosd" | "tand" | "sinr"
+        | "cosr" | "tanr" | "asind" | "acosd" | "atand" | "asinr" | "acosr" | "atanr"
+        | "atan2d" | "atan2r" | "deg2rad" | "rad2deg" | "hypot" | "is_close" | "same_bits" => {
+            let expected = if name == "is_close" {
+                4
+            } else if matches!(name, "atan2" | "atan2d" | "atan2r" | "hypot" | "same_bits") {
+                2
+            } else {
+                1
+            };
+            if args.len() == expected {
+                Ok(())
+            } else {
+                Err(GoblinError::parse(format!(
+                    "{name}() expects {expected} argument(s), got {}.",
+                    args.len()
+                )))
+            }
+        }
+        _ => Err(unknown(name)),
+    }
+}
+
+fn require_args<T>(name: &str, args: &[T], expected: usize) -> Result<()> {
     if args.len() == expected {
         Ok(())
     } else {
@@ -1695,7 +1819,7 @@ fn require_args(name: &str, args: &[Expr], expected: usize) -> Result<()> {
     }
 }
 
-fn require_args_one_of(name: &str, args: &[Expr], expected: &[usize]) -> Result<()> {
+fn require_args_one_of<T>(name: &str, args: &[T], expected: &[usize]) -> Result<()> {
     if expected.contains(&args.len()) {
         Ok(())
     } else {

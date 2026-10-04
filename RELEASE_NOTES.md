@@ -15,6 +15,10 @@
   header-only files; unsupported types/scales and ambiguous exports refuse.
 - Interpreter and compiled support share the same extraction helpers. New
   predicates do not prevent historical canonical source verification.
+- Function argument evaluation is kept outside the large builtin dispatch
+  frame so recursion reaches the existing 16-call refusal instead of aborting
+  the process. Linux-sized stack, caller restoration, side-effect ordering and
+  standalone native depth-boundary regressions cover this repair.
 - VS Code 0.1.18 and JetBrains 0.3.8 include matching completion and help.
 - No new dependencies. Historical Chinese/community-review material is unchanged.
   Extraction retains full input evidence and is not physical blinding.

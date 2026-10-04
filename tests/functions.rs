@@ -130,6 +130,121 @@ fn g_func_failures_are_explicit_and_preserved() {
 }
 
 #[test]
+fn recursion_is_refused_on_a_small_stack_and_restores_the_caller() {
+    // Linux's normal 2 MiB test-thread stack, explicitly imposed on macOS too.
+    // Do not enlarge CI stacks to hide a broken call-depth refusal.
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            for source in [
+                "g_func f(x) { return f(x) }\ny = f(1)\n",
+                "g_func f(x) { return again(x) }\ng_func again(x) { return f(x) }\ny = f(1)\n",
+                "g_func f(x) { return abs(f(x)) }\ny = f(1)\n",
+                "g_func f(x) { return len([f(x)]) }\ny = f(1)\n",
+                "g_func f(x) { return fits_where(\"Z\", \"==\", f(x)) }\ny = f(1)\n",
+            ] {
+                eprintln!("small-stack recursion case: {source}");
+                let parsed = parse_source(source).unwrap();
+                let mut evaluation = Evaluation::new(".");
+                evaluation.register_functions(&parsed.program).unwrap();
+                let sentinel = parse_source("sentinel = 42\n").unwrap();
+                evaluation
+                    .eval_stmt(&sentinel.program.statements[0])
+                    .unwrap();
+                for statement in &parsed.program.statements[..parsed.program.statements.len() - 1] {
+                    evaluation.eval_stmt(statement).unwrap();
+                }
+                let error = evaluation
+                    .eval_stmt(parsed.program.statements.last().unwrap())
+                    .unwrap_err();
+                assert!(error.to_string().contains("depth exceeded"), "{error}");
+                assert_eq!(evaluation.env["sentinel"].render(), "42");
+                assert!(!evaluation.env.contains_key("x"));
+                let recovery = parse_source("g_func recover(n) { if n == 0 { return 7 }\n return recover(n - 1) }\nrecovered = recover(15)\n").unwrap();
+                evaluation.register_functions(&recovery.program).unwrap();
+                evaluation.eval_stmt(recovery.program.statements.last().unwrap()).unwrap();
+                assert_eq!(evaluation.env["recovered"].render(), "7");
+            }
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+#[test]
+fn recursive_depth_boundary_agrees_with_standalone_native_execution() {
+    use goblinpp::evaluator::MAX_FUNCTION_DEPTH;
+    let root = tempdir().unwrap();
+    for (remaining, success) in [(MAX_FUNCTION_DEPTH - 1, true), (MAX_FUNCTION_DEPTH, false)] {
+        let source = format!(
+            "g_func descend(n) {{ if n == 0 {{ return 7 }}\n return abs(descend(n - 1)) }}\nanswer = descend({remaining})\nprint(answer)\nseal answer\n"
+        );
+        let parsed = parse_source(&source).unwrap();
+        let interpreted = Evaluation::new(root.path()).eval_program(&parsed.program);
+        assert_eq!(interpreted.is_ok(), success);
+        if success {
+            assert_eq!(interpreted.unwrap().sealed["answer"].render(), "7");
+        } else {
+            assert!(
+                interpreted
+                    .unwrap_err()
+                    .to_string()
+                    .contains("depth exceeded")
+            );
+        }
+        // Run the binary directly, not the launcher's interpreter preflight.
+        let compiled =
+            compile(&parsed, root.path().join(format!("depth-{remaining}")), &[]).unwrap();
+        let output = std::process::Command::new(compiled.binary)
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), success, "{output:?}");
+        if success {
+            assert_eq!(String::from_utf8(output.stdout).unwrap(), "7\n");
+        } else {
+            assert!(
+                String::from_utf8(output.stderr)
+                    .unwrap()
+                    .contains("depth exceeded")
+            );
+        }
+    }
+}
+
+#[test]
+fn builtin_argument_validation_precedes_effects_and_values_are_evaluated_once() {
+    for call in [
+        "abs(tick(), tick())",
+        "len(tick(), tick())",
+        "fits_where(tick())",
+        "write_text(tick())",
+        "csv_rows(tick(), tick())",
+        "not_a_function(tick())",
+    ] {
+        let parsed = parse_source(&format!(
+            "g_func tick() {{ print(\"tick\")\n return 1 }}\nanswer = {call}\n"
+        ))
+        .unwrap();
+        let mut evaluation = Evaluation::new(".");
+        evaluation.register_functions(&parsed.program).unwrap();
+        assert!(
+            evaluation
+                .eval_stmt(parsed.program.statements.last().unwrap())
+                .is_err()
+        );
+        assert!(
+            evaluation.stdout.is_empty(),
+            "evaluated arguments of {call}"
+        );
+    }
+    let source = "g_func tick(n) { print(n)\n return n }\nanswer = min(abs(tick(-2)), tick(3))\nprint(answer)\nseal answer\n";
+    let parsed = parse_source(source).unwrap();
+    let result = Evaluation::new(".").eval_program(&parsed.program).unwrap();
+    assert_eq!(result.stdout, ["-2", "3", "2"]);
+    assert_eq!(result.sealed["answer"].render(), "2");
+}
+
+#[test]
 fn invalid_g_func_syntax_and_reserved_names_are_rejected() {
     for source in [
         "return 1\n",
