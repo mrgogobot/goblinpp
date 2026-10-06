@@ -1,4 +1,29 @@
-# 0.1.0-alpha.24 (local, unreleased, distribution statistics)
+# 0.1.0-alpha.25 (local, unreleased, compound-unit input)
+
+- Both engines accept numeric compound-unit suffixes, including the reported
+  `1.13e-10 m/s^2` case, SI scaling, signed integer powers and grouped denominators.
+- Coefficients are separate from unit powers: `3 m^2` is 3 square metres;
+  `(3 m)^2` is 9. Review old unfrozen quantity powers before adopting this stage.
+- Multiple denominator factors require parentheses; ambiguous slash chains
+  refuse. Rendered multi-factor denominators now have explicit parentheses.
+- New receipts/freezes/checks declare the parser policy. Historical evidence
+  and module graphs use the legacy parser, not a reinterpreted canonical hash.
+  Old freezes require explicit revision; violations remain preserved evidence.
+- Unit scales, exponent bounds and dimensional arithmetic refuse invalid input;
+  arrays, libraries, native standalone programs and simple historical hashes
+  are covered. No new units, constants, dependencies or RNG have been added.
+- VS Code 0.1.20 and JetBrains 0.3.10 provide compound-unit help/highlighting.
+- Retain Rust 1.92.0; CI pins it instead of automatically updating stable Rust.
+  No user compiler installation or existing released artifact was changed.
+- Chinese/community-review snapshots remain unchanged. Cross-platform results
+  await this stage's CI; exact seals are not rounded to conceal differences.
+
+See `docs/COMPOUND_UNITS.md` and `examples/compound_units.gbl`.
+
+Spread the word with [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+Buying merchandise is optional; Goblin++ remains free to use.
+
+## Previous stage: 0.1.0-alpha.24 (distribution statistics)
 
 - `sort` returns a stable ascending numeric copy; signed-zero ties preserve
   source order. Empty sorting is allowed; reductions require finite samples.

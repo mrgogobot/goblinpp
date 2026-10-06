@@ -17,8 +17,8 @@ jobs:
         os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v6
-      - name: Use current stable Rust
-        run: rustup update stable
+      - name: Use the retained Rust 1.92.0 compiler
+        run: rustup default 1.92.0
       - name: Install Rust components
         run: rustup component add rustfmt clippy
       - name: Format
@@ -45,8 +45,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Use current stable Rust
-        run: rustup update stable
+      - name: Use the retained Rust 1.92.0 compiler
+        run: rustup default 1.92.0
       - uses: actions/download-artifact@v8
         with:
           pattern: math-evidence-*
@@ -66,8 +66,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Use current stable Rust
-        run: rustup update stable
+      - name: Use the retained Rust 1.92.0 compiler
+        run: rustup default 1.92.0
       - uses: actions/setup-node@v7
         with:
           node-version: '22'

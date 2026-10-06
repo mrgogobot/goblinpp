@@ -1,4 +1,11 @@
-# VS Code extension 0.1.19 (local, unreleased)
+# VS Code extension 0.1.20 (local, unreleased)
+
+Updated for Rust alpha.25 with compound-unit help and suffix highlighting.
+`3 m^2` denotes three square metres; `(3 m)^2` squares the whole quantity.
+Multiple denominator factors require parentheses. The engine owns semantics,
+legacy-evidence verification and explicit freeze migration, not this editor.
+
+## Previous stage: 0.1.19
 
 Updated for Rust alpha.24 with six distribution-function completions, snippets,
 highlighting and help. Quantiles use type 7; standard deviation names specify

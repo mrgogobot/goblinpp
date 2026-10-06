@@ -76,6 +76,15 @@ final class GoblinLexerTest {
     }
 
     @Test
+    void classifiesCompoundUnitSuffixes() {
+        List<Token> tokens = lex("a = 1.13e-10 m/s^2\narea = 3 m²\np = 7 kg/(m*s^2)\n");
+        for (String unit : List.of("m", "s", "kg")) {
+            assertTrue(tokens.contains(new Token(GoblinTokenTypes.UNIT, unit)));
+        }
+        assertFalse(tokens.stream().anyMatch(token -> token.type == TokenType.BAD_CHARACTER));
+    }
+
+    @Test
     void classifiesLocalImportsAndTableReaders() {
         List<Token> tokens = lex("import \"lib/measurements.gbl\"\nvalues = csv_numbers(\"data.csv\", \"length\")\nnames = tsv_column(\"data.tsv\", \"sample\")\n");
         assertTrue(tokens.contains(new Token(GoblinTokenTypes.KEYWORD, "import")));

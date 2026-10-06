@@ -55,7 +55,7 @@ Evidence labels:
 | GBL-010 | 2 | Dimension-aware element-wise array maths | Requested extension to current vector/array support |
 | GBL-011 | 2 | CSV/TSV table output from arrays | Scalar-cell API and text limits source-confirmed |
 | GBL-012 | 2 | Larger or streaming input and array capacity | Current limits source-confirmed |
-| GBL-013 | 3 | Compound unit literals matching rendered units | Previously reproduced; existing next-build note |
+| GBL-013 | 3 | Compound unit literals matching rendered units | Implemented locally in alpha.25; versioned parser and explicit freeze migration |
 | GBL-014 | 3 | Explicit deliberate refusal | Requested addition; no `refuse` builtin found |
 | GBL-015 | 3 | Exact 64-bit catalogue integers | Alpha.23 exact unscaled i64 FITS selection/text/export; general integer value/arithmetic type still queued |
 | GBL-016 | 3 | Validate and explain minimum Rust version | Manifest says 1.92; 1.91 success is user-reported |
@@ -389,9 +389,11 @@ that increasing them alone makes the current eager evaluator scale safely.
 
 ### GBL-013 — Compound unit literals
 
-Already reproduced: `1.13e-10 m/s^2` fails with `G101 UNKNOWN SYMBOL s`, while
-`1.13e-10 m / (1 s)^2` passes and renders the compact form. Keep the detailed
-design/precedence and compatibility gates in [NEXT_BUILD.md](NEXT_BUILD.md).
+Implemented locally in alpha.25. The reported acceleration suffix now works in
+both engines; coefficients are separate from unit powers. Legacy verification
+and explicit frozen-policy migration prevent old evidence being reinterpreted.
+See [COMPOUND_UNITS.md](COMPOUND_UNITS.md); the original acceptance brief is
+retained in [NEXT_BUILD.md](NEXT_BUILD.md). Cross-platform CI remains a release gate.
 
 ### GBL-014 — Explicit refusal
 
@@ -467,17 +469,19 @@ protection, or infer physical blinding from an access log.
 
 ### DOC-001 — Goblin++ merchandise link
 
-Requested by Malin Hess on 2026-10-03. Include the following optional link in
-a future documentation update to help spread the word about Goblin++:
+Requested by Malin Hess on 2026-10-03 and confirmed as a requirement for
+**every future release** on 2026-10-06. Include the following optional link
+to help spread the word about Goblin++:
 
 - [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk)
-- Suggested placement: a short merchandise/community section in the main README
-  and a link in the next documentation package.
+- Required placement: each new release's notes and GitHub description, the
+  packaged README/documentation, and manually prepared Zenodo descriptions.
 - Keep merchandise separate from installation and scientific instructions;
   no purchase is required to use Goblin++.
 
-Status: noted for the next documentation update, not yet added to published
-documentation or existing release archives.
+Status: present in the current README and alpha.25 source release notes;
+carried forward by [the reusable release checklist](../RELEASE_CHECKLIST.md).
+Previously built or published archives are not overwritten for this update.
 
 ## Gates shared by all implementation work
 

@@ -2,7 +2,7 @@
 use crate::ast::Stmt;
 use crate::error::{GoblinError, Result};
 use crate::hashing::sha256_bytes;
-use crate::parser::{ParsedSource, parse_source};
+use crate::parser::{ParsedSource, SyntaxMode, parse_source_with_mode};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use std::fs::{self, OpenOptions};
@@ -48,6 +48,7 @@ fn local_path(parent: &Path, requested: &str) -> Result<String> {
 
 fn resolve_with(
     text: &str,
+    mode: SyntaxMode,
     mut read: impl FnMut(&str) -> Result<Vec<u8>>,
 ) -> Result<ResolvedSource> {
     fn visit(
@@ -59,6 +60,7 @@ fn resolve_with(
         bytes: &mut BTreeMap<String, Vec<u8>>,
         read: &mut impl FnMut(&str) -> Result<Vec<u8>>,
     ) -> Result<()> {
+        let mode = parsed.syntax_mode;
         let mut expanded = Vec::new();
         for stmt in std::mem::take(&mut parsed.program.statements) {
             if let Stmt::Import(requested) = stmt {
@@ -86,7 +88,7 @@ fn resolve_with(
                 }
                 let text = std::str::from_utf8(&raw)
                     .map_err(|_| GoblinError::parse("Module source must be UTF-8."))?;
-                let mut module = parse_source(text)?;
+                let mut module = parse_source_with_mode(text, mode)?;
                 if !module.inline_rust.is_empty()
                     || module
                         .program
@@ -124,7 +126,7 @@ fn resolve_with(
         parsed.program.statements = expanded;
         Ok(())
     }
-    let mut parsed = parse_source(text)?;
+    let mut parsed = parse_source_with_mode(text, mode)?;
     let mut imports = Vec::new();
     let mut bytes = BTreeMap::new();
     visit(
@@ -155,12 +157,16 @@ fn resolve_with(
 }
 
 pub fn resolve(source: &Path, text: &str) -> Result<ResolvedSource> {
+    resolve_with_mode(source, text, SyntaxMode::Current)
+}
+
+pub fn resolve_with_mode(source: &Path, text: &str, mode: SyntaxMode) -> Result<ResolvedSource> {
     let base = source
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."))
         .canonicalize()?;
-    resolve_with(text, |relative| {
+    resolve_with(text, mode, |relative| {
         let mut path = base.clone();
         for part in Path::new(relative).components() {
             path.push(part.as_os_str());
@@ -235,6 +241,15 @@ pub fn verify_preserved(
     text: &str,
     entries: &serde_json::Value,
 ) -> Result<ParsedSource> {
+    verify_preserved_with_mode(run, text, entries, SyntaxMode::Current)
+}
+
+pub fn verify_preserved_with_mode(
+    run: &Path,
+    text: &str,
+    entries: &serde_json::Value,
+    mode: SyntaxMode,
+) -> Result<ParsedSource> {
     let entries: Vec<ModuleImport> = serde_json::from_value(entries.clone())?;
     if entries.len() > MAX_MODULES {
         return Err(GoblinError::parse("Too many module evidence entries."));
@@ -268,7 +283,7 @@ pub fn verify_preserved(
         }
         available.insert(entry.path.clone(), raw);
     }
-    let resolved = resolve_with(text, |path| {
+    let resolved = resolve_with(text, mode, |path| {
         available
             .get(path)
             .cloned()

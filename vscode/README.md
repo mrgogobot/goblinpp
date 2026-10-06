@@ -1,6 +1,8 @@
-# Goblin++ for Visual Studio Code 0.1.19 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.20 (local, unreleased)
 
-Editor support 0.1.19 for the Goblin++ Rust engine **0.1.0-alpha.24**. Completion,
+Editor support 0.1.20 for the Goblin++ Rust engine **0.1.0-alpha.25**. Unit help
+explains compound suffixes, coefficient-versus-quantity powers and grouped
+denominators; see `docs/COMPOUND_UNITS.md` for migration rules. Completion,
 snippets, highlighting and help include `sort`, `median`, `quantile`,
 `std_population`, `std_sample` and `ecdf`. Help distinguishes type-7 quantiles,
 sample/population divisors, copy sorting and ECDF ties; see the engine's
@@ -24,7 +26,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.19.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.20.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

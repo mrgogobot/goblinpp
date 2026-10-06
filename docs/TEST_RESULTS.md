@@ -1,4 +1,49 @@
-# Alpha.24 distribution statistics (local, unreleased)
+# Alpha.25 compound-unit input (local, unreleased)
+
+Verified locally on 2026-10-06, macOS arm64 with the retained Rust 1.92.0:
+
+- Rust: 218 passed, 0 failed, 0 ignored, no filtered tests in the final
+  `cargo test --locked --offline --all-targets` run. Formatting,
+  warning-denying Clippy, whitespace checks and the optimized build pass.
+  Cargo.lock changes only the Goblin++ package version; no new dependencies.
+- Nine compound-unit gates cover independent numeric/dimensional references,
+  SI scaling, signed zero, Unicode/canonical spelling, ordinary variable
+  arithmetic, grouped denominators, arrays and imported functions, both engines
+  and standalone native execution, parser-policy tampering, explicit old-freeze
+  migration, CLI status/compilation refusal and preserved failure evidence.
+- All 15,625 small-exponent combinations across six SI axes round-trip through
+  the rendered unit syntax and current parser. Invalid powers, ambiguous
+  denominators, dimension/scale overflow, underflow-to-zero, excessive nesting
+  and overlong suffixes refuse.
+- The shared numerical fixture has 36 cases. Both engines pass locally against
+  the declared exact-bit/tolerance references, with independently verified
+  preserved runs. Linux/macOS cross-platform comparison awaits alpha.25 CI;
+  seals remain exact and are not rounded to hide platform differences.
+- A genuine alpha.24 run whose imported function used `3 m^2` (9 square metres
+  under the old parser) independently verifies using alpha.25. The new engine
+  refuses its unchanged old freeze under the new policy; that protocol-violation
+  run also independently verifies. Historical artifacts were not rewritten.
+- VS Code 0.1.20: 16 passed, 0 failed, none skipped, including actual CLI
+  interpretation/compilation/verification and compound-unit help/highlighting.
+- JetBrains 0.3.10: 14 passed, 0 failed, none skipped; offline installer build
+  passes against cached IntelliJ 2024.3.7/JDK 21. This is not a new live
+  CLion/PyCharm test or multi-version compatibility certification.
+- Report-checker Python tests: 10 passed, 0 failed. All 179 tracked Chinese and
+  community-review files match their pre-change bytes.
+
+Local engineering checks do not establish complete WB-3 scientific validation,
+universal bitwise reproducibility or authenticated authorship. A compiler
+upgrade is deferred until preparation for the first non-alpha release; CI now
+pins Rust 1.92.0. See [COMPOUND_UNITS.md](COMPOUND_UNITS.md) for the deliberate
+`3 m^2` migration and explicit revision requirement for old freezes.
+
+After packaging, `tools/verify_local.py <package-receipt>` verifies artifact
+hashes, ZIP/inventory integrity and an isolated installation, then runs nine
+shipped examples in both modes (18 runs), independently verifying each receipt.
+Bundle-validation results are reported separately; this record is included in
+the immutable archive before those final packaging checks run.
+
+## Previous stage: Alpha.24 distribution statistics
 
 Verified locally on 2026-10-06, macOS arm64 with Rust 1.92.0:
 

@@ -1,6 +1,7 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.24",
+  "runtime": "goblin++ 0.1.0-alpha.25",
+  "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
     {

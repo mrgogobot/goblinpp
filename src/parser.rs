@@ -7,6 +7,38 @@ use crate::lexer::{Token, TokenKind, lex};
 use crate::quantity::is_unit;
 use std::collections::HashSet;
 
+pub const PARSER_POLICY: &str = "goblin.compound-unit-literals.v1";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SyntaxMode {
+    Current,
+    LegacyQuantity,
+}
+
+/// Missing policy means the historical parser, never today's interpretation.
+/// A current/future receipt cannot downgrade by removing its policy field.
+pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
+    match receipt.get("parser_policy") {
+        Some(value) if value.as_str() == Some(PARSER_POLICY) => Ok(SyntaxMode::Current),
+        Some(_) => Err(GoblinError::parse("Unsupported parser policy in evidence.")),
+        None => {
+            let version = receipt["goblin_version"].as_str().unwrap_or("");
+            let historical = version.starts_with("0.0.")
+                || version
+                    .strip_prefix("0.1.0-alpha.")
+                    .and_then(|v| v.parse::<u32>().ok())
+                    .is_some_and(|v| v <= 24);
+            if historical {
+                Ok(SyntaxMode::LegacyQuantity)
+            } else {
+                Err(GoblinError::parse(
+                    "Parser policy is required in alpha.25 and newer evidence.",
+                ))
+            }
+        }
+    }
+}
+
 pub fn reserved_function_name(name: &str) -> bool {
     matches!(
         name,
@@ -235,6 +267,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
 
 #[derive(Debug, Clone)]
 pub struct ParsedSource {
+    pub syntax_mode: SyntaxMode,
     pub program: Program,
     pub inline_rust: Vec<InlineRustBlock>,
     pub language_source: String,
@@ -266,11 +299,15 @@ impl ParsedSource {
 }
 
 pub fn parse_source(source: &str) -> Result<ParsedSource> {
+    parse_source_with_mode(source, SyntaxMode::Current)
+}
+
+pub fn parse_source_with_mode(source: &str, mode: SyntaxMode) -> Result<ParsedSource> {
     let ExtractedSource {
         language_source,
         blocks,
     } = extract(source)?;
-    let mut program = Parser::new(lex(&language_source)?).parse()?;
+    let mut program = Parser::new(lex(&language_source)?, mode).parse()?;
     for statement in &mut program.statements {
         if let Stmt::Expression(Expr::Name {
             source,
@@ -290,6 +327,7 @@ pub fn parse_source(source: &str) -> Result<ParsedSource> {
         }
     }
     Ok(ParsedSource {
+        syntax_mode: mode,
         program,
         inline_rust: blocks,
         language_source,
@@ -301,15 +339,17 @@ struct Parser {
     cursor: usize,
     in_function: bool,
     loop_depth: usize,
+    mode: SyntaxMode,
 }
 
 impl Parser {
-    fn new(tokens: Vec<Token>) -> Self {
+    fn new(tokens: Vec<Token>, mode: SyntaxMode) -> Self {
         Self {
             tokens,
             cursor: 0,
             in_function: false,
             loop_depth: 0,
+            mode,
         }
     }
     fn current(&self) -> &Token {
@@ -828,6 +868,18 @@ impl Parser {
                 let value = raw.parse::<f64>().map_err(|error| {
                     GoblinError::parse(format!("Invalid number {raw}: {error}"))
                 })?;
+                if self.mode == SyntaxMode::Current && self.unit_start() {
+                    let units = self.unit_expression(0, self.cursor)?;
+                    // Retain the exact historical AST/hash for a simple unit.
+                    if let Expr::QuantityLiteral { unit, .. } = units {
+                        return Ok(Expr::QuantityLiteral { value, unit });
+                    }
+                    return Ok(Expr::Binary {
+                        op: '*',
+                        left: Box::new(Expr::Number(value)),
+                        right: Box::new(units),
+                    });
+                }
                 if let TokenKind::Ident(name) = &self.current().kind
                     && is_unit(name)
                 {
@@ -880,6 +932,213 @@ impl Parser {
                 token.position
             ))),
         }
+    }
+
+    fn unit_start(&self) -> bool {
+        match &self.current().kind {
+            TokenKind::Ident(name) => is_unit(name),
+            TokenKind::Number(raw) if raw == "1" => {
+                self.tokens
+                    .get(self.cursor + 1)
+                    .is_some_and(|t| matches!(t.kind, TokenKind::Operator('/')))
+                    && self.tokens.get(self.cursor + 2).is_some_and(|t| {
+                        matches!(&t.kind, TokenKind::Ident(name) if is_unit(name))
+                            || matches!(t.kind, TokenKind::Operator('('))
+                    })
+            }
+            // Numeric implicit multiplication by an ordinary parenthesized
+            // expression stays ordinary, even when a variable is unit-spelled.
+            // Grouped units are accepted after a suffix's explicit * or /.
+            _ => false,
+        }
+    }
+
+    /// A suffix contains only registered units and signed integer powers.
+    /// Arithmetic operands (numbers, variables, calls) remain in the ordinary
+    /// expression parser. Parenthesize denominators with several factors.
+    fn unit_expression(&mut self, depth: usize, start: usize) -> Result<Expr> {
+        if depth > 32 {
+            return Err(GoblinError::parse(
+                "Compound units may nest at most 32 groups.",
+            ));
+        }
+        let mut node = self.unit_power(depth, start)?;
+        let mut divided = false;
+        loop {
+            if !(self.operator_is('*') || self.operator_is('/')) {
+                break;
+            }
+            let checkpoint = self.cursor;
+            let op = self.expect_any_operator()?;
+            if !self.unit_factor_start() {
+                self.cursor = checkpoint;
+                break;
+            }
+            if divided {
+                return Err(GoblinError::parse(
+                    "AMBIGUOUS COMPOUND UNIT\nUse parentheses for multiple denominator factors, e.g. 3 kg/(m*s^2), or parenthesize the completed quantity before further unit arithmetic.",
+                ));
+            }
+            divided = op == '/';
+            node = Expr::Binary {
+                op,
+                left: Box::new(node),
+                right: Box::new(self.unit_power(depth, start)?),
+            };
+            Self::validate_units(&node)?;
+        }
+        Ok(node)
+    }
+
+    fn unit_power(&mut self, depth: usize, start: usize) -> Result<Expr> {
+        if self.cursor.saturating_sub(start) >= 256 {
+            return Err(GoblinError::parse(
+                "Compound-unit suffixes may contain at most 256 tokens.",
+            ));
+        }
+        let node = match self.advance().kind {
+            TokenKind::Ident(name) if is_unit(&name) => Expr::QuantityLiteral {
+                value: 1.0,
+                unit: name,
+            },
+            TokenKind::Number(raw) if raw == "1" => Expr::Number(1.0),
+            TokenKind::Operator('(') => {
+                let units = self.unit_expression(depth + 1, start)?;
+                self.expect_operator(')')?;
+                units
+            }
+            _ => {
+                return Err(GoblinError::parse(
+                    "Expected a registered unit in compound-unit literal.",
+                ));
+            }
+        };
+        if self.cursor.saturating_sub(start) > 256 {
+            return Err(GoblinError::parse(
+                "Compound-unit suffixes may contain at most 256 tokens.",
+            ));
+        }
+        if !self.accept_operator('^') {
+            return Ok(node);
+        }
+        let sign = if self.accept_operator('-') {
+            -1
+        } else {
+            self.accept_operator('+');
+            1
+        };
+        let raw = match self.advance().kind {
+            TokenKind::Number(raw) if raw.bytes().all(|b| b.is_ascii_digit()) => raw,
+            _ => {
+                return Err(GoblinError::parse(
+                    "UNIT EXPONENT MUST BE AN INTEGER\nUse a signed integer between -32 and 32, e.g. m^2 or s^-2. Parenthesize a whole quantity before applying an arithmetic power.",
+                ));
+            }
+        };
+        let exponent = raw
+            .parse::<i32>()
+            .ok()
+            .and_then(|v| v.checked_mul(sign))
+            .filter(|v| (-32..=32).contains(v))
+            .ok_or_else(|| GoblinError::parse("Unit exponents must be between -32 and 32."))?;
+        if self.cursor.saturating_sub(start) > 256 {
+            return Err(GoblinError::parse(
+                "Compound-unit suffixes may contain at most 256 tokens.",
+            ));
+        }
+        if self.operator_is('^') {
+            return Err(GoblinError::parse(
+                "Chained unit powers are ambiguous. Use a single signed integer exponent.",
+            ));
+        }
+        let powered = Expr::Binary {
+            op: '^',
+            left: Box::new(node),
+            right: Box::new(Expr::Number(f64::from(exponent))),
+        };
+        Self::validate_units(&powered)?;
+        Ok(powered)
+    }
+
+    fn unit_factor_start(&self) -> bool {
+        if self.unit_start() {
+            return true;
+        }
+        let mut cursor = self.cursor;
+        while self
+            .tokens
+            .get(cursor)
+            .is_some_and(|t| matches!(t.kind, TokenKind::Operator('(')))
+        {
+            cursor += 1;
+            if cursor - self.cursor > 32 {
+                return true;
+            }
+        }
+        cursor > self.cursor
+            && self.tokens.get(cursor).is_some_and(|t| {
+                matches!(&t.kind, TokenKind::Ident(name) if is_unit(name))
+                    || (matches!(&t.kind, TokenKind::Number(raw) if raw == "1")
+                        && self.tokens.get(cursor + 1).is_some_and(|next| {
+                            matches!(next.kind, TokenKind::Operator('/' | '*' | ')'))
+                        }))
+            })
+    }
+
+    fn validate_units(node: &Expr) -> Result<crate::quantity::Quantity> {
+        use crate::quantity::Quantity;
+        let value = match node {
+            Expr::QuantityLiteral { unit, .. } => Quantity::from_unit(1.0, unit)?,
+            Expr::Number(_) => Quantity::scalar(1.0)?,
+            Expr::Binary {
+                op: '^',
+                left,
+                right,
+            } => {
+                let base = Self::validate_units(left)?;
+                let Expr::Number(exponent) = **right else {
+                    unreachable!("unit exponent")
+                };
+                let power = exponent as i32;
+                if base.dimension.iter().any(|d| {
+                    d.checked_mul(power)
+                        .is_none_or(|v| !(-256..=256).contains(&v))
+                }) {
+                    return Err(GoblinError::parse(
+                        "Combined unit dimension exponents must be between -256 and 256.",
+                    ));
+                }
+                base.powi(power)?
+            }
+            Expr::Binary { op, left, right } => {
+                let a = Self::validate_units(left)?;
+                let b = Self::validate_units(right)?;
+                if a.dimension.iter().zip(b.dimension).any(|(x, y)| {
+                    let combined = if *op == '*' {
+                        x.checked_add(y)
+                    } else {
+                        x.checked_sub(y)
+                    };
+                    combined.is_none_or(|v| !(-256..=256).contains(&v))
+                }) {
+                    return Err(GoblinError::parse(
+                        "Combined unit dimension exponents must be between -256 and 256.",
+                    ));
+                }
+                if *op == '*' {
+                    a.checked_mul(b)?
+                } else {
+                    a.checked_div(b)?
+                }
+            }
+            _ => unreachable!("unit-only expression"),
+        };
+        if value.value_si == 0.0 {
+            return Err(GoblinError::numeric(
+                "Compound unit scale underflowed to zero; simplify the unit expression.",
+            ));
+        }
+        Ok(value)
     }
 
     fn ident_is(&self, expected: &str) -> bool {

@@ -81,11 +81,15 @@
     "quantities": {
       "patterns": [
         {
-          "match": "((?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)([ \\t]+)(kohm|Mohm|ohm|kHz|MHz|mA|uA|µA|mV|kV|kΩ|MΩ|mF|uF|µF|nF|pF|mH|uH|µH|mW|kW|mS|uS|µS|Hz|A|C|V|Ω|F|H|W|S|angstrom|mol|kPa|atm|bar|mL|uL|µL|nm|pm|Pa|Da|kg|km|Å|g|m|s|K|J|L)(?![A-Za-z0-9_πħωΩΔΣλμσθ∇∂µÅ])",
+          "match": "((?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)([ \\t]*)(kohm|Mohm|ohm|kHz|MHz|mA|uA|µA|mV|kV|kΩ|MΩ|mF|uF|µF|nF|pF|mH|uH|µH|mW|kW|mS|uS|µS|Hz|A|C|V|Ω|F|H|W|S|angstrom|mol|kPa|atm|bar|mL|uL|µL|nm|pm|Pa|Da|kg|km|Å|g|m|s|K|J|L)(?![A-Za-z0-9_πħωΩΔΣλμσθ∇∂µÅ])",
           "captures": {
             "1": {"name": "constant.numeric.goblinpp"},
             "3": {"name": "support.type.unit.goblinpp"}
           }
+        },
+        {
+          "match": "(?<=[*/(])[ \\t]*(kohm|Mohm|ohm|kHz|MHz|mA|uA|µA|mV|kV|kΩ|MΩ|mF|uF|µF|nF|pF|mH|uH|µH|mW|kW|mS|uS|µS|Hz|A|C|V|Ω|F|H|W|S|angstrom|mol|kPa|atm|bar|mL|uL|µL|nm|pm|Pa|Da|kg|km|Å|g|m|s|K|J|L)(?![A-Za-z0-9_πħωΩΔΣλμσθ∇∂µÅ])",
+          "captures": {"1": {"name": "support.type.unit.goblinpp"}}
         }
       ]
     },

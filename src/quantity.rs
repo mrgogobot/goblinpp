@@ -606,6 +606,8 @@ pub fn format_dimension(dimension: Dimension) -> String {
     };
     if negative.is_empty() {
         numerator
+    } else if negative.len() > 1 {
+        format!("{numerator}/({})", negative.join("*"))
     } else {
         format!("{numerator}/{}", negative.join("*"))
     }

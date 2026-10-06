@@ -25,6 +25,11 @@ pub fn compile(
     output: impl AsRef<Path>,
     allowed_inline: &[String],
 ) -> Result<Compilation> {
+    if parsed.syntax_mode != crate::parser::SyntaxMode::Current {
+        return Err(GoblinError::compile(
+            "The legacy parser is for historical evidence verification only, not compilation.",
+        ));
+    }
     parsed.require_executable_program()?;
     crate::parser::validate_execution(&parsed.program)?;
     approved(&parsed.inline_rust, allowed_inline)?;
@@ -594,7 +599,7 @@ fn format_dim(dim: Dim) -> String {{
     ] {{ if dim == candidate {{ return label.into(); }} }}
     let names = ["kg", "m", "s", "K", "mol", "A"]; let mut top = vec![]; let mut bottom = vec![];
     for (name, power) in names.iter().zip(dim) {{ if power == 0 {{ continue; }} let item = if power.abs() == 1 {{ name.to_string() }} else {{ format!("{{name}}^{{}}", power.abs()) }}; if power > 0 {{ top.push(item) }} else {{ bottom.push(item) }} }}
-    let numerator = if top.is_empty() {{ "1".into() }} else {{ top.join("*") }}; if bottom.is_empty() {{ numerator }} else {{ format!("{{numerator}}/{{}}", bottom.join("*")) }}
+    let numerator = if top.is_empty() {{ "1".into() }} else {{ top.join("*") }}; if bottom.is_empty() {{ numerator }} else if bottom.len() > 1 {{ format!("{{numerator}}/({{}})", bottom.join("*")) }} else {{ format!("{{numerator}}/{{}}", bottom.join("*")) }}
 }}
 
 fn hex(bytes: &[u8]) -> String {{

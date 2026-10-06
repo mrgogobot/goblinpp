@@ -17,6 +17,13 @@ The engine is intentionally split at trust boundaries:
 
 Interpretation is the default. Compilation is never inferred from source contents. Inline Rust cannot cause an implicit switch to native execution.
 
+Alpha.25 declares `goblin.compound-unit-literals.v1` in current evidence.
+Numeric unit suffixes lower to existing quantity AST operations; the coefficient
+is not raised by a unit power. Historical receipts without this declaration
+use the legacy parser, including preserved module graphs, for verification
+only. New execution/compilation refuses older freezes until an explicit revision
+adopts the current policy. See [compound-unit syntax and migration](COMPOUND_UNITS.md).
+
 The compiler emits direct operations over generated quantity values. It never invokes the source parser at runtime. Data programs link a shared support library whose sources include the existing parser because of module dependencies; no Goblin source evaluation occurs in the generated entry point. This distinction is tested by inspecting generated source, running standalone without the engine on PATH, and sealing generated source, support inventory and executable.
 
 ## FITS data path

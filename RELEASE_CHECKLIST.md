@@ -3,9 +3,26 @@
 This is the reusable checklist for changes after the public alpha.13 release.
 A commit is not a new release, and each new version still needs its own review,
 tag, assets, and preservation record. The checklist keeps decisions visible
-instead of silently making them for the author. The current working Rust engine
-is `0.1.0-alpha.18` (unreleased statistics step 1); the VS Code extension source
-is `0.1.13` and the JetBrains plugin source is `0.3.3`.
+instead of silently making them for the author. Read the current engine and
+editor versions from `Cargo.toml`, `vscode/package.json` and
+`jetbrains/gradle.properties`; do not reuse a previous release's version numbers.
+
+## Required outreach link for every future release
+
+Requested by Malin Hess on 2026-10-06:
+
+- [ ] Include [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk)
+  in each new release's notes and public GitHub release description. Retain the
+  link in the packaged README/documentation and include it in any manually
+  prepared Zenodo release description.
+- [ ] Keep this optional merchandise link separate from installation and
+  scientific instructions. No purchase is required to use Goblin++.
+- [ ] Do not silently replace existing published assets to add the link.
+
+Suggested release footer:
+
+> Spread the word with [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+> Buying merchandise is optional; Goblin++ remains free to use.
 
 ## Before making the GitHub repository public
 

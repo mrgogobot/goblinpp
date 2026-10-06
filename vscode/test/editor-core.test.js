@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha24-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha25-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,7 +127,7 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.24 runtime features", () => {
+test("completion combines legacy spellings with alpha.25 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
   assert.equal(entries.length, 244);
   assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 244);
@@ -158,6 +158,8 @@ test("completion combines legacy spellings with alpha.24 runtime features", () =
   assert.match(entries.find((entry) => entry.spelling === "to_text").detail, /round-trips, including -0/);
   assert.match(entries.find((entry) => entry.spelling === "input").detail, /capture immediately/);
   assert.match(entries.find((entry) => entry.spelling === "km").detail, /SI factor 1000/);
+  assert.match(entries.find((entry) => entry.spelling === "m").detail, /3 square metres/);
+  assert.match(entries.find((entry) => entry.spelling === "s").detail, /denominator factors/);
   assert(entries.some((entry) => entry.spelling === "fits_column_mean"));
   assert(entries.some((entry) => entry.spelling === "fits_select_stats"));
   assert(entries.some((entry) => entry.spelling === "plot_fits_scatter"));
@@ -296,10 +298,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.24 language coloring and extension identity are internally consistent", () => {
+test("alpha.25 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.19");
+  assert.equal(manifest.version, "0.1.20");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -320,6 +322,11 @@ test("alpha.24 language coloring and extension identity are internally consisten
     assert(entries.some((candidate) => candidate.spelling === entry.spelling));
   }
   const unitPattern = new RegExp(grammar.repository.quantities.patterns[0].match);
+  assert(unitPattern.test("1.13e-10m/s^2"));
+  const suffixPattern = new RegExp(grammar.repository.quantities.patterns[1].match);
+  for (const suffix of ["/s^2", "*m²", "(m*s^2)", "/(kg*m)"]) {
+    assert(suffixPattern.test(suffix), suffix);
+  }
   for (const spelling of ["A", "µA", "V", "Ω", "kΩ", "uF", "H", "W", "S", "MHz"]) {
     assert(entries.some((entry) => entry.spelling === spelling));
     assert(unitPattern.test(`1 ${spelling}`));

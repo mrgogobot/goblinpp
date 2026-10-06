@@ -1,6 +1,8 @@
 # Goblin++ for JetBrains IDEs
 
-Plugin 0.3.9 accompanies engine alpha.24. Completion and quick documentation
+Plugin 0.3.10 accompanies engine alpha.25. Unit completion and quick documentation
+explain compound suffixes, whole-quantity powers and grouped denominators.
+See `docs/COMPOUND_UNITS.md` in the engine package. Completion and quick documentation
 include stable copy sorting, type-7 quantiles/median, explicit sample/population
 standard deviation and unweighted ECDF. See `docs/STATISTICS.md` in the engine
 package. Completion retains explicit FITS
@@ -41,7 +43,7 @@ engine: the plugin does not reimplement scientific execution or custody rules.
 - an explicit executable override under **Settings | Tools | Goblin++**
 
 The editor vocabulary is generated at build time from
-[`../vscode/spec/rust-alpha24-editor.json`](../vscode/spec/rust-alpha24-editor.json)
+[`../vscode/spec/rust-alpha25-editor.json`](../vscode/spec/rust-alpha25-editor.json)
 and [`../vscode/spec/lexicon.v0.json`](../vscode/spec/lexicon.v0.json). This keeps
 the JetBrains plugin aligned with the reviewed Goblin++ editor contract instead
 of maintaining another hand-copied keyword list.

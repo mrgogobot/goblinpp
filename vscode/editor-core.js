@@ -215,7 +215,7 @@ function vocabularyEntries(lexicon, runtimeVocabulary = {}) {
     entries.push({
       spelling: unit.spelling,
       kind: "unit",
-      detail: `${dimensionLabel(unit.dimension)}; SI factor ${unit.si_factor}`,
+      detail: `${dimensionLabel(unit.dimension)}; SI factor ${unit.si_factor}. ${runtimeVocabulary.quantity_literals || ""}`.trim(),
     });
   }
   for (const item of [...(runtimeVocabulary.statements || []), ...(runtimeVocabulary.functions || [])]) {

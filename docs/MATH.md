@@ -1,5 +1,9 @@
 # Scientific mathematics in Goblin++ 0.1.0-alpha.14
 
+Alpha.25 accepts compound numeric units, e.g. `1.13e-10 m/s^2`.
+`3 m^2` now means three square metres; `(3 m)^2` squares the whole quantity.
+See [the syntax and historical-evidence migration guide](COMPOUND_UNITS.md).
+
 Alpha.22 additionally provides dimension-aware `is_close` (four explicit
 arguments, no default tolerance) and `same_bits` (including signed zero).
 See [numeric reproducibility and comparison](NUMERIC_REPRODUCIBILITY.md).

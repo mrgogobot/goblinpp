@@ -62,6 +62,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     let mut receipt = json!({
         "schema": "goblin.run-receipt.v2", "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
+        "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "math_environment": crate::math_policy::environment()?,
@@ -109,7 +110,13 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         }
         let text = std::str::from_utf8(&source_bytes)
             .map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
-        let root_source = parse_source(text)?;
+        let root_source = match parse_source(text) {
+            Ok(value) => value,
+            Err(error) => {
+                enforce_freeze(source, &root, &run_dir, &mut receipt)?;
+                return Err(error);
+            }
+        };
         receipt["paranoid_mode"] = Value::Bool(root_source.paranoid());
         let resolved = match crate::modules::resolve(source, text) {
             Ok(value) => value,
@@ -563,6 +570,19 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             return Err(protocol(
                 "UNREGISTERED_FREEZE_RECEIPT",
                 "The freeze receipt has no matching event in the clean custody ledger.",
+            ));
+        }
+        if report
+            .receipt
+            .as_ref()
+            .and_then(|r| r["parser_policy"].as_str())
+            != Some(crate::parser::PARSER_POLICY)
+        {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("PARSER_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "PARSER_POLICY_CHANGED_AFTER_FREEZE",
+                "The source was frozen before compound-unit literal semantics. Historical evidence remains verifiable. Create an explicit revision and freeze the child to adopt alpha.25 semantics; review quantity powers before executing.",
             ));
         }
         if report

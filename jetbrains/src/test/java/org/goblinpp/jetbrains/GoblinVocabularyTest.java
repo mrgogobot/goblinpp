@@ -47,6 +47,8 @@ final class GoblinVocabularyTest {
         assertEquals("constant", GoblinVocabulary.find("ħ").kind());
         assertEquals("constant", GoblinVocabulary.find("m_u").kind());
         assertEquals("unit", GoblinVocabulary.find("kg").kind());
+        assertTrue(GoblinVocabulary.find("m").detail().contains("3 square metres"));
+        assertTrue(GoblinVocabulary.find("s").detail().contains("denominator factors"));
         assertEquals("unit", GoblinVocabulary.find("µL").kind());
         assertEquals("unit", GoblinVocabulary.find("Å").kind());
         assertEquals("unit", GoblinVocabulary.find("Ω").kind());

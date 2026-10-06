@@ -1,13 +1,15 @@
-# Goblin++ Rust Engine 0.1.0-alpha.24 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.25 (local, unreleased)
 
-Alpha.24 adds dimension-aware `sort`, `median`, `quantile`, `std_population`,
-`std_sample` and `ecdf` in both engines. Sorting returns an independent stable
-copy; quantiles use Hyndman–Fan type 7; invalid inputs refuse without dropping
-values. New run and freeze receipts record the statistics policy. See
-[Statistics](docs/STATISTICS.md) and `examples/statistics_distribution.gbl`.
-Alpha.23's combined FITS cuts, subset exports and exact catalogue-ID text are
-retained. No new dependencies were added. Seeded RNG, bootstrap and `GO_MAD`
-remain future work. Local tests do not replace this stage's cross-platform CI.
+Alpha.25 adds compound-unit input in both engines: `1.13e-10 m/s^2`,
+`3 kg*m^2/s^2` and `7 kg/(m*s^2)`. **`3 m^2` now means three square metres;
+use `(3 m)^2` to square the whole quantity.** Review old unfrozen quantity powers.
+Historical evidence uses the legacy parser; old freezes require an explicit
+revision before execution under the new parser policy. See
+[Compound units and migration](docs/COMPOUND_UNITS.md) and
+`examples/compound_units.gbl`. Rust stays at 1.92.0, including pinned CI checks.
+Alpha.24 statistics and alpha.23 FITS extraction are retained. No new
+dependencies were added. Seeded RNG, bootstrap, covariance and `GO_MAD` remain
+future work. Local tests do not replace this stage's cross-platform CI.
 
 Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
 
@@ -31,6 +33,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
 - [Statistics: sums, distributions, standard deviation and ECDF](docs/STATISTICS.md)
+- [Compound-unit input and historical freeze migration](docs/COMPOUND_UNITS.md)
 - [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
 - [Lossless numeric text and explicit presentation precision](docs/NUMERIC_TEXT.md)
 - [Numeric comparison, math identity and reproducibility](docs/NUMERIC_REPRODUCIBILITY.md)

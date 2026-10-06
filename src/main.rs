@@ -381,6 +381,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
     let report = json!({
         "schema": "goblin.check.v1", "goblin_version": goblinpp::VERSION,
         "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
+        "parser_policy": goblinpp::parser::PARSER_POLICY,
         "math_policy": goblinpp::math_policy::policy(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
@@ -443,6 +444,17 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         if freeze
             .receipt
             .as_ref()
+            .and_then(|r| r["parser_policy"].as_str())
+            != Some(goblinpp::parser::PARSER_POLICY)
+        {
+            return Err(GoblinError::protocol(
+                "PARSER_POLICY_CHANGED_AFTER_FREEZE",
+                "The freeze predates compound-unit semantics.\n\nClassification:\nPARSER_POLICY_CHANGED_AFTER_FREEZE\n\nCompilation refused. Review quantity powers, create an explicit revision and freeze the child to adopt alpha.25 semantics.",
+            ));
+        }
+        if freeze
+            .receipt
+            .as_ref()
             .and_then(|value| value["language_semantics"].as_str())
             != Some(goblinpp::text_runtime::SEMANTICS_POLICY)
         {
@@ -465,7 +477,7 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "math_policy": goblinpp::math_policy::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -591,6 +603,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             yn(report.language_semantics_same)
         );
         println!(
+            "PARSER_POLICY_SAME ........... {}",
+            yn(report.parser_policy_same)
+        );
+        println!(
             "MATH_POLICY_SAME ............. {}\nMATH_ENVIRONMENT_SAME ........ {}\nCOMPARISON_MODE=EXACT_EVIDENCE",
             yn(report.math_policy_same),
             yn(report.math_environment_same)
@@ -631,7 +647,16 @@ fn command_status(file: PathBuf, json_output: bool) -> Result<i32> {
     let lineage_exists = goblinpp::custody::lineage_path(&file).exists();
     let state = if freeze_path(&file).exists() {
         if freeze.verified && freeze_registered {
-            "FROZEN_VERIFIED"
+            if freeze
+                .receipt
+                .as_ref()
+                .and_then(|r| r["parser_policy"].as_str())
+                == Some(goblinpp::parser::PARSER_POLICY)
+            {
+                "FROZEN_VERIFIED"
+            } else {
+                "FROZEN_PARSER_MIGRATION_REQUIRED"
+            }
         } else if freeze.verified {
             "FROZEN_UNREGISTERED"
         } else {
@@ -741,6 +766,8 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "numeric_comparison_functions": ["is_close", "same_bits"],
         "math_policy": goblinpp::math_policy::policy(),
         "science_functions": goblinpp::science::FUNCTIONS,
+        "parser_policy": goblinpp::parser::PARSER_POLICY,
+        "compound_unit_limits": {"unit_exponent_abs_max":32,"dimension_exponent_abs_max":256,"max_group_depth":32,"max_suffix_tokens":256,"multiple_denominator_factors":"PARENTHESES_REQUIRED"},
         "statistics_policy": goblinpp::science::statistics_policy(),
         "chemistry_functions": goblinpp::chemistry::FUNCTIONS,
         "chemistry_registry": {"id": goblinpp::chemistry::REGISTRY_ID, "sha256": goblinpp::chemistry::registry_sha256()?, "elements": goblinpp::chemistry::ELEMENTS.len()},

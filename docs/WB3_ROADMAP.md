@@ -35,7 +35,7 @@ Bootstrap, seeded RNG and weighted distributions remain acceptance goals.
 | P1 | Formal permitted-column controls | GBL-021; enforcement and evidence disclosure must be designed, not only logged |
 | P1 | Bootstrap/resampling | GBL-007 plus GBL-008; declare resampling unit, replacement, statistic and interval assumptions |
 | P1 | Specified float serialization | GBL-004 implemented alpha.21; GBL-005 comparison/identity implemented alpha.22; no universal deterministic math guarantee |
-| P1 | Compound unit literals | GBL-013 remains open: `1.13e-10 m/s^2` must parse without changing expression precedence silently |
+| P1 | Compound unit literals | GBL-013 implemented locally in alpha.25; legacy parser preserves old evidence and old freezes require explicit revision; see COMPOUND_UNITS.md |
 | P1 | Constants namespace | GBL-024; alpha.20 already prevents silent constant shadowing, but does not implement a namespace |
 | P2 | String and append semantics | GBL-001/002/003 covered alpha.20; keep regressions and copy semantics, not a new hidden mutable mode |
 | P2 | Joins by source ID | GBL-025; depends on exact ID representation and table/streaming contracts |

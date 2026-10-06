@@ -2,6 +2,11 @@
   "schema": "goblin.platform-math-fixtures.v1",
   "description": "Named finite results and deliberately explicit engineering-test tolerances, not universal scientific tolerances. Expected values are analytic identities or rounded mathematical reference values; exact cases use IEEE bits.",
   "cases": [
+    {"name":"compound_acceleration","expression":"1.13e-10 m/s^2","expected":1.13e-10,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,-2,0,0,0]},
+    {"name":"compound_area","expression":"3 m^2","expected":3.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,2,0,0,0,0]},
+    {"name":"compound_whole_power","expression":"(3 m)^2","expected":9.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,2,0,0,0,0]},
+    {"name":"compound_scaled_area","expression":"3 km^2","expected":3000000.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,2,0,0,0,0]},
+    {"name":"compound_pressure","expression":"7 kg/(m*s^2)","expected":7.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[1,-1,-2,0,0,0]},
     {"name":"statistics_median","expression":"median([4 m, 1 m, 3 m, 2 m])","expected":2.5,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
     {"name":"statistics_quantile","expression":"quantile([4 m, 1 m, 3 m, 2 m], 0.25)","expected":1.75,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
     {"name":"statistics_population","expression":"std_population([2 m, 4 m, 4 m, 4 m, 5 m, 5 m, 7 m, 9 m])","expected":2.0,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,1,0,0,0,0]},

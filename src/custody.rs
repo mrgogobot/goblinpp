@@ -137,6 +137,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "schema": "goblin.freeze-receipt.v1",
         "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
+        "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "created_at": timestamp(),
@@ -189,10 +190,10 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         }
     };
     let source_sha = sha256_bytes(&bytes);
-    let resolved = std::str::from_utf8(&bytes)
+    let mut resolved = std::str::from_utf8(&bytes)
         .ok()
         .and_then(|text| crate::modules::resolve(source, text).ok());
-    let canonical_sha = resolved
+    let mut canonical_sha = resolved
         .as_ref()
         .and_then(|r| r.parsed.canonical_sha256().ok());
     let receipt_bytes = match fs::read(&path) {
@@ -240,6 +241,23 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         }
         current.as_str().map(str::to_string)
     };
+    let mode = crate::parser::evidence_mode(&receipt);
+    let parser_supported = mode.is_ok();
+    resolved = mode.as_ref().ok().and_then(|mode| {
+        std::str::from_utf8(&bytes)
+            .ok()
+            .and_then(|text| crate::modules::resolve_with_mode(source, text, *mode).ok())
+    });
+    canonical_sha = resolved
+        .as_ref()
+        .and_then(|r| r.parsed.canonical_sha256().ok());
+    checks.push(custody_check(
+        "PARSER_POLICY_SUPPORTED",
+        mode.is_ok(),
+        None,
+        field(&["parser_policy"]),
+        mode.err().map(|e| e.to_string()),
+    ));
     let schema = field(&["schema"]);
     let schema_ok = schema.as_deref() == Some("goblin.freeze-receipt.v1");
     checks.push(custody_check(
@@ -359,6 +377,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     ));
     let classification = if !schema_ok || !seal_ok {
         "FREEZE_RECEIPT_TAMPERED"
+    } else if !parser_supported {
+        "FREEZE_PARSER_POLICY_UNSUPPORTED"
     } else if !path_ok {
         "FROZEN_SOURCE_IDENTITY_CHANGED"
     } else if !registry_ok {
@@ -540,7 +560,23 @@ pub fn lineage_chain(source: impl AsRef<Path>) -> Result<Vec<Value>> {
     for _ in 0..256 {
         let freeze = verify_freeze(&current);
         let lineage_file = lineage_path(&current);
-        let mut node = json!({ "path": current.display().to_string(), "state": if freeze.verified { "FROZEN_VERIFIED" } else if lineage_file.exists() { "REVISION_UNFROZEN" } else { "UNTRACKED" } });
+        let state = if freeze.verified {
+            if freeze
+                .receipt
+                .as_ref()
+                .and_then(|r| r["parser_policy"].as_str())
+                == Some(crate::parser::PARSER_POLICY)
+            {
+                "FROZEN_VERIFIED"
+            } else {
+                "FROZEN_PARSER_MIGRATION_REQUIRED"
+            }
+        } else if lineage_file.exists() {
+            "REVISION_UNFROZEN"
+        } else {
+            "UNTRACKED"
+        };
+        let mut node = json!({ "path": current.display().to_string(), "state": state });
         if !lineage_file.exists() {
             reverse.push(node);
             break;

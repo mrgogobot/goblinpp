@@ -1,6 +1,5 @@
 use crate::error::{GoblinError, Result};
 use crate::hashing::{hash_canonical_json, sha256_file};
-use crate::parser::parse_source;
 use crate::runtime::read_receipt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -28,6 +27,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub parser_policy_same: bool,
     pub statistics_policy_same: bool,
     pub math_policy_same: bool,
     pub math_environment_same: bool,
@@ -58,6 +58,14 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    let parser_mode = crate::parser::evidence_mode(&receipt);
+    checks.push(check(
+        "PARSER_POLICY_SUPPORTED",
+        parser_mode.is_ok(),
+        None,
+        string_at(&receipt, &["parser_policy"]),
+        parser_mode.as_ref().err().map(|e| e.to_string()),
+    ));
     let schema = string_at(&receipt, &["schema"]);
     let schema_v2 = schema.as_deref() == Some("goblin.run-receipt.v2");
     checks.push(check(
@@ -122,9 +130,15 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
             .ok()
             .and_then(|text| {
                 if let Some(entries) = receipt.get("module_imports") {
-                    crate::modules::verify_preserved(run_dir, &text, entries).ok()
+                    parser_mode.as_ref().ok().and_then(|mode| {
+                        crate::modules::verify_preserved_with_mode(run_dir, &text, entries, *mode)
+                            .ok()
+                    })
                 } else {
-                    parse_source(&text).ok()
+                    parser_mode
+                        .as_ref()
+                        .ok()
+                        .and_then(|mode| crate::parser::parse_source_with_mode(&text, *mode).ok())
                 }
             })
             .and_then(|parsed| parsed.canonical_sha256().ok());
@@ -139,14 +153,24 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     if let Some(entries) = receipt.get("module_imports") {
         let verified = string_at(&receipt, &["source", "path"])
             .and_then(|path| fs::read_to_string(run_dir.join(path)).ok())
-            .is_some_and(|text| crate::modules::verify_preserved(run_dir, &text, entries).is_ok());
+            .is_some_and(|text| {
+                parser_mode.as_ref().ok().is_some_and(|mode| {
+                    crate::modules::verify_preserved_with_mode(run_dir, &text, entries, *mode)
+                        .is_ok()
+                })
+            });
         checks.push(check("MODULE_SOURCE_EVIDENCE", verified, None, None, None));
     }
     if schema_v2 {
         let declared_paranoid = receipt.get("paranoid_mode").and_then(Value::as_bool);
         let source_paranoid = string_at(&receipt, &["source", "path"])
             .and_then(|path| fs::read_to_string(run_dir.join(path)).ok())
-            .and_then(|text| parse_source(&text).ok())
+            .and_then(|text| {
+                parser_mode
+                    .as_ref()
+                    .ok()
+                    .and_then(|mode| crate::parser::parse_source_with_mode(&text, *mode).ok())
+            })
             .map(|parsed| parsed.paranoid());
         checks.push(check(
             "PARANOID_MODE_MATCHES_SOURCE",
@@ -649,6 +673,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         && module_sources(&left) == module_sources(&right);
     let language_semantics_same =
         at(&left, &["language_semantics"]) == at(&right, &["language_semantics"]);
+    let parser_policy_same = at(&left, &["parser_policy"]) == at(&right, &["parser_policy"]);
     let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
     let statistics_policy_same =
         at(&left, &["statistics_policy"]) == at(&right, &["statistics_policy"]);
@@ -688,6 +713,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let different_named_sources = at(&left, &["source", "path"]) != at(&right, &["source", "path"]);
     let classification = if !language_semantics_same {
         "LANGUAGE_SEMANTICS_CHANGE"
+    } else if !parser_policy_same {
+        "PARSER_POLICY_CHANGE"
     } else if !math_policy_same {
         "MATH_POLICY_CHANGE"
     } else if !statistics_policy_same {
@@ -706,6 +733,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        parser_policy_same,
         statistics_policy_same,
         math_policy_same,
         math_environment_same,

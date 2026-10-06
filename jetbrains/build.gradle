@@ -36,7 +36,7 @@ java {
 def generatedResources = layout.buildDirectory.dir('generated-resources')
 
 tasks.register('generateGoblinVocabulary') {
-    def editorSpec = file('../vscode/spec/rust-alpha24-editor.json')
+    def editorSpec = file('../vscode/spec/rust-alpha25-editor.json')
     def lexiconSpec = file('../vscode/spec/lexicon.v0.json')
     inputs.files(editorSpec, lexiconSpec)
     outputs.dir(generatedResources)
@@ -63,7 +63,7 @@ tasks.register('generateGoblinVocabulary') {
             }
         }
         (editor.units ?: []).each { item ->
-            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}.", '']
+            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}. ${editor.quantity_literals ?: ''}", '']
         }
         lexicon.vocabulary.constants.each { item ->
             item.aliases.each { alias ->
@@ -71,7 +71,7 @@ tasks.register('generateGoblinVocabulary') {
             }
         }
         lexicon.vocabulary.units.each { item ->
-            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}.", '']
+            entries << [item.spelling, 'unit', "Recognized unit ${item.spelling}. ${editor.quantity_literals ?: ''}", '']
         }
         def unique = entries.collectEntries { [(it[0]): it] }.values().sort { a, b -> a[0] <=> b[0] }
         output.withWriter('UTF-8') { writer ->

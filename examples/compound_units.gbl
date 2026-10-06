@@ -1,0 +1,23 @@
+GO_PARANOID
+
+# Numeric coefficients are NOT squared by unit exponents.
+acceleration = 1.13e-10 m/s^2
+area = 3 m^2
+whole_square = (3 m)^2
+speed = 3 km/s
+pressure = 7 kg/(m*s^2)
+inverse_time = 4 s^-2
+workaround = 1.13e-10 m / (1 s)^2
+matches = same_bits(acceleration, workaround)
+
+print("acceleration = {acceleration}")
+print("area = {area}; whole square = {whole_square}")
+print("speed = {speed}; pressure = {pressure}")
+print("inverse time = {inverse_time}; matches old workaround = {matches}")
+seal acceleration
+seal area
+seal whole_square
+seal speed
+seal pressure
+seal inverse_time
+seal matches
