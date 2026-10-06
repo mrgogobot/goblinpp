@@ -16,6 +16,11 @@ final class GoblinVocabularyTest {
     }
     @Test
     void loadsCurrentEditorVocabulary() {
+        for (String name : new String[]{"rng_seed", "rng_word", "rng_uniform", "rng_integer"}) {
+            assertEquals("function", GoblinVocabulary.find(name).kind());
+            assertTrue(GoblinVocabulary.find(name).detail().contains("NOT"));
+            assertTrue(GoblinVocabulary.find(name).snippet().contains("rng_"));
+        }
         for (String name : new String[]{"sort", "median", "quantile", "std_population", "std_sample", "ecdf"}) {
             assertEquals("function", GoblinVocabulary.find(name).kind());
             assertTrue(GoblinVocabulary.find(name).snippet().contains("values"));

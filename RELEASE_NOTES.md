@@ -1,4 +1,26 @@
-# 0.1.0-alpha.25 (local, unreleased, compound-unit input)
+# 0.1.0-alpha.26 (local, unreleased, seeded scientific randomness)
+
+- Explicit PCG32 XSH-RR setseq v1 seeds/streams in both engines. Four new calls:
+  `rng_seed`, `rng_word`, `rng_uniform`, `rng_integer`. Half-open mappings,
+  exact seed text encoding, no automatic seed/reseeding, bounded resources.
+- Run receipts include explicit no-RNG usage or seeded operation traces, exact
+  raw-word/result digests and final state. Independent verification replays the
+  bounded trace. Compiled runs compare native/reference evidence; standalone
+  successful binaries preserve a native-data manifest.
+- Freeze policy enforcement, tamper/refusal tests and exact RNG diff fields.
+  Earlier non-RNG receipt/freeze behavior is preserved; historical artifacts
+  are not rewritten. New builtins cannot silently replace user functions.
+- VS Code 0.1.21 and JetBrains 0.3.11 provide completions and help. Rust stays
+  at 1.92.0; Cargo dependencies are unchanged. PCG reference Apache-2.0
+  attribution/license is bundled. Cross-platform RNG fixture comparison is
+  added to CI; local passing tests are not a claim that remote CI has run.
+- RNG is not cryptographic. Bootstrap, normal/covariance sampling, encryption
+  and `COMPLETELY_MAD` remain future work. A custom IDE is not planned.
+
+See [RANDOMNESS.md](docs/RANDOMNESS.md).
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.25 (compound-unit input)
 
 - Both engines accept numeric compound-unit suffixes, including the reported
   `1.13e-10 m/s^2` case, SI scaling, signed integer powers and grouped denominators.

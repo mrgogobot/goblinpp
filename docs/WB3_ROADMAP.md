@@ -19,14 +19,17 @@ blinding are not implemented. Alpha.24 implements the core GBL-007 distribution
 functions in both engines: stable copy sorting, type-7 quantiles/median,
 explicit population/sample standard deviation and unweighted ECDF. Policies
 are recorded in new run/freeze receipts; see [STATISTICS.md](STATISTICS.md).
-Bootstrap, seeded RNG and weighted distributions remain acceptance goals.
+Alpha.26 implements explicit PCG32 seeded streams and replayable evidence;
+see [RANDOMNESS.md](RANDOMNESS.md). Bootstrap, normal/covariance sampling and
+weighted distributions remain acceptance goals. Exact platform fixtures are
+gated by CI, not assumed from one local build.
 
 ## Requested priorities and present coverage
 
 | Priority | Requirement | Existing coverage and remaining work |
 | --- | --- | --- |
 | P0 | sort, median, quantile, ECDF | Core GBL-007 implemented locally in alpha.24, including explicit population/sample standard deviation; bootstrap/weights pending |
-| P0 | Deterministic seeded RNG | GBL-008; pin algorithm/variant/version, seed encoding, streams and sampling mappings |
+| P0 | Deterministic seeded RNG | GBL-008 implemented locally in alpha.26 with PCG32 v1, explicit seed/stream, uniform/integer mappings and replay evidence; normal sampling pending |
 | P0 | Multi-column FITS filtering/export | GBL-006 alpha.23 local CSV/TSV stage; exact unscaled IDs and both engines covered; FITS writer/physical blinding pending |
 | P0 | dot, cross, norm, unit, matrix multiply | dot/cross/magnitude exist; GBL-018 adds checked normalization and explicit matrix representation/operations |
 | P0 | Covariance, Cholesky, multivariate normal | GBL-019; depends on matrix, units, RNG and normal-transform contracts |

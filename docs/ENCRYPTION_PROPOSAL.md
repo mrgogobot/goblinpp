@@ -8,6 +8,21 @@ must be treated as plaintext.
 
 ## First useful scope
 
+2026-10-06 direction: consider **AES-256-GCM** using a maintained reviewed
+implementation, with a separately specified versioned file format, password
+KDF, nonce management and fail-closed authentication. Encryption is separate
+from any proposed `COMPLETELY_MAD` strict research policy. Neither is alpha.26
+functionality; scientific PCG32 must not generate cryptographic keys/nonces.
+
+User-proposed command shapes:
+`goblin++ --enc <FILENAME> --set_key <PASSWORD>` and
+`goblin++ --dec <FILENAME> --key <PASSWORD>`.
+They express intent only; literal password arguments risk shell-history and
+process-list exposure. Review hidden password prompts or protected key files
+before settling the supported interface. There is no agreed secure file
+format or shipped command yet. A custom IDE/workbench is no longer planned;
+existing IDE integrations remain the authoring interface.
+
 Offer explicit CLI operations to encrypt and decrypt either one file or a
 single directory snapshot (for example, a complete run bundle). Never silently
 encrypt normal run output or change the bytes of an existing freeze or receipt.
@@ -18,8 +33,9 @@ Preserve the original evidence as-is unless the user explicitly decides how
 to manage it separately.
 
 Use an established, independently reviewed encryption format and maintained
-implementation, such as [age](https://github.com/FiloSottile/age), rather than
-designing a Goblin++ cipher. Decide explicitly between recipient-key and
+implementation rather than designing a Goblin++ cipher. The earlier
+[age](https://github.com/FiloSottile/age) suggestion is an alternative established
+format, not a claim that age is an AES-256-GCM format. Decide explicitly between recipient-key and
 passphrase workflows, including how a lost key is handled. Never place a
 passphrase or private key in a `.gbl` program, command-line argument, run
 receipt, log, or repository. A future implementation needs a clear statement of

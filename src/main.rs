@@ -383,6 +383,8 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
         "parser_policy": goblinpp::parser::PARSER_POLICY,
         "math_policy": goblinpp::math_policy::policy(),
+        "rng_policy": goblinpp::random::policy(),
+        "rng_preview": evaluation.randomness.evidence(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
@@ -475,9 +477,15 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
                 "The statistics policy differs from the frozen policy. Compilation refused. Create an explicit revision to adopt the changed policy.",
             ));
         }
+        if !goblinpp::random::frozen_policy_matches(freeze.receipt.as_ref().unwrap()) {
+            return Err(GoblinError::protocol(
+                "RNG_POLICY_CHANGED_AFTER_FREEZE",
+                "The RNG policy differs from the freeze. Compilation refused; create an explicit revision.",
+            ));
+        }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -614,6 +622,11 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
         println!(
             "STATISTICS_POLICY_SAME ....... {}",
             yn(report.statistics_policy_same)
+        );
+        println!(
+            "RNG_POLICY_SAME .............. {}\nRNG_EVIDENCE_SAME ............ {}",
+            yn(report.rng_policy_same),
+            yn(report.rng_evidence_same)
         );
     }
     Ok(0)
@@ -760,7 +773,7 @@ fn command_doctor(project: PathBuf, json_output: bool) -> Result<i32> {
 fn command_capabilities(json_output: bool) -> Result<i32> {
     let report = json!({
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
-        "available": ["rust interpreter", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
+        "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "string_functions": ["to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
         "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
         "numeric_comparison_functions": ["is_close", "same_bits"],
@@ -769,7 +782,9 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "parser_policy": goblinpp::parser::PARSER_POLICY,
         "compound_unit_limits": {"unit_exponent_abs_max":32,"dimension_exponent_abs_max":256,"max_group_depth":32,"max_suffix_tokens":256,"multiple_denominator_factors":"PARENTHESES_REQUIRED"},
         "statistics_policy": goblinpp::science::statistics_policy(),
+        "rng_policy": goblinpp::random::policy(),
         "chemistry_functions": goblinpp::chemistry::FUNCTIONS,
+        "rng_functions": ["rng_seed", "rng_word", "rng_uniform", "rng_integer"],
         "chemistry_registry": {"id": goblinpp::chemistry::REGISTRY_ID, "sha256": goblinpp::chemistry::registry_sha256()?, "elements": goblinpp::chemistry::ELEMENTS.len()},
         "electrical_functions": goblinpp::electrical::FUNCTIONS,
         "electrical_registry": {"id": goblinpp::electrical::REGISTRY_ID, "sha256": goblinpp::electrical::registry_sha256()?},

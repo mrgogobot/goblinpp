@@ -200,6 +200,7 @@ fn build_data_program(
         ("output", include_str!("output.rs")),
         ("parser", include_str!("parser.rs")),
         ("quantity", include_str!("quantity.rs")),
+        ("random", include_str!("random.rs")),
         ("science", include_str!("science.rs")),
         ("statistics_runtime", include_str!("statistics_runtime.rs")),
         ("text_runtime", include_str!("text_runtime.rs")),
@@ -938,10 +939,22 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             generate_expr(expr)?
         ),
         Expr::Call { name, args } if crate::evaluator::is_data_function(name) => {
+            if crate::random::is_function(name) {
+                crate::random::require_arity(name, args.len())?;
+            }
             format!(
                 "goblin_data_call({name:?}, vec![{}], &goblin_env)",
                 args.iter()
-                    .map(generate_expr)
+                    .map(|expr| {
+                        let code = generate_expr(expr)?;
+                        // RNG arguments short-circuit on failure just as in
+                        // the interpreter; never consume a later draw.
+                        Ok(if crate::random::is_function(name) {
+                            format!("Ok(({code})?)")
+                        } else {
+                            code
+                        })
+                    })
                     .collect::<Result<Vec<_>>>()?
                     .join(", ")
             )

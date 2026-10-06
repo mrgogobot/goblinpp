@@ -44,6 +44,8 @@ def main() -> None:
         actual = {str(path.relative_to(root)) for path in root.rglob("*") if path.is_file()}
         expected = {entry["path"] for entry in inventory["files"]} | {"BUNDLE_MANIFEST.json"}
         assert actual == expected
+        assert (root / "third-party/licenses/pcg/LICENSE-APACHE").is_file()
+        assert (root / "third-party/licenses/pcg/NOTICE.md").read_bytes() == (root / "tools/license_sources/pcg/NOTICE.md").read_bytes()
         for entry in inventory["files"]:
             payload = (root / entry["path"]).read_bytes()
             assert len(payload) == entry["bytes"]
@@ -55,7 +57,8 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random"]:
+            rng_evidence = None
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)
@@ -90,6 +93,16 @@ def main() -> None:
                     report = json.loads((root / directory / "receipt.json").read_text())
                     assert report["parser_policy"] == "goblin.compound-unit-literals.v1"
                     assert report["math_environment"]["launcher_build"]["rustc"].startswith("rustc 1.92.0 ")
+                if example == "seeded_random":
+                    report = json.loads((root / directory / "receipt.json").read_text())
+                    assert report["rng_policy"]["id"] == "goblin.pcg32-xsh-rr-setseq.v1"
+                    assert report["rng"]["usage"] == "USED"
+                    assert report["rng"]["streams"][0]["seed"] == "2026"
+                    assert report["rng"]["streams"][1]["seed"] == "42"
+                    assert report["rng"]["streams"][1]["stream"] == "54"
+                    if rng_evidence is not None:
+                        assert rng_evidence == report["rng"]
+                    rng_evidence = report["rng"]
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

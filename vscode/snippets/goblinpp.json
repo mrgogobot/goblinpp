@@ -1,4 +1,14 @@
 {
+  "Seeded scientific randomness": {
+    "prefix": "seeded",
+    "body": [
+      "rng_seed(${1:42})",
+      "${2:sample} = rng_uniform()",
+      "print(\"${2:sample} = {${2:sample}}\")",
+      "seal ${2:sample}"
+    ],
+    "description": "Reproducible scientific PCG32 stream, not cryptographic randomness."
+  },
   "Everyday program": {
     "prefix": "everyday",
     "body": [

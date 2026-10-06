@@ -1,4 +1,50 @@
-# Alpha.25 compound-unit input (local, unreleased)
+# Alpha.26 seeded scientific RNG (local, unreleased)
+
+Verified locally on 2026-10-06, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **231 passed**, 0 failed/ignored/filtered in the final full
+  `cargo test --locked --offline --all-targets` run. Formatting,
+  warning-denying Clippy, whitespace checks and optimized build pass.
+  Cargo.lock changes only the Goblin++ version; no new dependencies.
+- Eleven RNG integration tests plus two internal tests cover PCG's published
+  seed-42/stream-54 reference vector, specified uniform/integer mappings,
+  explicit streams and interleaving, full-u64 text seeds/u63 streams,
+  bounds/types/reseeding/unseeded refusals, transactional resource guards,
+  compressed trace segments, builtin collisions, arity-before-effects,
+  interpreter/native/standalone results, frozen policy/legacy compatibility,
+  tamper detection after re-hashing, missing required evidence and exact diff.
+- Measured native/interpreter RNG traces and exact sealed hashes match on
+  macOS arm64. The fixed RNG fixture is preserved for the new exact cross-platform
+  CI gate. Linux/macOS validation awaits this stage's CI; this is not a universal
+  bitwise mathematics guarantee. The existing 36-case math fixture also passes.
+- A genuine run made with the installed alpha.25 engine, including a then-legal
+  user function named `rng_uniform`, independently verifies with alpha.26.
+  Historical canonical parsing is retained; executing a newly conflicting
+  user function under alpha.26 requires renaming it.
+- VS Code 0.1.21: **16 passed**, 0 failed/skipped, including actual CLI
+  preview, interpreted/compiled RNG execution and independent verification.
+  Vocabulary has 248 unique spellings; RNG help/highlighting/snippet pass.
+- JetBrains 0.3.11: **14 passed**, 0 failed/skipped; offline installer build
+  passes with cached IntelliJ 2024.3.7/JDK 21. This is not a new live
+  CLion/PyCharm test or multi-version compatibility certification.
+- Report-checker Python tests: **14 passed**, 0 failed. All **179** tracked
+  Chinese/community-review files are byte-identical to the pre-change HEAD.
+- PCG reference attribution and Apache-2.0 license are retained in source and
+  included by the package notice collector. No cryptographic capability is
+  supplied by this RNG; encryption remains a separate future feature.
+
+Local checks do not establish complete WB-3 validation, authenticated history
+or correctness of a scientific model. Bootstrap, normal/covariance sampling,
+streaming/budget extensions and strict research isolation remain future work.
+See [RANDOMNESS.md](RANDOMNESS.md) for the precise contract and limits.
+
+After packaging, `tools/verify_local.py <package-receipt>` checks hashes,
+ZIP/inventory integrity, preserved reference licensing and an isolated
+installation; runs ten shipped examples in both modes (20 runs); and independently
+verifies every receipt. Packaging results are reported separately because this
+record is included in the immutable archive before those checks run.
+
+## Previous stage: Alpha.25 compound-unit input
 
 Verified locally on 2026-10-06, macOS arm64 with the retained Rust 1.92.0:
 

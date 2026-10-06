@@ -75,7 +75,8 @@ pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 pub fn is_data_function(name: &str) -> bool {
-    crate::fits::is_selection_function(name)
+    crate::random::is_function(name)
+        || crate::fits::is_selection_function(name)
         || crate::delimited::is_function(name)
         || matches!(
             name,
@@ -139,6 +140,7 @@ pub struct Evaluation {
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
     pub interaction: Interaction,
+    pub randomness: crate::random::Randomness,
     loop_iterations: u64,
     base_dir: PathBuf,
     data: BTreeMap<PathBuf, LoadedData>,
@@ -167,6 +169,7 @@ impl Evaluation {
             constants_used: BTreeMap::new(),
             paranoid: false,
             interaction: Interaction::default(),
+            randomness: crate::random::Randomness::default(),
             loop_iterations: 0,
             base_dir: base_dir.as_ref().to_path_buf(),
             data: BTreeMap::new(),
@@ -593,6 +596,9 @@ impl Evaluation {
 
     #[inline(never)]
     fn eval_builtin_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        if crate::random::is_function(name) {
+            return self.randomness.call(name, args);
+        }
         if crate::delimited::is_function(name) {
             return self.eval_table_call(name, args);
         }
@@ -1692,6 +1698,9 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
 /// Validate before evaluating arguments; never silently change refusal ordering
 /// or prompt/write side effects while keeping the dispatch frame off the stack.
 fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::random::is_function(name) {
+        return crate::random::require_arity(name, args.len());
+    }
     if crate::delimited::is_function(name) {
         let operation = name.split_once('_').unwrap().1;
         return require_args(

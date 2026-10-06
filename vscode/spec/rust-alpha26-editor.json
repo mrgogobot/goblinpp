@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.25",
+  "runtime": "goblin++ 0.1.0-alpha.26",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
@@ -135,6 +135,30 @@
     }
   ],
   "functions": [
+    {
+      "spelling": "rng_seed",
+      "kind": "function",
+      "detail": "Seed PCG32 v1 explicitly before drawing. Optional numeric stream ID defaults to 0. No reseeding. Full u64 seeds/u63 streams use canonical decimal text. Public receipt data; NOT cryptographic.",
+      "snippet": "rng_seed(${1:42}, ${2:0})"
+    },
+    {
+      "spelling": "rng_word",
+      "kind": "function",
+      "detail": "Draw one exact PCG32 unsigned 32-bit word from a seeded stream (default 0). Consume its result. Algorithm, seed and trace are recorded; NOT for encryption.",
+      "snippet": "rng_word(${1:0})"
+    },
+    {
+      "spelling": "rng_uniform",
+      "kind": "function",
+      "detail": "Draw dimensionless uniform [0,1) using two PCG32 words and the specified 53-bit mapping. Seeded stream defaults to 0; consume the result. NOT cryptographic.",
+      "snippet": "rng_uniform(${1:0})"
+    },
+    {
+      "spelling": "rng_integer",
+      "kind": "function",
+      "detail": "Draw a uniform integer in half-open [low, high) via bounded rejection, with optional seeded stream ID. Numeric dimensionless bounds within +/- (2^53-1); low < high. NOT cryptographic.",
+      "snippet": "rng_integer(${1:0}, ${2:10}, ${3:0})"
+    },
     {"spelling":"csv_rows", "kind":"function", "detail":"Count data rows in a UTF-8 CSV with a unique nonempty header; header is excluded.", "snippet":"csv_rows(\"${1:measurements.csv}\")"},
     {"spelling":"csv_columns", "kind":"function", "detail":"Count CSV header columns; ragged rows are refused.", "snippet":"csv_columns(\"${1:measurements.csv}\")"},
     {"spelling":"csv_headers", "kind":"function", "detail":"Return CSV header names as an independent text array.", "snippet":"csv_headers(\"${1:measurements.csv}\")"},

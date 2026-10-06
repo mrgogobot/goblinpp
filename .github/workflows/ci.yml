@@ -26,6 +26,7 @@ jobs:
       - name: Test
         env:
           GOBLIN_MATH_REPORT_PATH: ${{ github.workspace }}/target/math-evidence/report.json
+          GOBLIN_RNG_REPORT_PATH: ${{ github.workspace }}/target/math-evidence/rng-report.json
         run: cargo test --locked
       - name: Preserve measured math evidence
         uses: actions/upload-artifact@v7
@@ -60,6 +61,8 @@ jobs:
           python3 tools/compare_math_reports.py
           --latest-per-platform target/platform-evidence
           --goblinpp target/debug/goblinpp --require-macos-linux
+      - name: Compare exact seeded RNG platforms and engines
+        run: python3 tools/compare_rng_reports.py target/platform-evidence
 
   vscode:
     name: VS Code extension tests

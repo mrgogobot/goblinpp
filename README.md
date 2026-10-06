@@ -1,4 +1,13 @@
-# Goblin++ Rust Engine 0.1.0-alpha.25 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.26 (local, unreleased)
+
+Alpha.26 adds explicitly seeded **scientific PCG32 randomness** in both engines:
+`rng_seed`, `rng_word`, `rng_uniform` and `rng_integer`. Algorithm/version,
+seed/stream, mappings and replayable draw evidence are preserved in receipts;
+new freezes pin the RNG policy. No hidden seed or reseeding. See
+[Randomness guide](docs/RANDOMNESS.md) and `examples/seeded_random.gbl`.
+This RNG is **not suitable for cryptography**. Bootstrap, covariance sampling,
+encryption and strict research profiles remain future stages. No custom IDE is
+planned; the existing VS Code/JetBrains plugins remain supported.
 
 Alpha.25 adds compound-unit input in both engines: `1.13e-10 m/s^2`,
 `3 kg*m^2/s^2` and `7 kg/(m*s^2)`. **`3 m^2` now means three square metres;
@@ -8,7 +17,7 @@ revision before execution under the new parser policy. See
 [Compound units and migration](docs/COMPOUND_UNITS.md) and
 `examples/compound_units.gbl`. Rust stays at 1.92.0, including pinned CI checks.
 Alpha.24 statistics and alpha.23 FITS extraction are retained. No new
-dependencies were added. Seeded RNG, bootstrap, covariance and `GO_MAD` remain
+dependencies were added. Bootstrap, covariance and `GO_MAD` remain
 future work. Local tests do not replace this stage's cross-platform CI.
 
 Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
@@ -33,6 +42,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
 - [Statistics: sums, distributions, standard deviation and ECDF](docs/STATISTICS.md)
+- [Seeded scientific RNG, explicit streams and evidence replay](docs/RANDOMNESS.md)
 - [Compound-unit input and historical freeze migration](docs/COMPOUND_UNITS.md)
 - [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
 - [Lossless numeric text and explicit presentation precision](docs/NUMERIC_TEXT.md)
@@ -256,7 +266,7 @@ print("Energy = {result}")
 seal result
 ```
 
-Functions work in the interpreter and native compiler. They may be declared after their call site. Parameters and local assignments stay inside the function; array arguments are independent copies. Every reached path must return a value. Recursion is limited to 16 active calls. Keep `GO_PARANOID`, `seal`, and authorized inline Rust at top level; seal the returned result in the caller. Interpreted functions may read FITS and write run-confined outputs, but native compilation still refuses those built-ins. See [FUNCTIONS.md](docs/FUNCTIONS.md) and `examples/functions.gbl`.
+Functions work in the interpreter and native compiler. They may be declared after their call site. Parameters and local assignments stay inside the function; array arguments are independent copies. Every reached path must return a value. Recursion is limited to 16 active calls. Keep `GO_PARANOID`, `seal`, and authorized inline Rust at top level; seal the returned result in the caller. Functions may read FITS and write run-confined outputs in either engine; these native programs require Cargo and cached locked dependencies. See [FUNCTIONS.md](docs/FUNCTIONS.md) and `examples/functions.gbl`.
 
 ## Interaction and arrays
 

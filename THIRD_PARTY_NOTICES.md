@@ -1,5 +1,13 @@
 # Third-party notices
 
+## PCG reference adaptation (alpha.26)
+
+The scientific PCG32 implementation in `src/random.rs` adapts M. E. O'Neill's
+minimal reference under Apache-2.0. No RNG crate is added. Preserved attribution
+and license: [third-party/licenses/pcg/](third-party/licenses/pcg/).
+The package collector regenerates current dependency/toolchain notices and
+includes this reference license in each new local bundle.
+
 This notice bundle accompanies the Goblin++ 0.1.0-alpha.14 macOS arm64 binary.
 It was collected offline from the exact `Cargo.lock` normal-dependency tree
 for `aarch64-apple-darwin` and from the active Rust standard-library documentation.

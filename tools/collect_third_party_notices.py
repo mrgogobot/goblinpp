@@ -107,6 +107,10 @@ def main() -> None:
             shutil.copy2(path, RUST_LICENSES / path.name)
     toolchain = run("rustc", "--version", "--verbose")
     (RUST_LICENSES / "RUST_TOOLCHAIN.txt").write_text(toolchain + "\n", encoding="utf-8")
+    pcg_source = ROOT / "tools/license_sources/pcg"
+    if not (pcg_source / "LICENSE-APACHE").is_file() or not (pcg_source / "NOTICE.md").is_file():
+        raise SystemExit("Missing reviewed PCG reference license/attribution.")
+    copy_notices(pcg_source, OUTPUT / "licenses/pcg")
 
     lines = [
         "# Third-party notices",
@@ -139,6 +143,12 @@ def main() -> None:
             "toolchain identity, Rust library copyright notices, and the license texts shipped",
             "with that toolchain are preserved under",
             "[`third-party/licenses/rust-standard-library/`](third-party/licenses/rust-standard-library/).",
+            "",
+            "## PCG reference adaptation",
+            "",
+            "The scientific PCG32 implementation adapts M. E. O'Neill's minimal",
+            "reference under Apache-2.0, without adding a dependency crate.",
+            "Attribution and license: [`third-party/licenses/pcg/`](third-party/licenses/pcg/).",
             "",
             "## Reproduction",
             "",

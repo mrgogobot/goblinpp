@@ -193,6 +193,7 @@ fn value_only_builtin(name: &str) -> bool {
                 | "ecdf"
         )
         || crate::numeric_comparison::is_function(name)
+        || (crate::random::is_function(name) && name != "rng_seed")
         || (crate::fits::is_selection_function(name)
             && !matches!(name, "fits_export_csv" | "fits_export_tsv"))
 }
@@ -207,6 +208,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::numeric_comparison::is_function(name)
+                    || crate::random::is_function(name)
                     || crate::fits::is_selection_function(name)
                     || crate::science::is_distribution_function(name)
                 {
@@ -216,7 +218,9 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 }
                 require_writable_name(name)?;
                 for param in params {
-                    if crate::science::is_distribution_function(param) {
+                    if crate::science::is_distribution_function(param)
+                        || crate::random::is_function(param)
+                    {
                         return Err(GoblinError::parse(format!(
                             "{param} is a registered builtin function and cannot name a g_func parameter."
                         )));

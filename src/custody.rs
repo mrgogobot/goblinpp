@@ -140,6 +140,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
+        "rng_policy": crate::random::policy(),
         "created_at": timestamp(),
         "policy": "EXACT_SOURCE_BYTES_AND_CANONICAL_PROGRAM",
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": sha256_bytes(&bytes) },

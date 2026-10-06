@@ -21,6 +21,7 @@ pub mod numeric_comparison;
 pub mod output;
 pub mod parser;
 pub mod quantity;
+pub mod random;
 pub mod runtime;
 pub mod science;
 mod statistics_runtime;

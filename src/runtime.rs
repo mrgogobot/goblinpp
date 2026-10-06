@@ -65,6 +65,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
+        "rng_policy": crate::random::policy(),
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
@@ -273,6 +274,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         outcome = Err(error);
     }
     receipt["data_imports"] = serde_json::to_value(&imports)?;
+    receipt["rng"] = serde_json::to_value(evaluation.randomness.evidence())?;
     if evaluation.interaction.evidence_needed() {
         let evidence_path = run_dir.join("interaction.json");
         let evidence = json!({
@@ -614,6 +616,14 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
                 "The statistics policy differs from the frozen policy. Historical evidence remains verifiable. Create an explicit revision to adopt a changed policy.",
             ));
         }
+        if !crate::random::frozen_policy_matches(report.receipt.as_ref().unwrap()) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("RNG_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "RNG_POLICY_CHANGED_AFTER_FREEZE",
+                "The RNG policy differs from the frozen policy. Create an explicit revision before adopting a changed RNG contract.",
+            ));
+        }
         return Ok(());
     }
     let subject = ledger::subject_for(source, root)?;
@@ -856,6 +866,7 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         .map(crate::output::artifact_descriptor)
         .collect::<Vec<_>>();
     if manifest["schema"] != "goblin.native-data.v1"
+        || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
         || manifest["data_imports"] != serde_json::to_value(expected.data_imports())?
         || manifest["generated_artifacts"] != json!(generated)
     {

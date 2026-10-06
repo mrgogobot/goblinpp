@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha25-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha26-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,16 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.25 runtime features", () => {
+test("completion combines legacy spellings with alpha.26 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 244);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 244);
+  assert.equal(entries.length, 248);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 248);
+  for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
+    const entry = entries.find((item) => item.spelling === spelling);
+    assert.equal(entry.kind, "function");
+    assert.match(entry.detail, /NOT cryptographic|NOT for encryption/);
+    assert.match(core.completionSnippet(entry), /rng_/);
+  }
   assert.equal(entries.find((item) => item.spelling === "import").kind, "statement");
   for (const prefix of ["csv", "tsv"]) {
     for (const suffix of ["rows", "columns", "headers", "column", "numbers"]) {
@@ -298,10 +304,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.25 language coloring and extension identity are internally consistent", () => {
+test("alpha.26 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.20");
+  assert.equal(manifest.version, "0.1.21");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -313,7 +319,7 @@ test("alpha.25 language coloring and extension identity are internally consisten
     assert(builtins.test(`${spelling}(`));
     assert(runtimeVocabulary.functions.some((entry) => entry.spelling === spelling && entry.snippet));
   }
-  for (const spelling of ["sum", "mean", "sort", "median", "quantile", "std_population", "std_sample", "ecdf"]) {
+  for (const spelling of ["sum", "mean", "sort", "median", "quantile", "std_population", "std_sample", "ecdf", "rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     assert(builtins.test(`${spelling}(`));
   }
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);

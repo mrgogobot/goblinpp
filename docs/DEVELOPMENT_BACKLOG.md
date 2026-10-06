@@ -14,7 +14,8 @@ not a universal bitwise math guarantee.
 Alpha.23 implements the GBL-006 CSV/TSV extraction stage locally; a general
 exact-integer arithmetic type and FITS subset writer remain pending.
 Alpha.24 implements the core GBL-007 distribution functions locally; seeded
-bootstrap and weighted distributions remain pending. GBL-008 onward remain
+bootstrap and weighted distributions remain pending. Alpha.26 implements
+GBL-008's raw/uniform/integer PCG32 stage locally; remaining stages stay
 queued unless noted. No released tag or asset
 should be overwritten. WB-1/WB-2 are the user's workflow labels; the complete
 workflow, catalogue fixtures, and independent expected results have not been
@@ -50,7 +51,7 @@ Evidence labels:
 | GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; macOS/Linux CI gate passed |
 | GBL-006 | 2 | Multi-column FITS cuts and subset export | Alpha.23 local: combined scalar cuts, exact unscaled i64 IDs and CSV/TSV export; FITS writing/blinding not implemented |
 | GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Core distributions and ECDF implemented locally in alpha.24; bootstrap/weights pending |
-| GBL-008 | 2 | Seeded, named, cross-platform RNG | Requested addition; no current RNG dependency/API found |
+| GBL-008 | 2 | Seeded, named, cross-platform RNG | Alpha.26 local PCG32 XSH-RR setseq v1, exact streams/mappings, bounded replay evidence; CI platform gate prepared; normal/bootstrap/covariance pending |
 | GBL-009 | 2 | Declarable audited loop budget | Fixed cap source-confirmed |
 | GBL-010 | 2 | Dimension-aware element-wise array maths | Requested extension to current vector/array support |
 | GBL-011 | 2 | CSV/TSV table output from arrays | Scalar-cell API and text limits source-confirmed |
@@ -318,6 +319,11 @@ for exact conventions, policy evidence and refusal rules. Bootstrap remains open
   reproduce from seed and algorithm and expose assumptions explicitly.
 
 ### GBL-008 — Audited seeded random numbers
+
+Implemented locally in alpha.26; see [RANDOMNESS.md](RANDOMNESS.md).
+PCG32 XSH-RR setseq v1, explicit seeds/streams, published vectors and bounded
+evidence replay. Normal transforms and bootstrap remain future work. CI checks
+exact macOS/Linux fixture agreement; local testing alone is not that gate.
 
 - Choose a fully specified named algorithm/version, such as a particular PCG
   or ChaCha variant, with fixed seed encoding, state transition, stream

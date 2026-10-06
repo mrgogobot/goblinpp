@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.25 CLI check, run, and verify contracts", {
+test("actual alpha.26 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.25 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.25/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.26/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -99,6 +99,23 @@ test("actual alpha.25 CLI check, run, and verify contracts", {
     assert.equal(invoke(core.goblinArgs("verify", directory)).status, 0);
   }
   const distributions = path.join(root, "distributions.gbl");
+  const random = path.join(root, "seeded_random.gbl");
+  fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "seeded_random.gbl"), random);
+  const preview = invoke(core.goblinArgs("check", random, ["--json"]));
+  assert.equal(preview.status, 0, preview.stderr);
+  assert.equal(JSON.parse(preview.stdout).rng_preview.usage, "USED");
+  let evidence;
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", random, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    assert(directory);
+    const receipt = JSON.parse(fs.readFileSync(path.join(directory, "receipt.json"), "utf8"));
+    assert.equal(receipt.rng_policy.id, "goblin.pcg32-xsh-rr-setseq.v1");
+    if (evidence) assert.deepEqual(receipt.rng, evidence);
+    evidence = receipt.rng;
+    assert.equal(invoke(core.goblinArgs("verify", directory)).status, 0);
+  }
   fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "statistics_distribution.gbl"), distributions);
   assert.equal(invoke(core.goblinArgs("check", distributions, ["--json"])).status, 0);
   for (const extra of [[], ["--compile"]]) {

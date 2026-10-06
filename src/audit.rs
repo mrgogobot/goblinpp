@@ -27,6 +27,8 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub rng_policy_same: bool,
+    pub rng_evidence_same: bool,
     pub parser_policy_same: bool,
     pub statistics_policy_same: bool,
     pub math_policy_same: bool,
@@ -67,6 +69,26 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         parser_mode.as_ref().err().map(|e| e.to_string()),
     ));
     let schema = string_at(&receipt, &["schema"]);
+    if receipt.get("rng_policy").is_some()
+        || receipt.get("rng").is_some()
+        || crate::random::requires_policy(&receipt)
+    {
+        checks.push(check(
+            "RNG_POLICY_SUPPORTED",
+            receipt["rng_policy"] == crate::random::policy(),
+            None,
+            None,
+            None,
+        ));
+        let replay = crate::random::verify_evidence(&receipt["rng"]);
+        checks.push(check(
+            "RNG_EVIDENCE_REPLAY",
+            replay.is_ok(),
+            None,
+            None,
+            replay.err().map(|e| e.to_string()),
+        ));
+    }
     let schema_v2 = schema.as_deref() == Some("goblin.run-receipt.v2");
     checks.push(check(
         "SCHEMA_SUPPORTED",
@@ -675,6 +697,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         at(&left, &["language_semantics"]) == at(&right, &["language_semantics"]);
     let parser_policy_same = at(&left, &["parser_policy"]) == at(&right, &["parser_policy"]);
     let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
+    let rng_policy_same = at(&left, &["rng_policy"]) == at(&right, &["rng_policy"]);
+    let rng_evidence_same = at(&left, &["rng"]) == at(&right, &["rng"]);
     let statistics_policy_same =
         at(&left, &["statistics_policy"]) == at(&right, &["statistics_policy"]);
     let math_environment_same =
@@ -696,6 +720,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let execution_engine_same =
         at(&left, &["execution", "engine"]) == at(&right, &["execution", "engine"]);
     let equivalent_result = canonical_program_same
+        && rng_evidence_same
         && sealed_artifacts_same
         && generated_artifacts_same
         && constants_same
@@ -719,6 +744,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "MATH_POLICY_CHANGE"
     } else if !statistics_policy_same {
         "STATISTICS_POLICY_CHANGE"
+    } else if !rng_policy_same {
+        "RNG_POLICY_CHANGE"
     } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
@@ -733,6 +760,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        rng_policy_same,
+        rng_evidence_same,
         parser_policy_same,
         statistics_policy_same,
         math_policy_same,

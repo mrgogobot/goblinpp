@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Alpha.19 status | Evidence or boundary |
+| Capability | Current status (through alpha.26) | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -13,7 +13,8 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices and iteration values, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
 | Dimensional quantities | Implemented | Six base dimensions including electric current; historical five-axis evidence retained; mismatch and numeric-domain failures tested |
 | Scientific mathematics | New, implemented | Dimension-aware `abs`, `sqrt`, extrema and `hypot`; checked dimensionless rounding, exponential, logarithmic and trigonometric functions; interpreter/compiler parity and preserved failures |
-| Array statistics | New, implemented | Numeric `sum`/`mean`, stable copy `sort`, type-7 `median`/`quantile`, explicit population/sample standard deviation and unweighted ECDF; dimensions, shared runtime, policy receipts and native parity; variance, weights, RNG and bootstrap pending |
+| Array statistics | New, implemented | Numeric `sum`/`mean`, stable copy `sort`, type-7 `median`/`quantile`, explicit population/sample standard deviation and unweighted ECDF; dimensions, shared runtime, policy receipts and native parity; variance, weights and bootstrap pending |
+| Seeded scientific RNG | New in alpha.26 | PCG32 XSH-RR setseq v1, explicit seed/stream, fixed word/uniform/integer mappings, bounded replay evidence, freezes and native parity; non-cryptographic; normal transforms pending |
 | Checked integer remainder | New, implemented | `%` requires safe dimensionless integers, rejects zero divisor, and has interpreter/compiler parity |
 | Constants and units | Extended, implemented | Python 0.0.7 registry plus alpha.16 chemistry and alpha.17 SI electrical units; registry contents are freeze evidence |
 | Chemistry foundation | New, implemented | Scoped 43-element abridged registry, formula molar mass, mass/amount/concentration/dilution helpers, interpreter/native parity, explicit unsupported-syntax refusal; no isotope, reaction, pH, equilibrium, kinetics, or biology inference |
@@ -38,7 +39,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | FITS ASCII tables/compression/special columns | Pending | Discoverable metadata; unsupported values are explicitly refused |
 | FITS calls in compiled programs | New, implemented | Shared Rust helpers; native input hashes and accesses must match reference; support inventory preserved |
 | Output calls in compiled programs | New, implemented | Native output metadata and bytes compared, then independently verified; standalone custody boundary documented |
-| Bulk table export and FITS writing | Pending | Requires explicit output schema, unit, and provenance contracts; the summary operation does not export rows |
+| Bulk table export and FITS writing | Partial | Alpha.23 combined scalar cuts and CSV/TSV projection preserve exact unscaled i64 catalogue IDs as text in both engines; general FITS writing/physical blinding remain pending |
 | User-defined functions | Implemented in working tree | `g_func`, parameters, explicit `return`, local copy-value scope, forward calls and 16-call limit; interpreter/native parity tested |
 | Local function libraries | New, implemented | Static definitions-only imports, cycle/traversal/symlink/duplicate refusal, frozen raw graph, independent module-evidence verification |
 | CSV/TSV reading | New, implemented | Bounded UTF-8 snapshots, explicit delimiter and text/numeric column choice, strict headers/row shape, no silently skipped numeric cells, both engines |

@@ -44,7 +44,7 @@ fn goblin_data_finish() -> Result<(), String> {
         let imports = data.data_imports();
         let manifest = if let Ok(path) = std::env::var("GOBLIN_NATIVE_DATA_PATH") {
             std::path::PathBuf::from(path)
-        } else if imports.is_empty() && data.generated.is_empty() {
+        } else if imports.is_empty() && data.generated.is_empty() && data.randomness.evidence().streams.is_empty() {
             return Ok(());
         } else {
             let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos();
@@ -63,7 +63,7 @@ fn goblin_data_finish() -> Result<(), String> {
             file.sync_all().map_err(|e| e.to_string())?;
             artifacts.push(goblinpp::output::artifact_descriptor(output));
         }
-        let value = serde_json::json!({"schema":"goblin.native-data.v1", "data_imports":imports, "generated_artifacts":artifacts});
+        let value = serde_json::json!({"schema":"goblin.native-data.v1", "data_imports":imports, "generated_artifacts":artifacts, "rng":data.randomness.evidence()});
         let mut file = OpenOptions::new().write(true).create_new(true).open(&manifest).map_err(|e| e.to_string())?;
         file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;

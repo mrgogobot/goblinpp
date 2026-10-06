@@ -1,5 +1,22 @@
 # Next-build notes
 
+## Current sequence — 2026-10-06
+
+Alpha.25 compound-unit input is implemented; the original report below is
+historical, not current behavior. Alpha.26 supplies the explicit scientific
+PCG32 RNG contract; see [RANDOMNESS.md](RANDOMNESS.md). Next: declared bootstrap/
+resampling contracts, then matrix/covariance validation and normal sampling.
+Do not silently pick interval assumptions, seed defaults or normal transforms.
+
+Future concept only: AES-256-GCM file protection and a separate
+`COMPLETELY_MAD` strict policy profile. User-proposed commands:
+`goblin++ --enc <FILENAME> --set_key <PASSWORD>` and
+`goblin++ --dec <FILENAME> --key <PASSWORD>`.
+These flags are not implemented. Password arguments risk shell-history/process
+exposure; review hidden prompts/key handling before implementation. Scientific
+PCG32 must never supply cryptographic keys/nonces. A custom IDE/workbench is
+dropped to avoid upkeep; use existing IDEs/plugins.
+
 The full prioritised work list is in
 [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md). This existing compound-unit
 note corresponds to **GBL-013**; its detailed acceptance gates remain below.

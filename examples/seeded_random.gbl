@@ -1,0 +1,25 @@
+GO_PARANOID
+
+# Scientific reproducibility, NOT encryption or password generation.
+# Published PCG32 reference seed/stream: the first six words are fixed.
+rng_seed(42, 54)
+words = []
+for i in range(6) {
+    words = append(words, rng_word(54))
+}
+
+# An independent explicitly chosen stream; stream 0 is the default.
+rng_seed(2026)
+samples = []
+indices = []
+for i in range(8) {
+    samples = append(samples, rng_uniform())
+    indices = append(indices, rng_integer(0, 10))
+}
+
+print("PCG32 reference words = {words}")
+print("uniform samples in [0,1) = {samples}")
+print("integer indices in [0,10) = {indices}")
+seal words
+seal samples
+seal indices
