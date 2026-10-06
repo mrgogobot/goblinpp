@@ -2,6 +2,12 @@
   "schema": "goblin.platform-math-fixtures.v1",
   "description": "Named finite results and deliberately explicit engineering-test tolerances, not universal scientific tolerances. Expected values are analytic identities or rounded mathematical reference values; exact cases use IEEE bits.",
   "cases": [
+    {"name":"statistics_median","expression":"median([4 m, 1 m, 3 m, 2 m])","expected":2.5,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
+    {"name":"statistics_quantile","expression":"quantile([4 m, 1 m, 3 m, 2 m], 0.25)","expected":1.75,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
+    {"name":"statistics_population","expression":"std_population([2 m, 4 m, 4 m, 4 m, 5 m, 5 m, 7 m, 9 m])","expected":2.0,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,1,0,0,0,0]},
+    {"name":"statistics_sample","expression":"std_sample([2 m, 4 m, 4 m, 4 m, 5 m, 5 m, 7 m, 9 m])","expected":2.138089935299395,"absolute":2e-15,"relative":2e-15,"exact":false,"dimension":[0,1,0,0,0,0]},
+    {"name":"statistics_ecdf_ties","expression":"ecdf([2 m, 1 m, 2 m, 4 m], 2 m)","expected":0.75,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
+    {"name":"statistics_large_offset","expression":"std_population([1e16, 10000000000000002])","expected":1.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
     {"name":"root_exact","expression":"sqrt(81)","expected":9.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,0,0,0,0,0]},
     {"name":"length_exact","expression":"sqrt((3 m)^2)","expected":3.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},
     {"name":"diagonal_exact","expression":"hypot(3 m, 4 m)","expected":5.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,0,0,0,0]},

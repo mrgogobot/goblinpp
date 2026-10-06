@@ -457,6 +457,12 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
                 "The declared math policy differs from the frozen policy. Compilation refused. Create an explicit revision to adopt a changed policy.",
             ));
         }
+        if !goblinpp::science::frozen_statistics_policy_matches(freeze.receipt.as_ref().unwrap()) {
+            return Err(GoblinError::protocol(
+                "STATISTICS_POLICY_CHANGED_AFTER_FREEZE",
+                "The statistics policy differs from the frozen policy. Compilation refused. Create an explicit revision to adopt the changed policy.",
+            ));
+        }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
     let report = json!({ "status": "PASS", "math_policy": goblinpp::math_policy::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
@@ -588,6 +594,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             "MATH_POLICY_SAME ............. {}\nMATH_ENVIRONMENT_SAME ........ {}\nCOMPARISON_MODE=EXACT_EVIDENCE",
             yn(report.math_policy_same),
             yn(report.math_environment_same)
+        );
+        println!(
+            "STATISTICS_POLICY_SAME ....... {}",
+            yn(report.statistics_policy_same)
         );
     }
     Ok(0)
@@ -731,6 +741,7 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "numeric_comparison_functions": ["is_close", "same_bits"],
         "math_policy": goblinpp::math_policy::policy(),
         "science_functions": goblinpp::science::FUNCTIONS,
+        "statistics_policy": goblinpp::science::statistics_policy(),
         "chemistry_functions": goblinpp::chemistry::FUNCTIONS,
         "chemistry_registry": {"id": goblinpp::chemistry::REGISTRY_ID, "sha256": goblinpp::chemistry::registry_sha256()?, "elements": goblinpp::chemistry::ELEMENTS.len()},
         "electrical_functions": goblinpp::electrical::FUNCTIONS,

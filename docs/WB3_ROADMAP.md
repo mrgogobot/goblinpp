@@ -15,13 +15,17 @@ Implementation update: alpha.23 supplies combined scalar FITS cuts and CSV/TSV
 projection in both engines, including exact unscaled signed 64-bit IDs as text.
 See [FITS_SUBSETS.md](FITS_SUBSETS.md). This is the first extraction stage only;
 FITS writing, general integer arithmetic, streaming output and physical
-blinding are not implemented. Later requirements below remain acceptance goals.
+blinding are not implemented. Alpha.24 implements the core GBL-007 distribution
+functions in both engines: stable copy sorting, type-7 quantiles/median,
+explicit population/sample standard deviation and unweighted ECDF. Policies
+are recorded in new run/freeze receipts; see [STATISTICS.md](STATISTICS.md).
+Bootstrap, seeded RNG and weighted distributions remain acceptance goals.
 
 ## Requested priorities and present coverage
 
 | Priority | Requirement | Existing coverage and remaining work |
 | --- | --- | --- |
-| P0 | sort, median, quantile, ECDF | sum/mean exist; requested distribution functions remain GBL-007 work |
+| P0 | sort, median, quantile, ECDF | Core GBL-007 implemented locally in alpha.24, including explicit population/sample standard deviation; bootstrap/weights pending |
 | P0 | Deterministic seeded RNG | GBL-008; pin algorithm/variant/version, seed encoding, streams and sampling mappings |
 | P0 | Multi-column FITS filtering/export | GBL-006 alpha.23 local CSV/TSV stage; exact unscaled IDs and both engines covered; FITS writer/physical blinding pending |
 | P0 | dot, cross, norm, unit, matrix multiply | dot/cross/magnitude exist; GBL-018 adds checked normalization and explicit matrix representation/operations |

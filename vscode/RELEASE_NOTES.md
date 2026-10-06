@@ -1,4 +1,11 @@
-# VS Code extension 0.1.18 (local, unreleased)
+# VS Code extension 0.1.19 (local, unreleased)
+
+Updated for Rust alpha.24 with six distribution-function completions, snippets,
+highlighting and help. Quantiles use type 7; standard deviation names specify
+sample/population divisors, ECDF includes ties and sort returns a stable copy.
+Requires alpha.24 for execution; the editor does not reimplement statistics.
+
+## Previous stage: 0.1.18
 
 Updated for Rust alpha.23 with highlighting, completion, help and snippets for
 `fits_where`, `fits_all`, `fits_any`, `fits_column_text`, `fits_export_csv` and

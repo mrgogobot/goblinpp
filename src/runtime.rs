@@ -63,6 +63,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "schema": "goblin.run-receipt.v2", "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "math_policy": crate::math_policy::policy(),
+        "statistics_policy": crate::science::statistics_policy(),
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
@@ -583,6 +584,14 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             return Err(protocol(
                 "MATH_POLICY_CHANGED_AFTER_FREEZE",
                 "The declared math policy differs from the frozen policy. Historical evidence remains verifiable. Create an explicit revision to adopt a changed policy.",
+            ));
+        }
+        if !crate::science::frozen_statistics_policy_matches(report.receipt.as_ref().unwrap()) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("STATISTICS_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "STATISTICS_POLICY_CHANGED_AFTER_FREEZE",
+                "The statistics policy differs from the frozen policy. Historical evidence remains verifiable. Create an explicit revision to adopt a changed policy.",
             ));
         }
         return Ok(());

@@ -1,4 +1,30 @@
-# 0.1.0-alpha.23 (local, unreleased, combined FITS extraction)
+# 0.1.0-alpha.24 (local, unreleased, distribution statistics)
+
+- `sort` returns a stable ascending numeric copy; signed-zero ties preserve
+  source order. Empty sorting is allowed; reductions require finite samples.
+- `median` and `quantile(values, p)` use Hyndman–Fan type 7 with explicit
+  dimensionless p in [0, 1], no boundary fuzz and overflow-safe interpolation.
+- `std_population` uses divisor n; `std_sample` uses n-1 and requires two
+  observations. Anchored, scaled compensated computation avoids avoidable
+  large-offset cancellation and intermediate overflow.
+- `ecdf(values, query)` is unweighted count(value <= query)/n, including ties.
+  Query dimensions must match observations; results are dimensionless.
+- Both engines share the implementation and refuse invalid types, dimensions,
+  empty reductions and nonfinite results without silently dropping rows.
+- New run and freeze receipts pin the algorithm-source hash and conventions;
+  policy changes are distinct in exact diffs and frozen execution refuses them.
+  Historical evidence remains verifiable without inventing undeclared policy.
+- New builtin collisions refuse execution; historical user-function syntax
+  remains parseable for canonical verification. Discarded results refuse.
+- VS Code 0.1.19 and JetBrains 0.3.9 supply matching completion and help.
+- Tests extend the shared platform fixtures. Local verification is not a claim
+  of universal bitwise reproducibility or complete WB-3 validation. No new
+  dependencies; historical Chinese/community-review material is unchanged.
+
+See `docs/STATISTICS.md` and `examples/statistics_distribution.gbl`.
+Seeded RNG, bootstrap, weighted distributions and covariance remain future work.
+
+## Previous stage: 0.1.0-alpha.23 (combined FITS extraction)
 
 - Versioned `fits_where`, `fits_all` and `fits_any` predicates support explicit
   scalar-column comparisons, nested AND/OR, and null/valid tests.

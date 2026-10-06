@@ -1,0 +1,25 @@
+GO_PARANOID
+
+# Synthetic observations in metres, not a survey verdict.
+measurements = [2 m, 4 m, 4 m, 4 m, 5 m, 5 m, 7 m, 9 m]
+ordered = sort(measurements)
+middle = median(measurements)
+lower_quartile = quantile(measurements, 0.25)
+upper_quartile = quantile(measurements, 0.75)
+population_spread = std_population(measurements)
+sample_spread = std_sample(measurements)
+fraction_at_or_below = ecdf(measurements, 5 m)
+
+print("sorted = {ordered}")
+print("median = {middle}; Q1 = {lower_quartile}; Q3 = {upper_quartile}")
+print("population standard deviation = {population_spread:.6f}")
+print("sample standard deviation = {sample_spread:.6f}")
+print("fraction at or below 5 m = {fraction_at_or_below:.3f}")
+
+seal ordered
+seal middle
+seal lower_quartile
+seal upper_quartile
+seal population_spread
+seal sample_spread
+seal fraction_at_or_below

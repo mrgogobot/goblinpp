@@ -224,7 +224,7 @@ fn capabilities_advertise_only_implemented_statistics() {
         );
     }
     assert!(
-        !report["science_functions"]
+        report["science_functions"]
             .as_array()
             .unwrap()
             .iter()

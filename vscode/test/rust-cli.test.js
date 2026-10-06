@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.23 CLI check, run, and verify contracts", {
+test("actual alpha.24 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.23 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.23/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.24/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -87,6 +87,18 @@ test("actual alpha.23 CLI check, run, and verify contracts", {
     const statisticsDir = /^RUN_DIR=(.+)$/m.exec(statisticsRun.stdout)?.[1];
     assert(statisticsDir);
     assert.equal(invoke(core.goblinArgs("verify", statisticsDir)).status, 0);
+  }
+  const distributions = path.join(root, "distributions.gbl");
+  fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "statistics_distribution.gbl"), distributions);
+  assert.equal(invoke(core.goblinArgs("check", distributions, ["--json"])).status, 0);
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", distributions, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    assert.match(executed.stdout, /median = 4\.5 m; Q1 = 4 m; Q3 = 5\.5 m/);
+    assert.match(executed.stdout, /fraction at or below 5 m = 0\.750/);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    assert(directory);
+    assert.equal(invoke(core.goblinArgs("verify", directory)).status, 0);
   }
 
   fs.copyFileSync(path.join(__dirname, "..", "..", "examples", "sample.fits"), path.join(root, "sample.fits"));

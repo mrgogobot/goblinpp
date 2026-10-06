@@ -14,10 +14,11 @@ const SCIENCE_C_MPS: f64 = 299_792_458.0;
 
 fn goblin_science_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
     let expected = match name {
-        "sum" | "mean" | "au2m" | "m2au" | "pc2m" | "m2pc" | "ly2m" | "m2ly" | "magnitude"
+        "sort" | "median" | "std_population" | "std_sample"
+        | "sum" | "mean" | "au2m" | "m2au" | "pc2m" | "m2pc" | "ly2m" | "m2ly" | "magnitude"
         | "cartesian_radius" | "cartesian_azimuthd" | "cartesian_azimuthr"
         | "cartesian_inclinationd" | "cartesian_inclinationr" => 1,
-        "dot" | "cross" | "polar2cartesiand" | "polar2cartesianr" | "velocity"
+        "quantile" | "ecdf" | "dot" | "cross" | "polar2cartesiand" | "polar2cartesianr" | "velocity"
         | "velocity_add_galilean" | "velocity_add_relativistic_collinear"
         | "angular_velocityd" | "angular_velocityr" | "tangential_velocity"
         | "centripetal_acceleration" | "angular_momentum" => 2,
@@ -33,14 +34,35 @@ fn goblin_science_call(name: &str, values: Vec<Value>) -> Result<Value, String> 
     }
 
     match name {
-        "sum" | "mean" => {
+        "sort" => {
+            let Value::Array(items) = &values[0] else { return Err("sort() requires a numeric array.".into()); };
+            if items.is_empty() { return Ok(Value::Array(Vec::new())); }
+            let quantities = science_vector(&values[0], name)?;
+            let dimension = quantities[0].1;
+            for value in &quantities { science_require_dim(*value, dimension, name)?; }
+            let numbers: Vec<_> = quantities.iter().map(|value| value.0).collect();
+            Ok(Value::Array(goblin_statistics::sorted_numeric(&numbers)?.into_iter()
+                .map(|value| Value::q(value, dimension)).collect::<Result<Vec<_>, _>>()?))
+        }
+        "sum" | "mean" | "median" | "quantile" | "std_population" | "std_sample" | "ecdf" => {
             let quantities = science_vector(&values[0], name)?;
             let dimension = quantities[0].1;
             for value in &quantities {
                 science_require_dim(*value, dimension, name)?;
             }
             let numbers: Vec<_> = quantities.iter().map(|value| value.0).collect();
-            Value::q(goblin_statistics::numeric_reduction(name, &numbers)?, dimension)
+            let (result, result_dimension) = match name {
+                "quantile" => {
+                    let p = science_require_dim(science_q(&values[1], name)?, ZERO, name)?;
+                    (goblin_statistics::numeric_quantile(&numbers, p.0)?, dimension)
+                }
+                "ecdf" => {
+                    let query = science_require_dim(science_q(&values[1], name)?, dimension, name)?;
+                    (goblin_statistics::numeric_ecdf(&numbers, query.0)?, ZERO)
+                }
+                _ => (goblin_statistics::numeric_reduction(name, &numbers)?, dimension),
+            };
+            Value::q(result, result_dimension)
         }
         "au2m" => science_distance_from(&values[0], name, SCIENCE_AU_METERS),
         "m2au" => science_distance_to(&values[0], name, SCIENCE_AU_METERS),

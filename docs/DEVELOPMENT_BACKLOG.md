@@ -13,7 +13,9 @@ in Source checks #27 on the published alpha.22 source commit
 not a universal bitwise math guarantee.
 Alpha.23 implements the GBL-006 CSV/TSV extraction stage locally; a general
 exact-integer arithmetic type and FITS subset writer remain pending.
-GBL-007 onward remain queued unless noted. No released tag or asset
+Alpha.24 implements the core GBL-007 distribution functions locally; seeded
+bootstrap and weighted distributions remain pending. GBL-008 onward remain
+queued unless noted. No released tag or asset
 should be overwritten. WB-1/WB-2 are the user's workflow labels; the complete
 workflow, catalogue fixtures, and independent expected results have not been
 reviewed in this logging pass. The 2026-10-04 WB-3 additions and proposed
@@ -47,7 +49,7 @@ Evidence labels:
 | GBL-004 | 1 | Lossless default number-to-text formatting | Implemented alpha.21; bit-level/default export and both-engine gates |
 | GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; macOS/Linux CI gate passed |
 | GBL-006 | 2 | Multi-column FITS cuts and subset export | Alpha.23 local: combined scalar cuts, exact unscaled i64 IDs and CSV/TSV export; FITS writing/blinding not implemented |
-| GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Source-confirmed gap in requested builtins |
+| GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Core distributions and ECDF implemented locally in alpha.24; bootstrap/weights pending |
 | GBL-008 | 2 | Seeded, named, cross-platform RNG | Requested addition; no current RNG dependency/API found |
 | GBL-009 | 2 | Declarable audited loop budget | Fixed cap source-confirmed |
 | GBL-010 | 2 | Dimension-aware element-wise array maths | Requested extension to current vector/array support |
@@ -296,6 +298,9 @@ provide a general combined predicate and writable selected table.
   with appropriately redistributable or local-only catalogue fixtures.
 
 ### GBL-007 — Statistics and bootstrap
+
+Core distribution stage implemented locally in alpha.24. See [STATISTICS.md](STATISTICS.md)
+for exact conventions, policy evidence and refusal rules. Bootstrap remains open.
 
 - Add `median`, `quantile`, `sort`, and standard deviation with declared
   quantile interpolation, population/sample convention (or explicit `ddof`),

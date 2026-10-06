@@ -1,6 +1,12 @@
-# Goblin++ for Visual Studio Code 0.1.16 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.19 (local, unreleased)
 
-Editor support 0.1.18 for the Goblin++ Rust engine **0.1.0-alpha.23**. Completion and snippets include `fits_where`, `fits_all`, `fits_any`, `fits_column_text` and CSV/TSV subset exports. Large unscaled catalogue IDs stay exact text; extraction is not physical blinding. Existing explicit comparisons, lossless numeric text and protected values remain. This extension keeps the existing `goblinpp-project.goblinpp` identity.
+Editor support 0.1.19 for the Goblin++ Rust engine **0.1.0-alpha.24**. Completion,
+snippets, highlighting and help include `sort`, `median`, `quantile`,
+`std_population`, `std_sample` and `ecdf`. Help distinguishes type-7 quantiles,
+sample/population divisors, copy sorting and ECDF ties; see the engine's
+`docs/STATISTICS.md`. Existing FITS cuts/export, exact ID text, comparisons,
+lossless numeric text and protected values remain. This extension keeps the
+existing `goblinpp-project.goblinpp` identity; hints do not enforce semantics.
 
 Completions and highlighting include `import`, CSV/TSV readers, and the existing
 FITS/output calls, now available in compiled runs. Use the engine's
@@ -18,7 +24,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.16.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.19.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

@@ -2,7 +2,7 @@
   "name": "goblinpp",
   "displayName": "Goblin++",
   "description": "Editor support for the Goblin++ Rust scientific language and custody workflow.",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "publisher": "goblinpp-project",
   "license": "MIT",
   "repository": {

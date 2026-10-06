@@ -55,7 +55,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution"]:
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)
@@ -78,6 +78,11 @@ def main() -> None:
                     assert all(item["metadata"]["physical_blinding"] is False for item in exported)
                     assert all(item["metadata"]["input_rows"] == 3 for item in exported)
                     assert "OBJECT,Z,QUALITY\n" in (root / directory / "outputs/subset.csv").read_text()
+                if example == "statistics_distribution":
+                    assert "median = 4.5 m" in run.stdout
+                    assert "population standard deviation = 2.000000 m" in run.stdout
+                    report = json.loads((root / directory / "receipt.json").read_text())
+                    assert report["statistics_policy"]["quantile"] == "HYNDMAN_FAN_TYPE_7_F64_NO_BOUNDARY_FUZZ_V1"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

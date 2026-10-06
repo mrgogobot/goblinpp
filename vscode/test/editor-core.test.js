@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha23-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha24-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -127,10 +127,10 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.23 runtime features", () => {
+test("completion combines legacy spellings with alpha.24 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 238);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 238);
+  assert.equal(entries.length, 244);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 244);
   assert.equal(entries.find((item) => item.spelling === "import").kind, "statement");
   for (const prefix of ["csv", "tsv"]) {
     for (const suffix of ["rows", "columns", "headers", "column", "numbers"]) {
@@ -143,6 +143,13 @@ test("completion combines legacy spellings with alpha.23 runtime features", () =
     assert.match(entry.detail, /non-empty numeric array/);
     assert.equal(core.completionSnippet(entry), spelling + "(${1:values})");
   }
+  for (const spelling of ["sort", "median", "std_population", "std_sample", "quantile", "ecdf"]) {
+    const entry = entries.find((item) => item.spelling === spelling);
+    assert.equal(entry.kind, "function");
+    assert.match(core.completionSnippet(entry), /values/);
+  }
+  assert.match(entries.find((item) => item.spelling === "quantile").detail, /type 7/);
+  assert.match(entries.find((item) => item.spelling === "std_sample").detail, /n-1/);
   assert.deepEqual(
     entries.find((entry) => entry.spelling === "π"),
     { spelling: "π", kind: "constant", detail: "math.pi. Read-only registered constant; cannot be assigned or shadowed." },
@@ -289,10 +296,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.23 language coloring and extension identity are internally consistent", () => {
+test("alpha.24 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.18");
+  assert.equal(manifest.version, "0.1.19");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -304,7 +311,7 @@ test("alpha.23 language coloring and extension identity are internally consisten
     assert(builtins.test(`${spelling}(`));
     assert(runtimeVocabulary.functions.some((entry) => entry.spelling === spelling && entry.snippet));
   }
-  for (const spelling of ["sum", "mean"]) {
+  for (const spelling of ["sum", "mean", "sort", "median", "quantile", "std_population", "std_sample", "ecdf"]) {
     assert(builtins.test(`${spelling}(`));
   }
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);

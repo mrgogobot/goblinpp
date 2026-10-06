@@ -1,13 +1,13 @@
-# Goblin++ Rust Engine 0.1.0-alpha.23 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.24 (local, unreleased)
 
-Alpha.23 adds combined FITS cuts and selected-column CSV/TSV export in both
-engines, preserving unscaled signed 64-bit catalogue IDs as exact text. Unsafe
-numeric ID access refuses instead of rounding. See [FITS subsets](docs/FITS_SUBSETS.md)
-and `examples/fits_subset.gbl`. Extraction is not physical blinding; `GO_MAD`,
-general integer arithmetic, distribution statistics and seeded RNG remain queued.
-No new dependencies were added. Alpha.22's exact verification, explicit numeric
-tolerances and measured macOS/Linux fixture gate are retained; this new stage
-still needs its own cross-platform CI validation.
+Alpha.24 adds dimension-aware `sort`, `median`, `quantile`, `std_population`,
+`std_sample` and `ecdf` in both engines. Sorting returns an independent stable
+copy; quantiles use Hyndman–Fan type 7; invalid inputs refuse without dropping
+values. New run and freeze receipts record the statistics policy. See
+[Statistics](docs/STATISTICS.md) and `examples/statistics_distribution.gbl`.
+Alpha.23's combined FITS cuts, subset exports and exact catalogue-ID text are
+retained. No new dependencies were added. Seeded RNG, bootstrap and `GO_MAD`
+remain future work. Local tests do not replace this stage's cross-platform CI.
 
 Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
 
@@ -30,7 +30,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Install the VS Code extension](vscode/README.md)
 - [Build or install the JetBrains IDE plugin](jetbrains/README.md)
 - [Electrical-engineering examples and function guide](docs/ELECTRICAL_ENGINEERING.md)
-- [Statistics basics: sum and mean](docs/STATISTICS.md)
+- [Statistics: sums, distributions, standard deviation and ECDF](docs/STATISTICS.md)
 - [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
 - [Lossless numeric text and explicit presentation precision](docs/NUMERIC_TEXT.md)
 - [Numeric comparison, math identity and reproducibility](docs/NUMERIC_REPRODUCIBILITY.md)

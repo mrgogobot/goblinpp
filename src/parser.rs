@@ -101,7 +101,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "plot_fits_histogram"
             | "plot_fits_scatter"
     ) || crate::delimited::is_function(name)
-        || crate::science::is_function(name)
+        || (crate::science::is_function(name) && !crate::science::is_distribution_function(name))
         || crate::chemistry::is_function(name)
         || crate::electrical::is_function(name)
         || name.starts_with("__goblin_")
@@ -149,7 +149,17 @@ fn value_only_builtin(name: &str) -> bool {
         && resolve(name).is_none()
         && !is_unit(name)
         && !name.starts_with("__goblin_")
-        || matches!(name, "sum" | "mean")
+        || matches!(
+            name,
+            "sum"
+                | "mean"
+                | "sort"
+                | "median"
+                | "quantile"
+                | "std_population"
+                | "std_sample"
+                | "ecdf"
+        )
         || crate::numeric_comparison::is_function(name)
         || (crate::fits::is_selection_function(name)
             && !matches!(name, "fits_export_csv" | "fits_export_tsv"))
@@ -166,6 +176,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // builtin from silently overriding a user function at execution.
                 if crate::numeric_comparison::is_function(name)
                     || crate::fits::is_selection_function(name)
+                    || crate::science::is_distribution_function(name)
                 {
                     return Err(GoblinError::parse(format!(
                         "{name} is a registered builtin function and cannot be redefined. Rename the user function before executing under this runtime."
@@ -173,6 +184,11 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 }
                 require_writable_name(name)?;
                 for param in params {
+                    if crate::science::is_distribution_function(param) {
+                        return Err(GoblinError::parse(format!(
+                            "{param} is a registered builtin function and cannot name a g_func parameter."
+                        )));
+                    }
                     require_writable_name(param)?;
                 }
                 validate_statements(body)?;

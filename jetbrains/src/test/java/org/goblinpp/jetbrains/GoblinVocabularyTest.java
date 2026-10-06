@@ -16,6 +16,12 @@ final class GoblinVocabularyTest {
     }
     @Test
     void loadsCurrentEditorVocabulary() {
+        for (String name : new String[]{"sort", "median", "quantile", "std_population", "std_sample", "ecdf"}) {
+            assertEquals("function", GoblinVocabulary.find(name).kind());
+            assertTrue(GoblinVocabulary.find(name).snippet().contains("values"));
+        }
+        assertTrue(GoblinVocabulary.find("quantile").detail().contains("type 7"));
+        assertTrue(GoblinVocabulary.find("std_sample").detail().contains("n-1"));
         assertEquals("function", GoblinVocabulary.find("is_close").kind());
         assertTrue(GoblinVocabulary.find("is_close").detail().contains("no defaults"));
         assertTrue(GoblinVocabulary.find("same_bits").detail().contains("sign of zero"));

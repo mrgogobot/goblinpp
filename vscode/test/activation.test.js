@@ -143,12 +143,15 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 238);
+    assert.equal(items.length, 244);
     assert(items.some((item) => item.label === "csv_numbers" && item.kind === 2));
     assert(items.some((item) => item.label === "tsv_column" && item.kind === 2));
     assert(items.some((item) => item.label === "import"));
     assert(items.some((item) => item.label === "sum" && item.kind === 2));
     assert(items.some((item) => item.label === "mean" && item.kind === 2));
+    for (const name of ["sort", "median", "quantile", "std_population", "std_sample", "ecdf"]) {
+      assert(items.some((item) => item.label === name && item.kind === 2));
+    }
     assert(items.some((item) => item.label === "π" && item.kind === 3));
     assert(items.some((item) => item.label === "km" && item.kind === 4));
     assert(items.some((item) => item.label === "fits_mean" && item.kind === 2));

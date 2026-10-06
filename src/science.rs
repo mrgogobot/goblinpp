@@ -14,6 +14,12 @@ pub const MOMENTUM: Dimension = [1, 1, -1, 0, 0, 0];
 pub const FUNCTIONS: &[&str] = &[
     "sum",
     "mean",
+    "sort",
+    "median",
+    "quantile",
+    "std_population",
+    "std_sample",
+    "ecdf",
     "au2m",
     "m2au",
     "pc2m",
@@ -47,10 +53,44 @@ pub fn is_function(name: &str) -> bool {
     FUNCTIONS.contains(&name)
 }
 
+pub fn is_distribution_function(name: &str) -> bool {
+    matches!(
+        name,
+        "sort" | "median" | "quantile" | "std_population" | "std_sample" | "ecdf"
+    )
+}
+
+pub fn frozen_statistics_policy_matches(receipt: &serde_json::Value) -> bool {
+    // Historical freezes have no statistics pin: never invent one retroactively.
+    receipt
+        .get("statistics_policy")
+        .is_none_or(|frozen| *frozen == statistics_policy())
+}
+
+pub fn statistics_policy() -> serde_json::Value {
+    serde_json::json!({
+        "schema": "goblin.statistics-policy.v1",
+        "algorithm_sha256": crate::hashing::sha256_bytes(include_bytes!("statistics_runtime.rs")),
+        "sort": "STABLE_ASCENDING_NUMERIC_COPY_SIGNED_ZERO_TIES_SOURCE_ORDER",
+        "quantile": "HYNDMAN_FAN_TYPE_7_F64_NO_BOUNDARY_FUZZ_V1",
+        "median": "QUANTILE_P_0.5",
+        "standard_deviation": "ANCHORED_SCALED_COMPENSATED_TWO_PASS_V1",
+        "std_population_divisor": "n",
+        "std_sample_divisor": "n-1",
+        "ecdf": "UNWEIGHTED_COUNT_LE_QUERY_DIV_N",
+        "nonfinite_and_missing": "REFUSE_NO_IMPLICIT_ROW_DROPPING",
+        "cross_platform_bitwise_guarantee": false
+    })
+}
+
 pub fn arity(name: &str) -> Option<usize> {
     match name {
         "sum"
         | "mean"
+        | "sort"
+        | "median"
+        | "std_population"
+        | "std_sample"
         | "au2m"
         | "m2au"
         | "pc2m"
@@ -64,6 +104,8 @@ pub fn arity(name: &str) -> Option<usize> {
         | "cartesian_inclinationd"
         | "cartesian_inclinationr" => Some(1),
         "dot"
+        | "quantile"
+        | "ecdf"
         | "cross"
         | "polar2cartesiand"
         | "polar2cartesianr"
@@ -96,16 +138,57 @@ pub fn require_arity(name: &str, actual: usize) -> Result<()> {
 pub fn call(name: &str, values: Vec<Value>) -> Result<Value> {
     require_arity(name, values.len())?;
     match name {
-        "sum" | "mean" => {
+        "sort" => {
+            let Value::Array(items) = &values[0] else {
+                return Err(GoblinError::new("G203", "sort() requires a numeric array."));
+            };
+            if items.is_empty() {
+                return Ok(Value::Array(Vec::new()));
+            }
             let quantities = vector(&values[0], name)?;
             let dimension = quantities[0].dimension;
             for value in &quantities {
                 require_dimension(*value, dimension, name)?;
             }
             let numbers: Vec<_> = quantities.iter().map(|value| value.value_si).collect();
-            let result = crate::statistics_runtime::numeric_reduction(name, &numbers)
-                .map_err(GoblinError::numeric)?;
-            Quantity::new(result, dimension).map(Value::Quantity)
+            array_value(
+                crate::statistics_runtime::sorted_numeric(&numbers)
+                    .map_err(GoblinError::numeric)?
+                    .into_iter()
+                    .map(|value| Quantity::new(value, dimension))
+                    .collect::<Result<Vec<_>>>()?,
+            )
+        }
+        "sum" | "mean" | "median" | "quantile" | "std_population" | "std_sample" | "ecdf" => {
+            let quantities = vector(&values[0], name)?;
+            let dimension = quantities[0].dimension;
+            for value in &quantities {
+                require_dimension(*value, dimension, name)?;
+            }
+            let numbers: Vec<_> = quantities.iter().map(|value| value.value_si).collect();
+            let (result, result_dimension) = match name {
+                "quantile" => {
+                    let probability =
+                        require_dimension(quantity(&values[1], name)?, DIMENSIONLESS, name)?;
+                    (
+                        crate::statistics_runtime::numeric_quantile(&numbers, probability.value_si),
+                        dimension,
+                    )
+                }
+                "ecdf" => {
+                    let query = require_dimension(quantity(&values[1], name)?, dimension, name)?;
+                    (
+                        crate::statistics_runtime::numeric_ecdf(&numbers, query.value_si),
+                        DIMENSIONLESS,
+                    )
+                }
+                _ => (
+                    crate::statistics_runtime::numeric_reduction(name, &numbers),
+                    dimension,
+                ),
+            };
+            let result = result.map_err(GoblinError::numeric)?;
+            Quantity::new(result, result_dimension).map(Value::Quantity)
         }
         "au2m" => distance_from_numeric(name, quantity(&values[0], name)?, AU_METERS),
         "m2au" => distance_to_numeric(name, quantity(&values[0], name)?, AU_METERS),

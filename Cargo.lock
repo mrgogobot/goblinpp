@@ -272,7 +272,7 @@ dependencies = [
 
 [[package]]
 name = "goblinpp"
-version = "0.1.0-alpha.23"
+version = "0.1.0-alpha.24"
 dependencies = [
  "chrono",
  "clap",

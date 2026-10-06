@@ -1,4 +1,42 @@
-# Alpha.21 lossless numeric text (local, unreleased)
+# Alpha.24 distribution statistics (local, unreleased)
+
+Verified locally on 2026-10-06, macOS arm64 with Rust 1.92.0:
+
+- Rust: 209 passed, 0 failed, no filtered tests in the full run of
+  `cargo test --locked --offline --all-targets`. Formatting, warning-denying
+  Clippy and whitespace checks pass. No new dependencies.
+- Four new shared-runtime tests and seven distribution integration gates cover
+  independent known results, copy sorting, signed-zero ties, type-7 boundaries,
+  dimensions, large offsets, subnormals/extremes, explicit invalid-input refusal,
+  standalone native validation without interpreter preflight, exact evidence,
+  tampering, historical parsing, builtin collisions and frozen-policy migration.
+- The shared numerical fixture now has 31 cases, including six statistics
+  reference cases. Both engines pass locally with declared tolerances/exact-bit
+  requirements. Linux/macOS cross-platform validation awaits this stage's CI;
+  authoritative seals remain exact and are never rounded to hide differences.
+- VS Code 0.1.19: 16 passed, 0 failed, none skipped. Activation, 244 unique
+  vocabulary entries, statistics highlighting/completion/help and actual
+  engine check/run/compiled-run/independent-verification contracts pass.
+- JetBrains 0.3.9: 13 passed, 0 failed, none skipped; offline installer build
+  passes against cached IntelliJ 2024.3.7/JDK 21. This is not a new live
+  CLion/PyCharm test or multi-version compatibility certification.
+- Report-checker Python tests: 10 passed, 0 failed.
+- New statistics conventions and shared-source identity are hashed into run
+  receipts and new freezes. Policy drift preserves a protocol-violation run;
+  exact diff labels policy differences separately from output equality.
+- Existing source hashing, dimensions, constants, protected values, old receipt
+  compatibility, recursion safety, FITS extraction and custody gates pass.
+  Chinese and community-review documentation is unchanged.
+
+These are local engineering results, not full WB-3 scientific validation,
+arbitrary precision or universal cross-platform bitwise reproducibility.
+GBL-007 core distributions are implemented; bootstrap, RNG and weights remain
+future work. See [STATISTICS.md](STATISTICS.md). After packaging,
+`tools/verify_local.py <package-receipt>` checks hashes, ZIP/inventory integrity,
+an isolated installation and eight examples in both modes with independent
+verification. Bundle-validation output is reported separately.
+
+## Previous stage: Alpha.21 lossless numeric text
 
 - Rust: 170 passed, 0 failed, no filtered tests in the final full run of
   `cargo test --locked --offline --all-targets` on macOS arm64/Rust 1.92.0.
