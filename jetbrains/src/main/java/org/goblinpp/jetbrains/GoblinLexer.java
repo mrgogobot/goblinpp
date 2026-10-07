@@ -202,7 +202,7 @@ public final class GoblinLexer extends LexerBase {
             state = RUST;
             return;
         }
-        if ("RUST_INLINE_END".equals(spelling) || "GO_PARANOID".equals(spelling)) {
+        if ("RUST_INLINE_END".equals(spelling) || "GO_PARANOID".equals(spelling) || "GO_LOOP_BUDGET".equals(spelling)) {
             tokenType = GoblinTokenTypes.DIRECTIVE;
             return;
         }

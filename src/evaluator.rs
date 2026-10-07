@@ -70,12 +70,15 @@ impl Value {
     }
 }
 
-pub const MAX_LOOP_ITERATIONS: u64 = 1_000_000;
+pub const MAX_LOOP_ITERATIONS: u64 = crate::resources::DEFAULT_LOOP_BUDGET;
 pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 pub fn is_data_function(name: &str) -> bool {
     crate::random::is_function(name)
+        || crate::resampling::is_function(name)
+        || crate::matrix::is_function(name)
+        || crate::streaming::is_function(name)
         || crate::fits::is_selection_function(name)
         || crate::delimited::is_function(name)
         || matches!(
@@ -141,10 +144,13 @@ pub struct Evaluation {
     pub paranoid: bool,
     pub interaction: Interaction,
     pub randomness: crate::random::Randomness,
+    pub inference: crate::inference_policy::Trace,
     loop_iterations: u64,
+    requested_loop_budget: Option<u64>,
     base_dir: PathBuf,
     data: BTreeMap<PathBuf, LoadedData>,
     tables: BTreeMap<PathBuf, crate::delimited::Table>,
+    scans: BTreeMap<PathBuf, crate::streaming::Scan>,
     functions: HashMap<String, (Vec<String>, Vec<Stmt>)>,
     function_depth: usize,
     return_value: Option<Value>,
@@ -170,10 +176,13 @@ impl Evaluation {
             paranoid: false,
             interaction: Interaction::default(),
             randomness: crate::random::Randomness::default(),
+            inference: crate::inference_policy::Trace::default(),
             loop_iterations: 0,
+            requested_loop_budget: None,
             base_dir: base_dir.as_ref().to_path_buf(),
             data: BTreeMap::new(),
             tables: BTreeMap::new(),
+            scans: BTreeMap::new(),
             functions: HashMap::new(),
             function_depth: 0,
             return_value: None,
@@ -195,6 +204,7 @@ impl Evaluation {
 
     pub fn register_functions(&mut self, program: &Program) -> Result<()> {
         crate::parser::validate_execution(program)?;
+        self.requested_loop_budget = crate::resources::requested(program);
         for statement in &program.statements {
             if let Stmt::Function { name, params, body } = statement
                 && self
@@ -229,6 +239,7 @@ impl Evaluation {
                 "Imports must be resolved through the file launcher before evaluation.",
             )),
             Stmt::Function { .. } => Ok(ExecFlow::Normal),
+            Stmt::LoopBudget(_) => Ok(ExecFlow::Normal),
             Stmt::Return(expr) => {
                 self.return_value = Some(self.eval_expr(expr)?);
                 Ok(ExecFlow::Return)
@@ -403,16 +414,25 @@ impl Evaluation {
     }
 
     fn loop_tick(&mut self) -> Result<()> {
-        if self.loop_iterations >= MAX_LOOP_ITERATIONS {
+        let budget = self.requested_loop_budget.unwrap_or(MAX_LOOP_ITERATIONS);
+        if self.loop_iterations >= budget {
             return Err(GoblinError::new(
                 "G203",
                 format!(
-                    "LOOP LIMIT EXCEEDED\n\nA run may execute at most {MAX_LOOP_ITERATIONS} loop-body iterations in total. This failure is preserved in the run receipt."
+                    "LOOP LIMIT EXCEEDED\n\nThis run may execute at most {budget} loop-body iterations in total. This failure is preserved in the run receipt."
                 ),
             ));
         }
         self.loop_iterations += 1;
         Ok(())
+    }
+
+    pub fn resource_evidence(&self) -> serde_json::Value {
+        crate::resources::evidence(self.requested_loop_budget, self.loop_iterations)
+    }
+
+    pub fn configure_resources(&mut self, program: &Program) {
+        self.requested_loop_budget = crate::resources::requested(program);
     }
 
     pub fn eval_expr(&mut self, expression: &Expr) -> Result<Value> {
@@ -596,6 +616,18 @@ impl Evaluation {
 
     #[inline(never)]
     fn eval_builtin_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        if crate::resampling::is_function(name) || crate::matrix::is_function(name) {
+            let result = if crate::resampling::is_function(name) {
+                crate::resampling::call(name, args, &mut self.randomness)?
+            } else {
+                crate::matrix::call(name, args, &mut self.randomness)?
+            };
+            self.inference.record(name, args, &result);
+            return Ok(result);
+        }
+        if crate::streaming::is_function(name) {
+            return self.eval_streaming_call(name, args);
+        }
         if crate::random::is_function(name) {
             return self.randomness.call(name, args);
         }
@@ -1551,11 +1583,29 @@ impl Evaluation {
         } else {
             b'\t'
         };
+        if self
+            .scans
+            .get(&key)
+            .is_some_and(|s| s.delimiter != delimiter)
+        {
+            return Err(GoblinError::data(
+                "The same input cannot use two different delimiters in one run.",
+            ));
+        }
         if !self.tables.contains_key(&key) {
             self.tables
                 .insert(key.clone(), crate::delimited::Table::open(&key, delimiter)?);
         }
         let table = self.tables.get_mut(&key).unwrap();
+        if self
+            .scans
+            .get(&key)
+            .is_some_and(|s| s.sha256 != table.sha256)
+        {
+            return Err(GoblinError::data(
+                "Input changed between streaming and array reads.",
+            ));
+        }
         if table.delimiter != delimiter {
             return Err(GoblinError::data(
                 "The same input cannot be interpreted with two different delimiters in one run.",
@@ -1577,6 +1627,62 @@ impl Evaluation {
             }).collect::<Result<Vec<_>>>().map(Value::Array),
             _ => unreachable!(),
         }
+    }
+
+    fn eval_streaming_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        crate::streaming::require_arity(name, args.len())?;
+        let requested = args[0].text(name)?;
+        let column = args[1].text(name)?;
+        let path = if Path::new(requested).is_absolute() {
+            PathBuf::from(requested)
+        } else {
+            self.base_dir.join(requested)
+        };
+        if std::fs::symlink_metadata(&path)?.file_type().is_symlink() {
+            return Err(GoblinError::data("Refusing symbolic-link streaming input."));
+        }
+        let key = path.canonicalize()?;
+        let delimiter = if name.starts_with("csv_") {
+            b','
+        } else {
+            b'\t'
+        };
+        if self
+            .tables
+            .get(&key)
+            .is_some_and(|t| t.delimiter != delimiter)
+            || self
+                .scans
+                .get(&key)
+                .is_some_and(|s| s.delimiter != delimiter)
+        {
+            return Err(GoblinError::data(
+                "The same input cannot use two different delimiters in one run.",
+            ));
+        }
+        let mut scan = crate::streaming::Scan::open(&key, delimiter, column)?;
+        if let Some(previous) = self.scans.get(&key) {
+            if previous.sha256 != scan.sha256 || previous.byte_count != scan.byte_count {
+                return Err(GoblinError::data("Streaming input changed between calls."));
+            }
+            scan.access.extend(previous.access.iter().cloned());
+            scan.access.sort();
+            scan.access.dedup();
+        }
+        if let Some(previous) = self.tables.get(&key)
+            && previous.sha256 != scan.sha256
+        {
+            return Err(GoblinError::data(
+                "Input changed between array and streaming reads.",
+            ));
+        }
+        let stats = scan.stats;
+        self.scans.insert(key, scan);
+        stats
+            .iter()
+            .map(|v| Quantity::scalar(*v).map(Value::Quantity))
+            .collect::<Result<Vec<_>>>()
+            .map(Value::Array)
     }
 
     /// Shared native data API. Arguments have already been evaluated by generated Rust.
@@ -1635,18 +1741,45 @@ impl Evaluation {
                 evidence_path: None,
                 evidence_sha256: None,
             })
-            .chain(self.tables.values().map(|table| {
+            .chain(
+                self.tables
+                    .values()
+                    .filter(|table| !self.scans.contains_key(&table.path))
+                    .map(|table| DataImport {
+                        path: table.path.display().to_string(),
+                        sha256: table.sha256.clone(),
+                        byte_count: table.bytes.len() as u64,
+                        format: if table.delimiter == b',' {
+                            "CSV-UTF8"
+                        } else {
+                            "TSV-UTF8"
+                        }
+                        .into(),
+                        access: table.access.clone(),
+                        evidence_path: None,
+                        evidence_sha256: None,
+                    }),
+            )
+            .chain(self.scans.values().map(|scan| {
                 DataImport {
-                    path: table.path.display().to_string(),
-                    sha256: table.sha256.clone(),
-                    byte_count: table.bytes.len() as u64,
-                    format: if table.delimiter == b',' {
+                    path: scan.path.display().to_string(),
+                    sha256: scan.sha256.clone(),
+                    byte_count: scan.byte_count,
+                    format: if scan.delimiter == b',' {
                         "CSV-UTF8"
                     } else {
                         "TSV-UTF8"
                     }
                     .into(),
-                    access: table.access.clone(),
+                    access: {
+                        let mut access = scan.access.clone();
+                        if let Some(table) = self.tables.get(&scan.path) {
+                            access.extend(table.access.iter().cloned());
+                        }
+                        access.sort();
+                        access.dedup();
+                        access
+                    },
                     evidence_path: None,
                     evidence_sha256: None,
                 }
@@ -1655,6 +1788,9 @@ impl Evaluation {
     }
 
     pub fn copy_data_evidence(&self, sha256: &str, destination: &Path) -> Result<String> {
+        if let Some(scan) = self.scans.values().find(|s| s.sha256 == sha256) {
+            return scan.copy_evidence(destination);
+        }
         if let Some(table) = self.tables.values().find(|t| t.sha256 == sha256) {
             use std::io::Write;
             let mut file = std::fs::OpenOptions::new()
@@ -1698,8 +1834,17 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
 /// Validate before evaluating arguments; never silently change refusal ordering
 /// or prompt/write side effects while keeping the dispatch frame off the stack.
 fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::streaming::is_function(name) {
+        return crate::streaming::require_arity(name, args.len());
+    }
     if crate::random::is_function(name) {
         return crate::random::require_arity(name, args.len());
+    }
+    if crate::resampling::is_function(name) {
+        return crate::resampling::require_arity(name, args.len());
+    }
+    if crate::matrix::is_function(name) {
+        return crate::matrix::require_arity(name, args.len());
     }
     if crate::delimited::is_function(name) {
         let operation = name.split_once('_').unwrap().1;

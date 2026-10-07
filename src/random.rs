@@ -143,7 +143,7 @@ pub struct Evidence {
     pub streams: Vec<StreamEvidence>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Stream {
     seed: u64,
     id: u64,
@@ -203,7 +203,7 @@ impl Stream {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Randomness {
     streams: BTreeMap<u64, Stream>,
     operations: u64,
@@ -212,6 +212,32 @@ pub struct Randomness {
 }
 
 impl Randomness {
+    /// Validate a required, explicitly seeded stream without consuming it.
+    pub fn validate_stream(&self, id: u64) -> Result<()> {
+        if self.streams.contains_key(&id) {
+            Ok(())
+        } else {
+            Err(error(format!(
+                "RNG stream {id} is unseeded. Call rng_seed(seed, stream) before drawing."
+            )))
+        }
+    }
+
+    /// Typed wrapper retaining the alpha.26 uniform mapping and evidence.
+    pub fn draw_uniform(&mut self, id: u64) -> Result<f64> {
+        self.draw(id, "rng_uniform", None, None)
+    }
+
+    /// Unbiased zero-based sample index, retaining alpha.26 integer evidence.
+    pub fn draw_index(&mut self, upper: usize, id: u64) -> Result<usize> {
+        if upper == 0 || upper as u128 > MAX_SAFE as u128 {
+            return Err(error(
+                "Sample index upper bound must be positive and within the exact integer range.",
+            ));
+        }
+        Ok(self.draw(id, "rng_integer", Some(0), Some(upper as i64))? as usize)
+    }
+
     pub fn evidence(&self) -> Evidence {
         Evidence {
             schema: "goblin.rng-evidence.v1".into(),
@@ -353,6 +379,11 @@ impl Randomness {
         };
         Quantity::scalar(self.draw(id, name, low, high)?).map(Value::Quantity)
     }
+}
+
+/// Decode a required stream using the unchanged alpha.26 stream encoding.
+pub fn stream_id(value: &Value) -> Result<u64> {
+    unsigned(value, u64::MAX >> 1, "RNG stream")
 }
 
 /// Bounded replay of mappings and raw-word/result digests, without executing user code.

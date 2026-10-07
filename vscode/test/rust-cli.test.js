@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.26 CLI check, run, and verify contracts", {
+test("actual alpha.27 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.26 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.26/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.27/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -175,6 +175,27 @@ test("actual alpha.26 CLI check, run, and verify contracts", {
   assert.equal(invoke(core.goblinArgs("verify", compiledSelectionDir)).status, 0);
 
   const bad = path.join(root, "bad.gbl");
+  const inference = path.join(root, "inference.gbl");
+  fs.writeFileSync(inference, fs.readFileSync(path.join(__dirname, "..", "..", "examples", "inference.gbl")));
+  const inferencePreview = invoke(core.goblinArgs("check", inference, ["--json"]));
+  assert.equal(inferencePreview.status, 0, inferencePreview.stderr);
+  assert.equal(JSON.parse(inferencePreview.stdout).resources_preview.effective_loop_budget, 50000000);
+  for (const extra of [[], ["--compile"]]) {
+    const result = invoke(core.goblinArgs("run", inference, extra));
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /row-major product = \[58, 64, 139, 154\]/);
+    const dir = /^RUN_DIR=(.+)$/m.exec(result.stdout)?.[1];
+    assert.equal(invoke(core.goblinArgs("verify", dir)).status, 0);
+  }
+  const scan = path.join(root, "scan.gbl");
+  fs.writeFileSync(scan, 'summary = csv_scan_stats("data.csv", "length")\nprint(summary)\nseal summary\n');
+  for (const extra of [[], ["--compile"]]) {
+    const result = invoke(core.goblinArgs("run", scan, extra));
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /\[3, 33, 11, 10, 12\]/);
+    const dir = /^RUN_DIR=(.+)$/m.exec(result.stdout)?.[1];
+    assert.equal(invoke(core.goblinArgs("verify", dir)).status, 0);
+  }
   fs.writeFileSync(bad, "for i in range(3) {\n x = i\n");
   const rejected = invoke(core.goblinArgs("check", bad, ["--json"]));
   assert.equal(rejected.status, 2);

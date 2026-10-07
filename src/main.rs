@@ -385,6 +385,10 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "math_policy": goblinpp::math_policy::policy(),
         "rng_policy": goblinpp::random::policy(),
         "rng_preview": evaluation.randomness.evidence(),
+        "inference_policy": goblinpp::inference_policy::policy(),
+        "inference_preview": evaluation.inference.evidence(),
+        "resource_policy": goblinpp::resources::policy(),
+        "resources_preview": evaluation.resource_evidence(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
@@ -483,9 +487,21 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
                 "The RNG policy differs from the freeze. Compilation refused; create an explicit revision.",
             ));
         }
+        if !goblinpp::inference_policy::frozen_policy_matches(freeze.receipt.as_ref().unwrap()) {
+            return Err(GoblinError::protocol(
+                "INFERENCE_POLICY_CHANGED_AFTER_FREEZE",
+                "The scientific helper policy differs from the freeze. Compilation refused; create an explicit revision.",
+            ));
+        }
+        if !goblinpp::resources::frozen_policy_matches(freeze.receipt.as_ref().unwrap()) {
+            return Err(GoblinError::protocol(
+                "RESOURCE_POLICY_CHANGED_AFTER_FREEZE",
+                "The resource policy differs from the freeze. Compilation refused; create an explicit revision.",
+            ));
+        }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -627,6 +643,13 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             "RNG_POLICY_SAME .............. {}\nRNG_EVIDENCE_SAME ............ {}",
             yn(report.rng_policy_same),
             yn(report.rng_evidence_same)
+        );
+        println!(
+            "INFERENCE_POLICY_SAME ........ {}\nINFERENCE_EVIDENCE_SAME ...... {}\nRESOURCE_POLICY_SAME ......... {}\nRESOURCE_EVIDENCE_SAME ....... {}",
+            yn(report.inference_policy_same),
+            yn(report.inference_evidence_same),
+            yn(report.resource_policy_same),
+            yn(report.resource_evidence_same)
         );
     }
     Ok(0)
@@ -782,6 +805,10 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "parser_policy": goblinpp::parser::PARSER_POLICY,
         "compound_unit_limits": {"unit_exponent_abs_max":32,"dimension_exponent_abs_max":256,"max_group_depth":32,"max_suffix_tokens":256,"multiple_denominator_factors":"PARENTHESES_REQUIRED"},
         "statistics_policy": goblinpp::science::statistics_policy(),
+        "inference_policy": goblinpp::inference_policy::policy(),
+        "resource_policy": goblinpp::resources::policy(),
+        "inference_functions": ["resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal"],
+        "streaming_functions": ["csv_scan_stats", "tsv_scan_stats"],
         "rng_policy": goblinpp::random::policy(),
         "chemistry_functions": goblinpp::chemistry::FUNCTIONS,
         "rng_functions": ["rng_seed", "rng_word", "rng_uniform", "rng_integer"],

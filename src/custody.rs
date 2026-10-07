@@ -141,6 +141,8 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
+        "inference_policy": crate::inference_policy::policy(),
+        "resource_policy": crate::resources::policy(),
         "created_at": timestamp(),
         "policy": "EXACT_SOURCE_BYTES_AND_CANONICAL_PROGRAM",
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": sha256_bytes(&bytes) },
@@ -244,6 +246,30 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     };
     let mode = crate::parser::evidence_mode(&receipt);
     let parser_supported = mode.is_ok();
+    let inference_supported = crate::inference_policy::frozen_policy_matches(&receipt);
+    if receipt.get("inference_policy").is_some()
+        || crate::inference_policy::requires_policy(&receipt)
+    {
+        checks.push(custody_check(
+            "INFERENCE_POLICY_SUPPORTED",
+            inference_supported,
+            None,
+            None,
+            None,
+        ));
+    }
+    let resource_supported = (!crate::resources::requires_policy(&receipt)
+        && receipt.get("resource_policy").is_none())
+        || receipt["resource_policy"] == crate::resources::policy();
+    if receipt.get("resource_policy").is_some() || crate::resources::requires_policy(&receipt) {
+        checks.push(custody_check(
+            "RESOURCE_POLICY_SUPPORTED",
+            resource_supported,
+            None,
+            None,
+            None,
+        ));
+    }
     resolved = mode.as_ref().ok().and_then(|mode| {
         std::str::from_utf8(&bytes)
             .ok()
@@ -380,6 +406,10 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "FREEZE_RECEIPT_TAMPERED"
     } else if !parser_supported {
         "FREEZE_PARSER_POLICY_UNSUPPORTED"
+    } else if !inference_supported {
+        "FREEZE_INFERENCE_POLICY_UNSUPPORTED"
+    } else if !resource_supported {
+        "FREEZE_RESOURCE_POLICY_UNSUPPORTED"
     } else if !path_ok {
         "FROZEN_SOURCE_IDENTITY_CHANGED"
     } else if !registry_ok {

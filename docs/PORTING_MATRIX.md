@@ -4,7 +4,7 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 
 “Implemented” means exercised by Rust tests. “Pending” is a refusal to claim parity without evidence.
 
-| Capability | Current status (through alpha.26) | Evidence or boundary |
+| Capability | Current status (through alpha.27 locally) | Evidence or boundary |
 |---|---|---|
 | Lexer, parser, AST | Implemented | Explicit/implicit multiplication, Unicode superscripts, aliases, comments, strings |
 | Everyday control flow | Extended, implemented | Range/direct-array `for`, `while`, nearest-loop `break`/`continue`, short-circuit `and`/`or`/`not`, `if`/`else if`/`else`, `switch`/`case`/`default`, comparisons, nested control flow, interpreter/compiler parity and loop ceiling |
@@ -13,8 +13,10 @@ Reference artifact: `goblinpp-v0.0.7.zip`, SHA-256 `898b7a710672f5f712bbe002f28a
 | One-dimensional arrays and slices | New, implemented | Homogeneous arrays; indexing, assignment, independent half-open slices and iteration values, `len`, `append`; 100,000-item cap; interpreter/compiler parity |
 | Dimensional quantities | Implemented | Six base dimensions including electric current; historical five-axis evidence retained; mismatch and numeric-domain failures tested |
 | Scientific mathematics | New, implemented | Dimension-aware `abs`, `sqrt`, extrema and `hypot`; checked dimensionless rounding, exponential, logarithmic and trigonometric functions; interpreter/compiler parity and preserved failures |
-| Array statistics | New, implemented | Numeric `sum`/`mean`, stable copy `sort`, type-7 `median`/`quantile`, explicit population/sample standard deviation and unweighted ECDF; dimensions, shared runtime, policy receipts and native parity; variance, weights and bootstrap pending |
-| Seeded scientific RNG | New in alpha.26 | PCG32 XSH-RR setseq v1, explicit seed/stream, fixed word/uniform/integer mappings, bounded replay evidence, freezes and native parity; non-cryptographic; normal transforms pending |
+| Array statistics | New, implemented | Distribution statistics/ECDF, plus alpha.27 IID mean/median bootstrap; weights and general resampling schemes pending |
+| Seeded scientific RNG | Implemented alpha.26/27 | PCG32 v1 primitives replay exactly; explicit-stream Box-Muller transforms can differ in platform last bits; non-cryptographic |
+| Matrix/covariance helpers | Implemented alpha.27 locally | Flat row-major homogeneous-unit matrices, explicit shape/ddof/tolerance, no repair; mixed-unit covariance pending |
+| Larger-data execution | Implemented foundation alpha.27 locally | Audited loop budget up to50M, bounded CSV/TSV numeric scans <=1GiB; not general out-of-core analysis |
 | Checked integer remainder | New, implemented | `%` requires safe dimensionless integers, rejects zero divisor, and has interpreter/compiler parity |
 | Constants and units | Extended, implemented | Python 0.0.7 registry plus alpha.16 chemistry and alpha.17 SI electrical units; registry contents are freeze evidence |
 | Chemistry foundation | New, implemented | Scoped 43-element abridged registry, formula molar mass, mass/amount/concentration/dilution helpers, interpreter/native parity, explicit unsupported-syntax refusal; no isotope, reaction, pH, equilibrium, kinetics, or biology inference |

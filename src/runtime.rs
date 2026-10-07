@@ -66,6 +66,8 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "math_policy": crate::math_policy::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
+        "inference_policy": crate::inference_policy::policy(),
+        "resource_policy": crate::resources::policy(),
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
@@ -118,6 +120,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 return Err(error);
             }
         };
+        evaluation.configure_resources(&root_source.program);
         receipt["paranoid_mode"] = Value::Bool(root_source.paranoid());
         let resolved = match crate::modules::resolve(source, text) {
             Ok(value) => value,
@@ -229,6 +232,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     GoblinError::compile(format!("Compiled stdin replay failed: {error}"))
                 })?;
             verify_native_results(&native_results, &evaluation.sealed)?;
+            verify_native_resources(&native_results, &evaluation.resource_evidence())?;
             let native_data = run_dir.join("native-data.json");
             if native_data.exists() {
                 verify_native_data(&native_data, &evaluation)?;
@@ -275,6 +279,8 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     }
     receipt["data_imports"] = serde_json::to_value(&imports)?;
     receipt["rng"] = serde_json::to_value(evaluation.randomness.evidence())?;
+    receipt["inference"] = evaluation.inference.evidence();
+    receipt["resources"] = evaluation.resource_evidence();
     if evaluation.interaction.evidence_needed() {
         let evidence_path = run_dir.join("interaction.json");
         let evidence = json!({
@@ -624,6 +630,22 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
                 "The RNG policy differs from the frozen policy. Create an explicit revision before adopting a changed RNG contract.",
             ));
         }
+        if !crate::resources::frozen_policy_matches(report.receipt.as_ref().unwrap()) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("RESOURCE_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "RESOURCE_POLICY_CHANGED_AFTER_FREEZE",
+                "The resource policy differs from the frozen policy. Historical evidence remains verifiable; create an explicit revision and freeze the child to adopt the new resource contract.",
+            ));
+        }
+        if !crate::inference_policy::frozen_policy_matches(report.receipt.as_ref().unwrap()) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("INFERENCE_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "INFERENCE_POLICY_CHANGED_AFTER_FREEZE",
+                "The scientific helper policy differs from the frozen policy. Create an explicit revision before adopting a changed inference contract.",
+            ));
+        }
         return Ok(());
     }
     let subject = ledger::subject_for(source, root)?;
@@ -866,7 +888,13 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         .map(crate::output::artifact_descriptor)
         .collect::<Vec<_>>();
     if manifest["schema"] != "goblin.native-data.v1"
+        || manifest["resource_policy"] != crate::resources::policy()
+        || manifest["resources"] != expected.resource_evidence()
         || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
+        || manifest["inference"] != expected.inference.evidence()
+        || manifest["inference_policy"] != crate::inference_policy::policy()
+        || manifest["rng_policy"] != crate::random::policy()
+        || manifest["goblin_version"] != crate::VERSION
         || manifest["data_imports"] != serde_json::to_value(expected.data_imports())?
         || manifest["generated_artifacts"] != json!(generated)
     {
@@ -898,6 +926,9 @@ fn verify_native_results(
     let mut observed = std::collections::BTreeMap::new();
     for (line_index, line) in text.lines().enumerate() {
         let fields = line.split('\t').collect::<Vec<_>>();
+        if fields.first() == Some(&"RESOURCE") {
+            continue;
+        }
         let value = match fields.as_slice() {
             ["Q", name, bits, dimensions] => {
                 let name = decode_hex_text(name)?;
@@ -965,6 +996,16 @@ fn verify_native_results(
                 "NATIVE PARITY FAILURE\n\nCompiled seal {name} disagrees with the interpreter preflight."
             )));
         }
+    }
+    Ok(())
+}
+
+fn verify_native_resources(path: &Path, expected: &Value) -> Result<()> {
+    let observed = crate::resources::native_evidence(&fs::read_to_string(path)?)?;
+    if &observed != expected {
+        return Err(GoblinError::compile(
+            "Native resource counters differ from the interpreter reference.",
+        ));
     }
     Ok(())
 }

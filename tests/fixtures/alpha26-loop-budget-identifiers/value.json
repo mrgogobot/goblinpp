@@ -1,0 +1,16 @@
+{
+  "schema": "goblin.sealed-artifact.v1",
+  "name": "value",
+  "value": {
+    "value_si": 2.0,
+    "dimension": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "unit_si": "1"
+  }
+}

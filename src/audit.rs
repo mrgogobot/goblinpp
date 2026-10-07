@@ -27,6 +27,10 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub resource_policy_same: bool,
+    pub resource_evidence_same: bool,
+    pub inference_policy_same: bool,
+    pub inference_evidence_same: bool,
     pub rng_policy_same: bool,
     pub rng_evidence_same: bool,
     pub parser_policy_same: bool,
@@ -69,6 +73,49 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         parser_mode.as_ref().err().map(|e| e.to_string()),
     ));
     let schema = string_at(&receipt, &["schema"]);
+    if receipt.get("inference_policy").is_some()
+        || receipt.get("inference").is_some()
+        || crate::inference_policy::requires_policy(&receipt)
+    {
+        checks.push(check(
+            "INFERENCE_POLICY_SUPPORTED",
+            receipt["inference_policy"] == crate::inference_policy::policy(),
+            None,
+            None,
+            None,
+        ));
+        checks.push(check(
+            "INFERENCE_TRACE_STRUCTURE",
+            crate::inference_policy::validate_evidence(&receipt["inference"]),
+            None,
+            None,
+            Some("Execution summaries are integrity evidence, not mathematical replay.".into()),
+        ));
+    }
+    let resource_evidence_needed = receipt.get("resource_policy").is_some()
+        || receipt.get("resources").is_some()
+        || crate::resources::requires_policy(&receipt);
+    if resource_evidence_needed {
+        checks.push(check(
+            "RESOURCE_POLICY_SUPPORTED",
+            receipt["resource_policy"] == crate::resources::policy(),
+            None,
+            None,
+            None,
+        ));
+        let request = string_at(&receipt, &["source", "path"])
+            .and_then(|p| fs::read_to_string(run_dir.join(p)).ok())
+            .and_then(|text| crate::parser::parse_source(&text).ok())
+            .map(|parsed| crate::resources::requested(&parsed.program));
+        let valid = crate::resources::validate_evidence(&receipt["resources"], request);
+        checks.push(check(
+            "RESOURCE_BUDGET_EVIDENCE",
+            valid.is_ok(),
+            None,
+            None,
+            valid.err().map(|e| e.to_string()),
+        ));
+    }
     if receipt.get("rng_policy").is_some()
         || receipt.get("rng").is_some()
         || crate::random::requires_policy(&receipt)
@@ -521,12 +568,26 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         compare_file(
             &mut checks,
             "NATIVE_RESULT_MANIFEST_SHA256",
-            &run_dir.join(path),
+            &run_dir.join(&path),
             string_at(
                 &receipt,
                 &["execution", "compiler", "native_result_manifest_sha256"],
             ),
         );
+        if resource_evidence_needed {
+            let matches = path == "native-results.tsv"
+                && fs::read_to_string(run_dir.join(&path))
+                    .ok()
+                    .and_then(|text| crate::resources::native_evidence(&text).ok())
+                    .is_some_and(|value| value == receipt["resources"]);
+            checks.push(check(
+                "NATIVE_RESOURCE_BUDGET_PARITY",
+                matches,
+                None,
+                None,
+                None,
+            ));
+        }
     }
     if let Some(path) = string_at(
         &receipt,
@@ -618,6 +679,24 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 if m["schema"] != "goblin.native-data.v1" {
                     return false;
                 }
+                if receipt.get("rng").is_some() && m["rng"] != receipt["rng"] {
+                    return false;
+                }
+                if crate::inference_policy::requires_policy(&receipt)
+                    && (m["inference_policy"] != receipt["inference_policy"]
+                        || m["inference"] != receipt["inference"]
+                        || m["rng_policy"] != receipt["rng_policy"]
+                        || m["rng"] != receipt["rng"]
+                        || m["goblin_version"] != receipt["goblin_version"])
+                {
+                    return false;
+                }
+                if resource_evidence_needed
+                    && (m["resource_policy"] != receipt["resource_policy"]
+                        || m["resources"] != receipt["resources"])
+                {
+                    return false;
+                }
                 let mut expected = receipt["data_imports"].clone();
                 if let Some(entries) = expected.as_array_mut() {
                     for entry in entries {
@@ -698,7 +777,12 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let parser_policy_same = at(&left, &["parser_policy"]) == at(&right, &["parser_policy"]);
     let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
     let rng_policy_same = at(&left, &["rng_policy"]) == at(&right, &["rng_policy"]);
+    let inference_policy_same =
+        at(&left, &["inference_policy"]) == at(&right, &["inference_policy"]);
+    let inference_evidence_same = at(&left, &["inference"]) == at(&right, &["inference"]);
     let rng_evidence_same = at(&left, &["rng"]) == at(&right, &["rng"]);
+    let resource_policy_same = at(&left, &["resource_policy"]) == at(&right, &["resource_policy"]);
+    let resource_evidence_same = at(&left, &["resources"]) == at(&right, &["resources"]);
     let statistics_policy_same =
         at(&left, &["statistics_policy"]) == at(&right, &["statistics_policy"]);
     let math_environment_same =
@@ -720,6 +804,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let execution_engine_same =
         at(&left, &["execution", "engine"]) == at(&right, &["execution", "engine"]);
     let equivalent_result = canonical_program_same
+        && inference_evidence_same
+        && resource_evidence_same
         && rng_evidence_same
         && sealed_artifacts_same
         && generated_artifacts_same
@@ -746,6 +832,10 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "STATISTICS_POLICY_CHANGE"
     } else if !rng_policy_same {
         "RNG_POLICY_CHANGE"
+    } else if !inference_policy_same {
+        "INFERENCE_POLICY_CHANGE"
+    } else if !resource_policy_same {
+        "RESOURCE_POLICY_CHANGE"
     } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
@@ -760,6 +850,10 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        inference_policy_same,
+        inference_evidence_same,
+        resource_policy_same,
+        resource_evidence_same,
         rng_policy_same,
         rng_evidence_same,
         parser_policy_same,

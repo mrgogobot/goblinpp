@@ -1,4 +1,59 @@
-# Alpha.26 seeded scientific RNG (local, unreleased)
+# Alpha.27 inference and bounded resources (local, unreleased)
+
+Verified locally on 2026-10-07, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **276 passed**, 0 failed/ignored/filtered in the final full
+  `cargo test --locked --offline --all-targets` run. Formatting,
+  warning-denying Clippy and optimized build pass. Cargo.lock changes only
+  the Goblin++ version; no dependencies or compiler upgrade were introduced.
+- Seven resampling tests cover explicit-stream selection, hand-computed
+  bootstrap reductions, units, fixed normal transformation/draw counts,
+  invalid-input refusal and transactional rollback. Thirteen matrix tests
+  cover known products, stable norm/unit, covariance/divisors, Cholesky
+  reconstruction, singular/ill-conditioned refusal, units, bounded work and
+  transactional multivariate sampling.
+- Six inference integration gates cover interpreter/native/standalone
+  parity, exact helper traces/seals/RNG evidence, arity before effects,
+  builtin collisions, preserved policy violations and independent tamper
+  detection, including re-hashed native evidence mismatching the receipt.
+- Fifteen resource/streaming gates cover shared nested/function loop budgets,
+  both execution modes and standalone refusal, more than the former fixed
+  loop ceiling and 16 MiB input bound, malformed/null/quoted/multiline tables,
+  exact imported bytes, mixed scan/array access and policy/evidence tampering.
+- Four parser-migration gates preserve a genuine, unmodified alpha.26 run
+  that used `GO_LOOP_BUDGET` as an ordinary identifier/function/parameter.
+  Its old canonical hash verifies unchanged. New policy v2 preserves v1
+  compound units, rejects alpha.27 grammar downgrade and requires explicit
+  revision before executing an old v1 freeze. Nine compound-unit gates and
+  all prior regression suites pass.
+- VS Code 0.1.22: **17 passed**, 0 failed/skipped, including actual CLI
+  preview, interpreted/compiled inference and streaming runs and independent
+  verification. Shared vocabulary: 263 unique spellings.
+- JetBrains 0.3.12: **15 passed**, 0 failed/skipped; offline installer build
+  passes against cached IntelliJ 2024.3.7/JDK 21. This is not a new live
+  CLion/PyCharm test or multi-version compatibility certification.
+- Report-checker Python tests: **14 passed**, 0 failed. All **179** tracked
+  Chinese/community-review files remain byte-identical to pre-change HEAD.
+
+Local same-machine parity is not universal cross-platform bitwise mathematics.
+The PCG primitive algorithm remains unchanged; Box-Muller transcendental
+functions can vary in their last bits across platforms. Preserve exact seals
+and compare scientific quantities separately against declared tolerances.
+The helpers do not validate a scientific model, imply confidence-interval
+coverage, provide mixed-unit Gaia covariance, or enforce physical blinding.
+Streaming is bounded column reduction, not arbitrary out-of-core analysis.
+Encryption and `COMPLETELY_MAD` remain proposed, not shipped capabilities.
+
+After packaging, `tools/verify_local.py <package-receipt>` checks artifact
+hashes, ZIP/inventory integrity, preserved notices and an isolated installation;
+runs twelve shipped examples in both modes (24 runs); compares exact RNG,
+inference/resource evidence and seals; and independently verifies each receipt.
+Packaging results are reported separately because this record is included in
+the immutable archive before those checks run. See [RESAMPLING.md](RESAMPLING.md),
+[MATRICES_COVARIANCE.md](MATRICES_COVARIANCE.md) and
+[RESOURCES_STREAMING.md](RESOURCES_STREAMING.md).
+
+## Previous stage: Alpha.26 seeded scientific RNG
 
 Verified locally on 2026-10-06, macOS arm64, retained Rust 1.92.0:
 

@@ -53,6 +53,7 @@ pub enum Expr {
 pub enum Stmt {
     Import(String),
     Directive(String),
+    LoopBudget(u64),
     Function {
         name: String,
         params: Vec<String>,
@@ -166,6 +167,7 @@ impl Stmt {
         match self {
             Stmt::Import(path) => json!(["import", path]),
             Stmt::Directive(name) => json!(["directive", name]),
+            Stmt::LoopBudget(value) => json!(["loop_budget", value]),
             Stmt::Function { name, params, body } => json!([
                 "g_func",
                 name,

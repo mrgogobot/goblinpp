@@ -78,7 +78,22 @@ the provenance or scientific validity of the input data.
 
 ## Loop limits
 
-Interpreter and compiled loops share a 1,000,000 loop-body-iteration limit per run, including nested loops. Exceeding it becomes a preserved machinery failure. This prevents ordinary accidental infinite loops; it does not bound time spent in a single scientific function call, memory use from generated outputs beyond their individual caps, or authorized inline Rust. `GO_PARANOID` and inline Rust blocks are required to be top-level, so loop control cannot silently alter their authorization model.
+Interpreter and compiled loops share a default 1,000,000 loop-body-iteration
+limit per run, including nested loops and function calls. Alpha.27 accepts one
+main-source, top-level `GO_LOOP_BUDGET` declaration from 1 through 50,000,000;
+the requested, effective and used budget is recorded in run evidence. Exceeding
+it becomes a preserved machinery failure. This prevents ordinary accidental
+infinite loops; it is not a wall-clock timeout or a sandbox. Scientific helpers
+retain their separate input/work caps, and authorized inline Rust remains
+outside this limit. `GO_PARANOID`, `GO_LOOP_BUDGET` and inline Rust blocks must
+be top-level so loop control cannot silently alter their authorization model.
+
+Alpha.27 streaming CSV/TSV reductions use bounded buffers and logical records,
+not unrestricted in-memory tables. Imported files are still copied as plaintext
+evidence inside the run directory. Large scans can therefore use substantial
+disk space and retain sensitive data; streaming is not encryption or physical
+blinding. See [RESOURCES_STREAMING.md](RESOURCES_STREAMING.md) for the explicit
+file, record and work limits.
 
 ## Custody
 

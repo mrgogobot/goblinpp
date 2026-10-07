@@ -201,8 +201,13 @@ fn build_data_program(
         ("parser", include_str!("parser.rs")),
         ("quantity", include_str!("quantity.rs")),
         ("random", include_str!("random.rs")),
+        ("resampling", include_str!("resampling.rs")),
+        ("matrix", include_str!("matrix.rs")),
+        ("inference_policy", include_str!("inference_policy.rs")),
+        ("resources", include_str!("resources.rs")),
         ("science", include_str!("science.rs")),
         ("statistics_runtime", include_str!("statistics_runtime.rs")),
+        ("streaming", include_str!("streaming.rs")),
         ("text_runtime", include_str!("text_runtime.rs")),
     ];
     let mut lib = String::from("pub const VERSION: &str = env!(\"CARGO_PKG_VERSION\");\n");
@@ -288,6 +293,14 @@ fn build_data_program(
 
 fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     crate::parser::validate_execution(program)?;
+    let requested_loop_budget = crate::resources::requested(program);
+    let loop_budget = requested_loop_budget.unwrap_or(crate::resources::DEFAULT_LOOP_BUDGET);
+    let requested_budget_text = requested_loop_budget
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "null".into());
+    let requested_budget_rust = requested_loop_budget
+        .map(|v| format!("Some({v})"))
+        .unwrap_or_else(|| "None".into());
     let constant_lookup = crate::constants::CONSTANTS
         .iter()
         .flat_map(|constant| {
@@ -306,7 +319,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
         ""
     };
     let data_finish = if requires_data_runtime(program) {
-        "goblin_data_finish()?;"
+        "goblin_data_finish(goblin_loop_steps)?;"
     } else {
         ""
     };
@@ -348,7 +361,8 @@ use std::io::{{BufRead, Read, Write}};
 
 type Dim = [i32; 6];
 const ZERO: Dim = [0, 0, 0, 0, 0, 0];
-const MAX_LOOP_ITERATIONS: u64 = 1_000_000;
+const MAX_LOOP_ITERATIONS: u64 = {loop_budget};
+const REQUESTED_LOOP_BUDGET: Option<u64> = {requested_budget_rust};
 
 #[derive(Clone, Debug)]
 enum Value {{ Q(f64, Dim), Text(String), Bool(bool), Array(Vec<Value>) }}
@@ -612,9 +626,10 @@ fn hex(bytes: &[u8]) -> String {{
     }}
     output
 }}
-fn write_native_results(sealed: &BTreeMap<String, Value>) -> Result<(), String> {{
+fn write_native_results(sealed: &BTreeMap<String, Value>, loop_steps: u64) -> Result<(), String> {{
     let Ok(path) = std::env::var("GOBLIN_NATIVE_RESULT_PATH") else {{ return Ok(()); }};
     let mut file = OpenOptions::new().write(true).create_new(true).open(&path).map_err(|error| format!("cannot create native result manifest {{path}}: {{error}}"))?;
+    writeln!(file, "RESOURCE\t{requested_budget_text}\t{loop_budget}\t{{loop_steps}}").map_err(|error| error.to_string())?;
     for (name, value) in sealed {{
         let line = match value {{
             Value::Q(number, dim) => format!("Q\t{{}}\t{{:016x}}\t{{}}\n", hex(name.as_bytes()), number.to_bits(), dim.iter().map(i32::to_string).collect::<Vec<_>>().join(",")),
@@ -646,7 +661,7 @@ fn goblin_main() -> Result<(), String> {{
     let goblin_call_depth: usize = 0;
     let mut goblin_sealed_values: BTreeMap<String, Value> = BTreeMap::new();
 {body}    {data_finish}
-    write_native_results(&goblin_sealed_values)?;
+    write_native_results(&goblin_sealed_values, goblin_loop_steps)?;
     Ok(())
 }}
 
@@ -671,6 +686,9 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                 return Err(GoblinError::compile("Resolve imports before compilation."));
             }
             Stmt::Function { .. } => {}
+            Stmt::LoopBudget(_) => {
+                body.push_str("    // GO_LOOP_BUDGET is pinned in the generated loop counter.\n")
+            }
             Stmt::Return(expr) => body.push_str(&format!("    return {};\n", generate_expr(expr)?)),
             Stmt::Break => body.push_str("    break;\n"),
             Stmt::Continue => body.push_str("    continue;\n"),
@@ -942,6 +960,15 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             if crate::random::is_function(name) {
                 crate::random::require_arity(name, args.len())?;
             }
+            if crate::resampling::is_function(name) {
+                crate::resampling::require_arity(name, args.len())?;
+            }
+            if crate::matrix::is_function(name) {
+                crate::matrix::require_arity(name, args.len())?;
+            }
+            if crate::streaming::is_function(name) {
+                crate::streaming::require_arity(name, args.len())?;
+            }
             format!(
                 "goblin_data_call({name:?}, vec![{}], &goblin_env)",
                 args.iter()
@@ -949,11 +976,17 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                         let code = generate_expr(expr)?;
                         // RNG arguments short-circuit on failure just as in
                         // the interpreter; never consume a later draw.
-                        Ok(if crate::random::is_function(name) {
-                            format!("Ok(({code})?)")
-                        } else {
-                            code
-                        })
+                        Ok(
+                            if crate::random::is_function(name)
+                                || crate::resampling::is_function(name)
+                                || crate::matrix::is_function(name)
+                                || crate::streaming::is_function(name)
+                            {
+                                format!("Ok(({code})?)")
+                            } else {
+                                code
+                            },
+                        )
                     })
                     .collect::<Result<Vec<_>>>()?
                     .join(", ")

@@ -1,4 +1,15 @@
 {
+  "Explicit IID bootstrap": {
+    "prefix": "bootstrap",
+    "body": [
+      "rng_seed(${1:42}, ${2:0})",
+      "${3:replicates} = bootstrap_mean(${4:measurements}, ${5:1000}, ${2:0})",
+      "${6:lower} = quantile(${3:replicates}, ${7:0.025})",
+      "${8:upper} = quantile(${3:replicates}, ${9:0.975})",
+      "print(\"percentile endpoints = {${6:lower}} to {${8:upper}}\")"
+    ],
+    "description": "Explicit IID replacement percentile endpoints, not an automatic coverage guarantee; use a fresh stream if already seeded."
+  },
   "Seeded scientific randomness": {
     "prefix": "seeded",
     "body": [

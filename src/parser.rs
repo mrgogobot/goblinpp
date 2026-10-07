@@ -7,22 +7,33 @@ use crate::lexer::{Token, TokenKind, lex};
 use crate::quantity::is_unit;
 use std::collections::HashSet;
 
-pub const PARSER_POLICY: &str = "goblin.compound-unit-literals.v1";
+pub const PARSER_POLICY: &str = "goblin.compound-units-loop-budget.v2";
+pub const LEGACY_COMPOUND_PARSER_POLICY: &str = "goblin.compound-unit-literals.v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SyntaxMode {
     Current,
+    CompoundUnitsNoLoopBudget,
     LegacyQuantity,
 }
 
 /// Missing policy means the historical parser, never today's interpretation.
 /// A current/future receipt cannot downgrade by removing its policy field.
 pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
+    let version = receipt["goblin_version"].as_str().unwrap_or("");
+    let alpha = version
+        .strip_prefix("0.1.0-alpha.")
+        .and_then(|v| v.parse::<u32>().ok());
     match receipt.get("parser_policy") {
         Some(value) if value.as_str() == Some(PARSER_POLICY) => Ok(SyntaxMode::Current),
+        Some(value)
+            if value.as_str() == Some(LEGACY_COMPOUND_PARSER_POLICY)
+                && alpha.is_some_and(|v| v <= 26) =>
+        {
+            Ok(SyntaxMode::CompoundUnitsNoLoopBudget)
+        }
         Some(_) => Err(GoblinError::parse("Unsupported parser policy in evidence.")),
         None => {
-            let version = receipt["goblin_version"].as_str().unwrap_or("");
             let historical = version.starts_with("0.0.")
                 || version
                     .strip_prefix("0.1.0-alpha.")
@@ -46,6 +57,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "import"
             | "return"
             | "GO_PARANOID"
+            | "GO_LOOP_BUDGET"
             | "seal"
             | "for"
             | "while"
@@ -144,6 +156,7 @@ pub fn reserved_function_name(name: &str) -> bool {
 /// Execution checks are intentionally separate from syntax/canonical parsing:
 /// historical receipts must remain verifiable without executing their programs.
 pub fn validate_execution(program: &Program) -> Result<()> {
+    crate::resources::validate_program(program)?;
     validate_statements(&program.statements)
 }
 
@@ -193,6 +206,9 @@ fn value_only_builtin(name: &str) -> bool {
                 | "ecdf"
         )
         || crate::numeric_comparison::is_function(name)
+        || crate::streaming::is_function(name)
+        || crate::resampling::is_function(name)
+        || crate::matrix::is_function(name)
         || (crate::random::is_function(name) && name != "rng_seed")
         || (crate::fits::is_selection_function(name)
             && !matches!(name, "fits_export_csv" | "fits_export_tsv"))
@@ -208,6 +224,9 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::numeric_comparison::is_function(name)
+                    || crate::streaming::is_function(name)
+                    || crate::resampling::is_function(name)
+                    || crate::matrix::is_function(name)
                     || crate::random::is_function(name)
                     || crate::fits::is_selection_function(name)
                     || crate::science::is_distribution_function(name)
@@ -219,6 +238,9 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 require_writable_name(name)?;
                 for param in params {
                     if crate::science::is_distribution_function(param)
+                        || crate::streaming::is_function(param)
+                        || crate::resampling::is_function(param)
+                        || crate::matrix::is_function(param)
                         || crate::random::is_function(param)
                     {
                         return Err(GoblinError::parse(format!(
@@ -359,6 +381,13 @@ impl Parser {
     fn current(&self) -> &Token {
         &self.tokens[self.cursor]
     }
+    fn name_reserved(&self, name: &str) -> bool {
+        if name == "GO_LOOP_BUDGET" {
+            self.mode == SyntaxMode::Current
+        } else {
+            reserved_function_name(name)
+        }
+    }
     fn advance(&mut self) -> Token {
         let token = self.current().clone();
         self.cursor += 1;
@@ -374,6 +403,16 @@ impl Parser {
             {
                 return Err(GoblinError::parse(format!("Duplicate g_func {name:?}.")));
             }
+        }
+        if statements
+            .iter()
+            .filter(|s| matches!(s, Stmt::LoopBudget(_)))
+            .count()
+            > 1
+        {
+            return Err(GoblinError::parse(
+                "GO_LOOP_BUDGET may be declared only once in the main source.",
+            ));
         }
         Ok(Program { statements })
     }
@@ -416,6 +455,29 @@ impl Parser {
     }
 
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
+        if self.mode == SyntaxMode::Current && self.ident_is("GO_LOOP_BUDGET") {
+            if in_block {
+                return Err(GoblinError::parse(
+                    "GO_LOOP_BUDGET must be top-level in the main source, not inside a block or function.",
+                ));
+            }
+            self.advance();
+            let token = self.advance();
+            let TokenKind::Number(number) = token.kind else {
+                return Err(GoblinError::parse(
+                    "GO_LOOP_BUDGET requires one integer literal.",
+                ));
+            };
+            let number = number.parse::<u64>().map_err(|_| {
+                GoblinError::parse("GO_LOOP_BUDGET requires an unsigned decimal integer literal.")
+            })?;
+            if !(1..=crate::resources::MAX_LOOP_BUDGET).contains(&number) {
+                return Err(GoblinError::parse(
+                    "GO_LOOP_BUDGET must be an integer from 1 to 50000000.",
+                ));
+            }
+            return Ok(Stmt::LoopBudget(number));
+        }
         if self.ident_is("import") {
             if in_block {
                 return Err(GoblinError::parse("import declarations must be top-level."));
@@ -434,7 +496,7 @@ impl Parser {
             }
             self.advance();
             let name = self.expect_ident()?;
-            if reserved_function_name(&name) {
+            if self.name_reserved(&name) {
                 return Err(GoblinError::parse(format!(
                     "{name:?} cannot name a g_func."
                 )));
@@ -444,7 +506,7 @@ impl Parser {
             if !self.operator_is(')') {
                 loop {
                     let param = self.expect_ident()?;
-                    if reserved_function_name(&param) || params.contains(&param) {
+                    if self.name_reserved(&param) || params.contains(&param) {
                         return Err(GoblinError::parse(format!(
                             "Invalid or duplicate g_func parameter {param:?}."
                         )));
@@ -489,7 +551,7 @@ impl Parser {
         if self.ident_is("for") {
             self.advance();
             let variable = self.expect_ident()?;
-            if reserved_function_name(&variable) {
+            if self.name_reserved(&variable) {
                 return Err(GoblinError::parse(format!(
                     "{variable:?} cannot be a loop variable."
                 )));
@@ -872,7 +934,7 @@ impl Parser {
                 let value = raw.parse::<f64>().map_err(|error| {
                     GoblinError::parse(format!("Invalid number {raw}: {error}"))
                 })?;
-                if self.mode == SyntaxMode::Current && self.unit_start() {
+                if self.mode != SyntaxMode::LegacyQuantity && self.unit_start() {
                     let units = self.unit_expression(0, self.cursor)?;
                     // Retain the exact historical AST/hash for a simple unit.
                     if let Expr::QuantityLiteral { unit, .. } = units {

@@ -1,0 +1,143 @@
+{
+  "schema": "goblin.run-receipt.v2",
+  "goblin_version": "0.1.0-alpha.26",
+  "language_semantics": "goblin.eager-text-and-roundtrip-numbers.v2",
+  "parser_policy": "goblin.compound-unit-literals.v1",
+  "math_policy": {
+    "schema": "goblin.math-policy.v1",
+    "id": "goblin.rust-platform-finite-f64.v1",
+    "backend": "rust-std-platform",
+    "backend_version_source": "math_environment.launcher_build.rustc and execution.compiler.rustc",
+    "cross_platform_bitwise_guarantee": false,
+    "comparison_policy": "goblin.symmetric-max-absolute-relative.v1",
+    "default_tolerance": null,
+    "evidence_verification": "EXACT_SHA256"
+  },
+  "statistics_policy": {
+    "schema": "goblin.statistics-policy.v1",
+    "algorithm_sha256": "a20eb2ad78dbaf12061da86e365e07289c9fe85da63841df348ed818bcb4cae4",
+    "sort": "STABLE_ASCENDING_NUMERIC_COPY_SIGNED_ZERO_TIES_SOURCE_ORDER",
+    "quantile": "HYNDMAN_FAN_TYPE_7_F64_NO_BOUNDARY_FUZZ_V1",
+    "median": "QUANTILE_P_0.5",
+    "standard_deviation": "ANCHORED_SCALED_COMPENSATED_TWO_PASS_V1",
+    "std_population_divisor": "n",
+    "std_sample_divisor": "n-1",
+    "ecdf": "UNWEIGHTED_COUNT_LE_QUERY_DIV_N",
+    "nonfinite_and_missing": "REFUSE_NO_IMPLICIT_ROW_DROPPING",
+    "cross_platform_bitwise_guarantee": false
+  },
+  "rng_policy": {
+    "id": "goblin.pcg32-xsh-rr-setseq.v1",
+    "algorithm": "PCG32-XSH-RR-64-32-setseq",
+    "implementation": "goblin-pcg32-v1",
+    "seeding": "pcg-setseq-init-v1",
+    "seed_encoding": "canonical unsigned decimal u64; stream u63; default stream 0",
+    "word_encoding": "u32 little-endian bytes for SHA-256",
+    "uniform_mapping": "((word1 >> 5) * 2^26 + (word2 >> 6)) / 2^53; [0,1)",
+    "integer_mapping": "u64 high-word-first rejection modulo width; [low,high)",
+    "result_encoding": "word:u32LE; uniform:f64-bitsLE; integer:i64LE",
+    "explicit_seed_required": true,
+    "reseed_allowed": false,
+    "cryptographic": false,
+    "max_streams": 128,
+    "max_operations": 1000000,
+    "max_raw_words": 8000000,
+    "max_operation_segments": 4096
+  },
+  "math_environment": {
+    "launcher_build": {
+      "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "target_features": "aes,crc,dit,dotprod,dpb,dpb2,fcma,fhm,flagm,fp16,frintts,jsconv,lor,lse,neon,paca,pacg,pan,pmuv3,ras,rcpc,rcpc2,rdm,sb,sha2,sha3,ssbs,vh"
+    },
+    "launcher_binary_sha256": "1412d8162d78a9fc7a1c8cc2e19b0a50b3851285ff3322db1ad1d8febe6e3ca3",
+    "native_compiler": null,
+    "native_binary_sha256": null,
+    "platform_math_library": "UNPINNED_PLATFORM_IMPLEMENTATION"
+  },
+  "status": "PASS",
+  "started": "2026-10-07T13:38:22.983212Z",
+  "finished": "2026-10-07T13:38:23.022119Z",
+  "execution": {
+    "engine": "rust-interpreter",
+    "compiler": null
+  },
+  "paranoid_mode": true,
+  "paranoid_postflight": {
+    "status": "PASS",
+    "source_start_sha256": "215e188aa8885e0f5eb7b122844581a66a7ff5b61d26bec051ab646737d9b72e",
+    "source_end_sha256": "215e188aa8885e0f5eb7b122844581a66a7ff5b61d26bec051ab646737d9b72e",
+    "source_end_evidence_path": "postflight/source.observed",
+    "source_end_evidence_sha256": "215e188aa8885e0f5eb7b122844581a66a7ff5b61d26bec051ab646737d9b72e",
+    "source_bytes_equal_at_postflight": true,
+    "self_verification_gate": "REQUIRED_BEFORE_LEDGER_REGISTRATION"
+  },
+  "source": {
+    "path": "historical-identifiers.gbl",
+    "sha256": "215e188aa8885e0f5eb7b122844581a66a7ff5b61d26bec051ab646737d9b72e"
+  },
+  "canonical_source": {
+    "sha256": "af30e65831bb194d3f226503299c9819411883640f540a35813b63abc6c5d20a"
+  },
+  "constants_used": [],
+  "data_imports": [],
+  "inline_rust": [],
+  "scientific_registries": {
+    "chemistry": {
+      "id": "IUPAC-2021-ABRIDGED-COMMON-v1",
+      "sha256": "c26c5bf4c5df38fa25ffad332a7608727167650bb946f88f372e646c33059f9e",
+      "element_count": 43
+    },
+    "electrical": {
+      "id": "BIPM-SI-9-v3.02-Goblin-electrical-v1",
+      "sha256": "982afcad3968913c96fcf82e2123d654b64580aa11738f7e114ea161f7513da1"
+    }
+  },
+  "sealed_artifacts": [
+    {
+      "name": "answer",
+      "path": "answer.json",
+      "sha256": "0680a7f39c7801d8cc94932417db4f060ac808843b62e36fff6b10993c880d45"
+    },
+    {
+      "name": "speed",
+      "path": "speed.json",
+      "sha256": "f58e97eefc0ffa7825b60263720eeac120b700d3f0c61a9cff5279ed238be058"
+    },
+    {
+      "name": "value",
+      "path": "value.json",
+      "sha256": "917d4c1f96f24c4e3c297eb7774322a989a7f95c650eda3790d50714c79d3593"
+    }
+  ],
+  "generated_artifacts": [],
+  "stdout_sha256": "2df4c0c4ef369ee00c29ae0c9ce6aa2a7c3e05c6228b8815fc62c61956dbf4b8",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "interaction": null,
+  "environment": {
+    "runtime": "goblin++ 0.1.0-alpha.26",
+    "os": "macos",
+    "arch": "aarch64"
+  },
+  "freeze": {
+    "status": "NOT_FROZEN"
+  },
+  "ledger": {
+    "status": "PASS",
+    "authentication": "CHECKSUM_ONLY",
+    "event_count": 0,
+    "head_event_sha256": null,
+    "checks": []
+  },
+  "protocol_violation": null,
+  "failure": null,
+  "module_imports": [],
+  "rng": {
+    "schema": "goblin.rng-evidence.v1",
+    "policy": "goblin.pcg32-xsh-rr-setseq.v1",
+    "usage": "NOT_USED",
+    "streams": []
+  },
+  "receipt_core_sha256": "c2fbb9803ba7b94b37110f4ed9905280721e6fa521369f976507f6f747a90016"
+}

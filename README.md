@@ -1,12 +1,35 @@
-# Goblin++ Rust Engine 0.1.0-alpha.26 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.27 (local, unreleased)
+
+Alpha.27 adds explicit-stream IID bootstrap/resampling, standard-normal draws,
+flat row-major matrix operations, covariance and Cholesky/multivariate-normal
+sampling, plus bounded CSV/TSV scans and an audited `GO_LOOP_BUDGET` declaration.
+Both execution engines share the scientific helpers; successful compiled runs
+compare reference/native outputs, RNG traces, helper summaries and loop counts.
+No automatic confidence interval, covariance repair, random seed or unit
+coercion. See [resampling](docs/RESAMPLING.md),
+[matrices/covariance](docs/MATRICES_COVARIANCE.md), and
+[resources/streaming](docs/RESOURCES_STREAMING.md). Start with
+`examples/inference.gbl` and `examples/streaming_catalogue.gbl`.
+
+This is a bounded foundation, not a complete out-of-core analysis system:
+normal transforms can differ in their last bits across platforms; mixed-unit
+covariance requires explicit standardization; streaming currently supplies
+numeric column reductions, not arbitrary joins or streaming bootstrap.
+Rust stays pinned at 1.92.0; no new dependencies. Encryption and
+`COMPLETELY_MAD` remain separate proposals. Historical Chinese documents and
+community-review material remain unchanged.
+
+Alpha.27 versions the loop-budget grammar separately. Historical receipts remain
+verifiable with their original parser; existing alpha.25/26 freezes require an
+explicit revision and child freeze before adopting the new parser policy.
 
 Alpha.26 adds explicitly seeded **scientific PCG32 randomness** in both engines:
 `rng_seed`, `rng_word`, `rng_uniform` and `rng_integer`. Algorithm/version,
 seed/stream, mappings and replayable draw evidence are preserved in receipts;
 new freezes pin the RNG policy. No hidden seed or reseeding. See
 [Randomness guide](docs/RANDOMNESS.md) and `examples/seeded_random.gbl`.
-This RNG is **not suitable for cryptography**. Bootstrap, covariance sampling,
-encryption and strict research profiles remain future stages. No custom IDE is
+This RNG is **not suitable for cryptography**. Encryption and strict research
+profiles remain future stages. No custom IDE is
 planned; the existing VS Code/JetBrains plugins remain supported.
 
 Alpha.25 adds compound-unit input in both engines: `1.13e-10 m/s^2`,
@@ -17,8 +40,8 @@ revision before execution under the new parser policy. See
 [Compound units and migration](docs/COMPOUND_UNITS.md) and
 `examples/compound_units.gbl`. Rust stays at 1.92.0, including pinned CI checks.
 Alpha.24 statistics and alpha.23 FITS extraction are retained. No new
-dependencies were added. Bootstrap, covariance and `GO_MAD` remain
-future work. Local tests do not replace this stage's cross-platform CI.
+dependencies were added. `GO_MAD` remains future work.
+Local tests do not replace this stage's cross-platform CI.
 
 Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
 

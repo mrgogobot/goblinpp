@@ -1,11 +1,16 @@
-# Goblin++ for Visual Studio Code 0.1.21 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.22 (local, unreleased)
+
+Version 0.1.22 covers alpha.27 resampling, normal draws, row-major matrices,
+covariance/Cholesky helpers, streaming column scans and `GO_LOOP_BUDGET`.
+Completion help states explicit streams, ddof, tolerance and resource limits.
+The engine is authoritative; these are editor aids, not scientific validation.
 
 Alpha.26 adds completion, hover help and a `seeded` snippet for
 `rng_seed`, `rng_word`, `rng_uniform` and `rng_integer`.
 Explicit scientific PCG32 streams are reproducible, not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Editor support 0.1.21 for the Goblin++ Rust engine **0.1.0-alpha.26**. Unit help
+Editor support 0.1.22 for the Goblin++ Rust engine **0.1.0-alpha.27**. Unit help
 explains compound suffixes, coefficient-versus-quantity powers and grouped
 denominators; see `docs/COMPOUND_UNITS.md` for migration rules. Completion,
 snippets, highlighting and help include `sort`, `median`, `quantile`,
@@ -31,7 +36,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.21.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.22.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

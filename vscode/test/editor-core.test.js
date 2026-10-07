@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha26-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha27-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -21,6 +21,18 @@ const grammar = JSON.parse(
 const manifest = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
 );
+
+test("alpha.27 scientific helpers expose explicit conventions and highlighting", () => {
+  for (const name of ["resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal", "csv_scan_stats", "tsv_scan_stats"]) {
+    const entry = runtimeVocabulary.functions.find((item) => item.spelling === name);
+    assert.ok(entry, name);
+    assert.ok(entry.snippet.includes(name), name);
+    assert.ok(JSON.stringify(grammar).includes(name), name);
+  }
+  assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "covariance").detail.includes("ddof"));
+  assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "cholesky").detail.includes("no jitter"));
+  assert.ok(runtimeVocabulary.statements.find((v) => v.spelling === "GO_LOOP_BUDGET").detail.includes("50,000,000"));
+});
 
 test("commands are explicit argument arrays without a shell string", () => {
   assert.deepEqual(core.goblinArgs("run", "/tmp/a file.gbl"), [
@@ -127,10 +139,10 @@ test("native executable discovery prefers explicit path, bundled build, then use
   assert.equal(core.selectExecutable("", root, () => false, "/home/snow", "darwin", "arm64"), "goblin++");
 });
 
-test("completion combines legacy spellings with alpha.26 runtime features", () => {
+test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 248);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 248);
+  assert.equal(entries.length, 263);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 263);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -304,10 +316,10 @@ test("all TextMate regular expressions compile", () => {
   visit(grammar);
 });
 
-test("alpha.26 language coloring and extension identity are internally consistent", () => {
+test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.21");
+  assert.equal(manifest.version, "0.1.22");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);

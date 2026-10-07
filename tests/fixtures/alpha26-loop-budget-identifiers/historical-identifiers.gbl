@@ -1,0 +1,11 @@
+GO_PARANOID
+GO_LOOP_BUDGET = 2
+g_func GO_LOOP_BUDGET(GO_LOOP_BUDGET) { return GO_LOOP_BUDGET + 1 }
+for GO_LOOP_BUDGET in range(3) { value = GO_LOOP_BUDGET }
+GO_LOOP_BUDGET 50
+answer = GO_LOOP_BUDGET(4)
+speed = 3 m/s
+print("answer = {answer}; last = {value}; speed = {speed}")
+seal answer
+seal value
+seal speed

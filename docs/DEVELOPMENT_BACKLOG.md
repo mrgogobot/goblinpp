@@ -1,5 +1,14 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-07: alpha.27 locally implements IID replacement
+bootstrap/resampling, explicit-stream normal transforms, flat matrix operations,
+homogeneous covariance/Cholesky/sampling, configurable audited loop budgets and
+bounded streaming CSV/TSV numeric scans. See [RESAMPLING.md](RESAMPLING.md),
+[MATRICES_COVARIANCE.md](MATRICES_COVARIANCE.md), and
+[RESOURCES_STREAMING.md](RESOURCES_STREAMING.md). Weighted/paired/block bootstrap,
+mixed-unit matrices, arbitrary out-of-core transformations and the actual
+400,000-orbit WB-3 workload are not claimed validated.
+
 Logged 2026-10-02 from Malin Hess's WB-1 experience. Baseline:
 `0.1.0-alpha.19`, source commit
 `f4c69201f42f6b3d560a3befc32ddf362e01e2c2`.
@@ -50,19 +59,19 @@ Evidence labels:
 | GBL-004 | 1 | Lossless default number-to-text formatting | Implemented alpha.21; bit-level/default export and both-engine gates |
 | GBL-005 | 1 | Explicit cross-platform numeric reproducibility policy | Alpha.22 policy, hashed identity, explicit tolerances and fixtures; macOS/Linux CI gate passed |
 | GBL-006 | 2 | Multi-column FITS cuts and subset export | Alpha.23 local: combined scalar cuts, exact unscaled i64 IDs and CSV/TSV export; FITS writing/blinding not implemented |
-| GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Core distributions and ECDF implemented locally in alpha.24; bootstrap/weights pending |
-| GBL-008 | 2 | Seeded, named, cross-platform RNG | Alpha.26 local PCG32 XSH-RR setseq v1, exact streams/mappings, bounded replay evidence; CI platform gate prepared; normal/bootstrap/covariance pending |
-| GBL-009 | 2 | Declarable audited loop budget | Fixed cap source-confirmed |
+| GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Distributions/ECDF alpha.24; IID mean/median bootstrap alpha.27 locally; weights and other resampling schemes pending |
+| GBL-008 | 2 | Seeded, named, cross-platform RNG | PCG32 v1 alpha.26; explicit-stream Box-Muller alpha.27 locally; primitive replay is not cross-platform derived-normal bit equality |
+| GBL-009 | 2 | Declarable audited loop budget | Alpha.27 local GO_LOOP_BUDGET, default1M, hard50M, shared used counter/native parity |
 | GBL-010 | 2 | Dimension-aware element-wise array maths | Requested extension to current vector/array support |
 | GBL-011 | 2 | CSV/TSV table output from arrays | Scalar-cell API and text limits source-confirmed |
-| GBL-012 | 2 | Larger or streaming input and array capacity | Current limits source-confirmed |
+| GBL-012 | 2 | Larger or streaming input and array capacity | Alpha.27 bounded CSV/TSV numeric column scans <=1GiB; ordinary array/table caps unchanged; general out-of-core operations pending |
 | GBL-013 | 3 | Compound unit literals matching rendered units | Implemented locally in alpha.25; versioned parser and explicit freeze migration |
 | GBL-014 | 3 | Explicit deliberate refusal | Requested addition; no `refuse` builtin found |
 | GBL-015 | 3 | Exact 64-bit catalogue integers | Alpha.23 exact unscaled i64 FITS selection/text/export; general integer value/arithmetic type still queued |
 | GBL-016 | 3 | Validate and explain minimum Rust version | Manifest says 1.92; 1.91 success is user-reported |
 | GBL-017 | 3 | Gzip scientific input with original-file custody | Requested addition; gzip support not found |
-| GBL-018 | WB-3 P0 | Matrix primitives and checked vector normalization | dot/cross/magnitude exist; matrices and norm/unit APIs queued |
-| GBL-019 | WB-3 P0 | Covariance validation, Cholesky and multivariate sampling | Requires matrix, unit and RNG contracts; queued |
+| GBL-018 | WB-3 P0 | Matrix primitives and checked vector normalization | Alpha.27 local row-major transpose/multiplication and vector_norm/vector_unit; homogeneous arrays, no broadcasting |
+| GBL-019 | WB-3 P0 | Covariance validation, Cholesky and multivariate sampling | Alpha.27 local explicit ddof/symmetry tolerance, no repairs, transactional seeded draws; mixed-unit covariance pending |
 | GBL-020 | WB-3 P1 | Deterministic ID-based row partitioning | Requires exact ID encoding and versioned hash mapping; queued |
 | GBL-021 | WB-3 P1 | Enforced allowed-column access and blind execution boundary | Not provided by GO_PARANOID; queued design/security gates |
 | GBL-022 | WB-3 | Versioned science regression suite | Eight entropic runs and WB-1 proposed; fixtures/results not yet inspected |

@@ -62,7 +62,14 @@ meaning. **Review existing quantity powers before running unfrozen scripts.**
 Write `(3 m)^2` to preserve the old whole-quantity interpretation.
 
 New run, freeze, check and compilation evidence declares
-`parser_policy = goblin.compound-unit-literals.v1`. Compound suffixes lower
+`parser_policy = goblin.compound-unit-literals.v1` in alpha.25/26, retained
+for historical verification. Alpha.27 declares
+`goblin.compound-units-loop-budget.v2` because `GO_LOOP_BUDGET` becomes a
+directive rather than an ordinary identifier. Old v1 receipts use the preserved
+compound-unit grammar with no loop-budget directive; old missing-policy receipts
+retain the pre-alpha.25 quantity grammar. Adoption of v2 for a frozen v1 program
+requires an explicit revision and child freeze, not an in-place rewrite.
+Compound suffixes lower
 to ordinary unit-quantity arithmetic in the AST; simple literals such as
 `1 kg` and the reference energy program retain their historical canonical
 hashes. This is syntax canonicalisation, not an algebraic equivalence solver;

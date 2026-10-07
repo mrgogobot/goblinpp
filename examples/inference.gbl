@@ -1,0 +1,34 @@
+GO_PARANOID
+GO_LOOP_BUDGET 50000000
+
+# All random helpers require an explicitly seeded stream.
+rng_seed(42, 54)
+measurements = [1 m, 2 m, 3 m, 4 m]
+replicates = bootstrap_mean(measurements, 1000, 54)
+lower = quantile(replicates, 0.025)
+upper = quantile(replicates, 0.975)
+print("IID bootstrap mean percentile interval = {lower} to {upper}")
+# An explicitly chosen percentile interval, not a universal coverage guarantee.
+
+left = [1, 2, 3, 4, 5, 6]
+right = [7, 8, 9, 10, 11, 12]
+product = matrix_multiply(left, 2, 3, right, 3, 2)
+print("row-major product = {product}")
+direction = vector_unit([3 m, 4 m])
+print("unit direction = {direction}")
+
+# Four observations, two variables. Choose sample covariance explicitly (ddof=1).
+observations = [1 m, 2 m, 2 m, 1 m, 3 m, 4 m, 4 m, 3 m]
+cov = covariance(observations, 4, 2, 1)
+factor = cholesky(cov, 2, 0)
+draw = mvnormal([2.5 m, 2.5 m], cov, 2, 0, 54)
+print("sample covariance = {cov}")
+print("lower Cholesky factor = {factor}")
+print("normal draw = {draw}")
+seal product
+seal direction
+seal lower
+seal upper
+seal cov
+seal factor
+seal draw

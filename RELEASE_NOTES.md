@@ -1,4 +1,37 @@
-# 0.1.0-alpha.26 (local, unreleased, seeded scientific randomness)
+# 0.1.0-alpha.27 (local, unreleased, auditable inference foundations)
+
+- Explicit-stream resampling, bootstrap means/medians and Box-Muller standard
+  normal draws using the existing PCG32 v1 seed/stream contract. No implicit
+  interval or seed. Invalid helper calls leave their RNG transaction unchanged.
+- Flat row-major matrix transpose/multiplication, safe vector norm/unit,
+  covariance with explicit ddof, positive-definite Cholesky with explicit
+  symmetry tolerance, and multivariate-normal sampling. No silent regularization.
+  Homogeneous units only; mixed-unit Gaia covariance requires standardization.
+- `GO_LOOP_BUDGET` supports one main-source declaration up to 50,000,000 shared
+  loop-body entries. Requested/effective/used counts and resource policy are
+  preserved and native/reference checked; builtin work limits remain separate.
+- `csv_scan_stats`/`tsv_scan_stats` incrementally reduce a named numeric column:
+  [count, sum, mean, min, max], with exact parsed-byte hash/evidence preservation.
+  Files up to 1 GiB, records up to 1 MiB, at most 1,024 columns. Missing or
+  malformed selected data refuses; ordinary array/table caps remain unchanged.
+- Scientific helper summaries and versioned policies are in receipts/freezes
+  and exact diffs. Summaries are integrity evidence, not mathematical replay.
+  Existing raw PCG trace replay remains intact. Exact outputs are not rounded
+  to conceal cross-platform normal-transform differences.
+- VS Code 0.1.22 and JetBrains 0.3.12 include completion/help/highlighting.
+  Rust remains 1.92.0, dependencies unchanged; Chinese/community-review files
+  are untouched. This local stage is not yet a GitHub/Zenodo publication.
+- Encryption, `COMPLETELY_MAD` and a custom IDE are not shipped features.
+- Parser policy v2 preserves alpha.25/26 grammar for historical verification,
+  including formerly ordinary `GO_LOOP_BUDGET` identifiers. Existing v1 freezes
+  require an explicit revision before execution with the new syntax policy.
+
+See [RESAMPLING.md](docs/RESAMPLING.md),
+[MATRICES_COVARIANCE.md](docs/MATRICES_COVARIANCE.md), and
+[RESOURCES_STREAMING.md](docs/RESOURCES_STREAMING.md).
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.26 (seeded scientific randomness)
 
 - Explicit PCG32 XSH-RR setseq v1 seeds/streams in both engines. Four new calls:
   `rng_seed`, `rng_word`, `rng_uniform`, `rng_integer`. Half-open mappings,

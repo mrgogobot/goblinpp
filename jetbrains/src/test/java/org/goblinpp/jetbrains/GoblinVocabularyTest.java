@@ -8,6 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void inferenceHelpersStateTheirScientificChoices() {
+        for (String name : new String[]{"resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal", "csv_scan_stats", "tsv_scan_stats"}) {
+            assertEquals("function", GoblinVocabulary.find(name).kind());
+            assertTrue(GoblinVocabulary.find(name).snippet().contains(name));
+        }
+        assertTrue(GoblinVocabulary.find("covariance").detail().contains("ddof"));
+        assertTrue(GoblinVocabulary.find("cholesky").detail().contains("no jitter"));
+        assertTrue(GoblinVocabulary.find("GO_LOOP_BUDGET").detail().contains("50,000,000"));
+    }
+    @Test
     void protectedValuesHaveExplicitCompletionHelp() {
         assertTrue(GoblinVocabulary.find("h").detail().contains("Read-only"));
         assertTrue(GoblinVocabulary.find("append").detail().contains("Discarded"));

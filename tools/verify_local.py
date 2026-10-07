@@ -57,13 +57,21 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue"]:
             rng_evidence = None
+            parity_evidence = None
             for extra in [[], ["--compile"]]:
                 run = subprocess.run([str(binary), f"examples/{example}.gbl", *extra],
                                      cwd=root, text=True, capture_output=True, check=True)
                 assert "RUN_STATUS=PASS" in run.stdout, run.stdout + run.stderr
                 directory = next(line.removeprefix("RUN_DIR=") for line in run.stdout.splitlines() if line.startswith("RUN_DIR="))
+                report = json.loads((root / directory / "receipt.json").read_text())
+                exact_evidence = {key: report[key] for key in
+                                  ("rng_policy", "rng", "inference_policy", "inference",
+                                   "resource_policy", "resources", "sealed_artifacts")}
+                if parity_evidence is not None:
+                    assert exact_evidence == parity_evidence, example
+                parity_evidence = exact_evidence
                 if example == "energy":
                     assert "CANONICAL_SOURCE_SHA256=6a1d72b91490bfc247bdf22322f7eb2ec59d5a88344d6c13a469e92883185a2d" in run.stdout
                 if example == "protected_values":
@@ -91,7 +99,7 @@ def main() -> None:
                     assert "pressure = 7 kg/(m*s^2)" in run.stdout
                     assert "matches old workaround = true" in run.stdout
                     report = json.loads((root / directory / "receipt.json").read_text())
-                    assert report["parser_policy"] == "goblin.compound-unit-literals.v1"
+                    assert report["parser_policy"] == "goblin.compound-units-loop-budget.v2"
                     assert report["math_environment"]["launcher_build"]["rustc"].startswith("rustc 1.92.0 ")
                 if example == "seeded_random":
                     report = json.loads((root / directory / "receipt.json").read_text())
@@ -103,6 +111,14 @@ def main() -> None:
                     if rng_evidence is not None:
                         assert rng_evidence == report["rng"]
                     rng_evidence = report["rng"]
+                if example == "inference":
+                    assert "row-major product = [58, 64, 139, 154]" in run.stdout
+                    assert report["inference_policy"]["id"] == "goblin.inference.v1"
+                    assert report["resources"]["requested_loop_budget"] == 50_000_000
+                    assert report["resources"]["effective_loop_budget"] == 50_000_000
+                if example == "streaming_catalogue":
+                    assert "rows = 3; sum = 33; mean = 11; min = 10; max = 12" in run.stdout
+                    assert report["resource_policy"]["streaming"]["id"] == "goblin.delimited-scan.v1"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

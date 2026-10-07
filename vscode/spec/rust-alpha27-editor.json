@@ -1,9 +1,10 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.26",
+  "runtime": "goblin++ 0.1.0-alpha.27",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
+    {"spelling":"GO_LOOP_BUDGET","kind":"statement","detail":"One main-source declaration, 1 to 50,000,000 shared loop-body entries; default 1,000,000. Requested/effective/used budget is audited; not a sandbox.","snippet":"GO_LOOP_BUDGET ${1:50000000}"},
     {
       "spelling": "import",
       "kind": "statement",
@@ -36,7 +37,7 @@
     {
       "spelling": "for",
       "kind": "statement",
-      "detail": "Iterate a half-open integer range or independent array value; 1,000,000 total loop-body iterations per run.",
+      "detail": "Iterate a half-open integer range or independent array value; shared default 1,000,000 loop-body entries, configurable to 50,000,000 with GO_LOOP_BUDGET.",
       "snippet": "for ${1:i} in range(${2:0}, ${3:10}) {\n    ${4:print(\"{i}\")}\n}"
     },
     {
@@ -135,6 +136,20 @@
     }
   ],
   "functions": [
+    {"spelling":"resample","kind":"function","detail":"Independent numeric sample with replacement; explicit pre-seeded stream required, positive count <=100,000; units preserved.","snippet":"resample(${1:values}, ${2:count}, ${3:0})"},
+    {"spelling":"bootstrap_mean","kind":"function","detail":"IID replacement bootstrap mean replicates; explicit repetitions and seeded stream; no implicit interval or seed. At most 1,000,000 sample selections.","snippet":"bootstrap_mean(${1:values}, ${2:1000}, ${3:0})"},
+    {"spelling":"bootstrap_median","kind":"function","detail":"IID replacement bootstrap median replicates; explicit repetitions and seeded stream; no automatic confidence interval.","snippet":"bootstrap_median(${1:values}, ${2:1000}, ${3:0})"},
+    {"spelling":"rng_normal","kind":"function","detail":"Standard normal via Box-Muller cosine using exactly two PCG uniforms; explicit seeded stream; platform transcendental last bits may differ. NOT cryptographic.","snippet":"rng_normal(${1:0})"},
+    {"spelling":"rng_normal_array","kind":"function","detail":"Positive count <=100,000 standard normals; explicit seeded stream; no cached spare; NOT cryptographic.","snippet":"rng_normal_array(${1:count}, ${2:0})"},
+    {"spelling":"matrix_transpose","kind":"function","detail":"Transpose a flat row-major homogeneous numeric array with explicit positive shape; no nested arrays.","snippet":"matrix_transpose(${1:values}, ${2:rows}, ${3:columns})"},
+    {"spelling":"matrix_multiply","kind":"function","detail":"Multiply flat row-major matrices with explicit left/right shapes, matching inner dimensions and checked output units; bounded scalar-product work.","snippet":"matrix_multiply(${1:left}, ${2:left_rows}, ${3:left_cols}, ${4:right}, ${5:right_rows}, ${6:right_cols})"},
+    {"spelling":"vector_norm","kind":"function","detail":"Robust scaled Euclidean norm of a homogeneous numeric vector, retaining its unit; overflow refuses.","snippet":"vector_norm(${1:values})"},
+    {"spelling":"vector_unit","kind":"function","detail":"Normalize a nonzero homogeneous vector safely; returns dimensionless independent array; zero vector refuses.","snippet":"vector_unit(${1:values})"},
+    {"spelling":"covariance","kind":"function","detail":"Flat row-major observations by variables; explicit ddof 0 or 1, divisor observations-ddof; homogeneous units squared. No mixed-unit covariance.","snippet":"covariance(${1:values}, ${2:observations}, ${3:variables}, ${4:1})"},
+    {"spelling":"cholesky","kind":"function","detail":"Positive-definite flat n-by-n matrix, explicit relative symmetry tolerance; lower-triangle factor, no jitter, clipping or silent repair.","snippet":"cholesky(${1:values}, ${2:n}, ${3:0})"},
+    {"spelling":"mvnormal","kind":"function","detail":"One multivariate-normal vector from homogeneous mean and squared-unit covariance; explicit n, symmetry tolerance and seeded stream; no implicit regularization.","snippet":"mvnormal(${1:mean_values}, ${2:covariance_values}, ${3:n}, ${4:0}, ${5:0})"},
+    {"spelling":"csv_scan_stats","kind":"function","detail":"Bounded streaming numeric CSV column scan; returns [count,sum,mean,min,max]; <=1 GiB file, <=1 MiB record, <=1024 columns; missing/nonnumeric data refuses.","snippet":"csv_scan_stats(\"${1:data.csv}\", \"${2:value}\")"},
+    {"spelling":"tsv_scan_stats","kind":"function","detail":"Bounded streaming numeric TSV column scan; returns [count,sum,mean,min,max]; input hash and parsed-byte evidence preserved; not full generic streaming tables.","snippet":"tsv_scan_stats(\"${1:data.tsv}\", \"${2:value}\")"},
     {
       "spelling": "rng_seed",
       "kind": "function",

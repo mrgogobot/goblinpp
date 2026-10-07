@@ -1,5 +1,12 @@
 # WB-3 requirements and proposed strict research profile
 
+Alpha.27 local implementation update: IID bootstrap/resampling, standard-normal
+transforms, flat row-major matrices, homogeneous covariance/Cholesky/multivariate
+sampling, audited loop budgets and bounded CSV/TSV column scans are implemented.
+See the three alpha.27 guides. This does not establish end-to-end WB-3 validation,
+mixed-unit covariance, physical blinding, general out-of-core processing or a
+cross-platform guarantee for transformed normal outputs.
+
 Logged 2026-10-04 from Malin Hess's requirements. Baseline: published
 `0.1.0-alpha.22`, source commit
 `c3fff61a74cb3a1e4535d9c308bb23ce4e812691`.
@@ -28,15 +35,15 @@ gated by CI, not assumed from one local build.
 
 | Priority | Requirement | Existing coverage and remaining work |
 | --- | --- | --- |
-| P0 | sort, median, quantile, ECDF | Core GBL-007 implemented locally in alpha.24, including explicit population/sample standard deviation; bootstrap/weights pending |
-| P0 | Deterministic seeded RNG | GBL-008 implemented locally in alpha.26 with PCG32 v1, explicit seed/stream, uniform/integer mappings and replay evidence; normal sampling pending |
+| P0 | sort, median, quantile, ECDF | Core distributions alpha.24; IID mean/median bootstrap alpha.27 locally; weights/other schemes pending |
+| P0 | Deterministic seeded RNG | PCG32 v1 alpha.26; explicit-stream normal transforms alpha.27 locally; platform last-bit boundary declared |
 | P0 | Multi-column FITS filtering/export | GBL-006 alpha.23 local CSV/TSV stage; exact unscaled IDs and both engines covered; FITS writer/physical blinding pending |
-| P0 | dot, cross, norm, unit, matrix multiply | dot/cross/magnitude exist; GBL-018 adds checked normalization and explicit matrix representation/operations |
-| P0 | Covariance, Cholesky, multivariate normal | GBL-019; depends on matrix, units, RNG and normal-transform contracts |
-| P0 | Streaming and declared iteration budget | GBL-009/012; loop cap remains 1,000,000; measure the reported 400,000-orbit workload |
+| P0 | dot, cross, norm, unit, matrix multiply | Alpha.27 locally adds vector_norm/vector_unit and flat row-major transpose/multiply |
+| P0 | Covariance, Cholesky, multivariate normal | Alpha.27 homogeneous-unit foundation, explicit ddof/tolerance/stream; mixed-unit matrices pending |
+| P0 | Streaming and declared iteration budget | Alpha.27 budget <=50M and bounded numeric column scans <=1GiB; actual 400,000-orbit workload not measured |
 | P1 | Hash-based row partitioning | GBL-020; exact stable IDs, fixed hash/encoding and declared fold mapping |
 | P1 | Formal permitted-column controls | GBL-021; enforcement and evidence disclosure must be designed, not only logged |
-| P1 | Bootstrap/resampling | GBL-007 plus GBL-008; declare resampling unit, replacement, statistic and interval assumptions |
+| P1 | Bootstrap/resampling | Alpha.27 explicit IID replacement mean/median replicates; no implicit CI, weighted/paired/block schemes pending |
 | P1 | Specified float serialization | GBL-004 implemented alpha.21; GBL-005 comparison/identity implemented alpha.22; no universal deterministic math guarantee |
 | P1 | Compound unit literals | GBL-013 implemented locally in alpha.25; legacy parser preserves old evidence and old freezes require explicit revision; see COMPOUND_UNITS.md |
 | P1 | Constants namespace | GBL-024; alpha.20 already prevents silent constant shadowing, but does not implement a namespace |

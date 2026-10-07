@@ -1,5 +1,11 @@
 # Seeded scientific randomness — alpha.26
 
+Alpha.27 retains this exact primitive policy and adds explicit-stream normal
+and IID bootstrap helpers: see [RESAMPLING.md](RESAMPLING.md) and
+[MATRICES_COVARIANCE.md](MATRICES_COVARIANCE.md). Loop-budget and streaming
+extensions are specified separately in [RESOURCES_STREAMING.md](RESOURCES_STREAMING.md).
+Primitive replay does not certify cross-platform equality of transformed normals.
+
 Goblin++ provides a reproducible **scientific**, not cryptographic, generator
 in the interpreter and native compiler. Seed explicitly; there is no clock,
 operating-system entropy or hidden default seed. Rust stays at 1.92.0.

@@ -1,0 +1,12 @@
+GO_PARANOID
+
+# Delimited scans do not build a full table or array in memory.
+# Paths are relative to this source; use argv(1) for your own catalogue.
+summary = csv_scan_stats("measurements.csv", "length_m")
+count = summary[0]
+total = summary[1]
+average = summary[2]
+lowest = summary[3]
+highest = summary[4]
+print("rows = {count}; sum = {total}; mean = {average}; min = {lowest}; max = {highest}")
+seal summary

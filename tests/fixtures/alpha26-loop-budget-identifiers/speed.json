@@ -1,0 +1,16 @@
+{
+  "schema": "goblin.sealed-artifact.v1",
+  "name": "speed",
+  "value": {
+    "value_si": 3.0,
+    "dimension": [
+      0,
+      1,
+      -1,
+      0,
+      0,
+      0
+    ],
+    "unit_si": "m/s"
+  }
+}

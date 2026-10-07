@@ -1,4 +1,18 @@
-# VS Code extension 0.1.20 (local, unreleased)
+# VS Code extension 0.1.22 (local, unreleased)
+
+Updated for Rust alpha.27: completion, highlighting, help and a bootstrap
+snippet for explicit-stream resampling, normal sampling, flat row-major
+matrices, covariance, Cholesky, multivariate normals, bounded CSV/TSV scans
+and `GO_LOOP_BUDGET`. Help exposes required divisors, tolerance, stream and
+resource choices. Both editors use the same 263-spelling vocabulary.
+The engine, not the editor, owns execution and evidence semantics.
+
+## Previous stage: 0.1.21
+
+Added alpha.26 seeded PCG32 scientific RNG help, highlighting and snippets.
+Seeds and streams are explicit; this generator is not cryptographic.
+
+## Previous stage: 0.1.20
 
 Updated for Rust alpha.25 with compound-unit help and suffix highlighting.
 `3 m^2` denotes three square metres; `(3 m)^2` squares the whole quantity.
