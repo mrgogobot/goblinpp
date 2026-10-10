@@ -68,6 +68,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
         "resource_policy": crate::resources::policy(),
+        "batch_policy": crate::batches::policy(),
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
@@ -149,6 +150,14 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
         if freeze_path(source).exists() {
             let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            if frozen.get("batch_policy").is_none()
+                && crate::batches::program_uses_batches(&current.program)
+            {
+                return Err(protocol(
+                    "BATCH_POLICY_NOT_FROZEN",
+                    "This historical freeze did not pin batch processing. Create an explicit revision and freeze the child before using batch functions.",
+                ));
+            }
             let expected = frozen
                 .get("module_imports")
                 .cloned()
@@ -175,6 +184,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             for statement in &safe_program.statements {
                 evaluation.eval_stmt(statement)?;
             }
+            evaluation.batches.finish()?;
             let binary = run_dir.join("program-native");
             let compilation = compile(&current, &binary, &options.allowed_inline_rust)?;
             receipt["execution"]["compiler"] = compilation_json(&compilation);
@@ -260,6 +270,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             stdout = lines_to_text(&evaluation.stdout);
         }
         parsed = Some(current);
+        evaluation.batches.finish()?;
         Ok(())
     })();
 
@@ -281,6 +292,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     receipt["rng"] = serde_json::to_value(evaluation.randomness.evidence())?;
     receipt["inference"] = evaluation.inference.evidence();
     receipt["resources"] = evaluation.resource_evidence();
+    receipt["batches"] = evaluation.batches.evidence();
     if evaluation.interaction.evidence_needed() {
         let evidence_path = run_dir.join("interaction.json");
         let evidence = json!({
@@ -330,7 +342,6 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             }));
         }
     }
-    receipt["generated_artifacts"] = Value::Array(generated_artifacts);
     let mut artifacts = Vec::new();
     for (name, value) in &evaluation.sealed {
         let path = run_dir.join(format!("{name}.json"));
@@ -354,6 +365,21 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     {
         outcome = Err(error);
     }
+    match evaluation
+        .batches
+        .publish(&run_dir.join("outputs"), outcome.is_ok())
+    {
+        Ok(mut descriptors) => {
+            for descriptor in &mut descriptors {
+                descriptor["path"] =
+                    json!(format!("outputs/{}", descriptor["name"].as_str().unwrap()));
+            }
+            generated_artifacts.extend(descriptors);
+        }
+        Err(error) => outcome = Err(error),
+    }
+    generated_artifacts.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
+    receipt["generated_artifacts"] = Value::Array(generated_artifacts);
     match outcome {
         Ok(()) => receipt["status"] = Value::String("PASS".into()),
         Err(error) => {
@@ -397,6 +423,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     .join(", "),
                 Err(error) => error.to_string(),
             };
+            crate::batches::mark_incomplete(&run_dir, &mut receipt)?;
             downgrade_self_check(&mut receipt, &receipt_path, &stderr_path, &detail)?;
         }
     }
@@ -429,6 +456,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             current.push_str(&warning);
             fs::write(&stderr_path, current)?;
             receipt["status"] = Value::String("MACHINERY_FAIL".into());
+            crate::batches::mark_incomplete(&run_dir, &mut receipt)?;
             receipt["ledger"]["registration"] = Value::String("FAIL".into());
             receipt["failure"] = json!({
                 "code": "G404", "type": "GoblinError", "message": error.to_string(),
@@ -644,6 +672,19 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             return Err(protocol(
                 "INFERENCE_POLICY_CHANGED_AFTER_FREEZE",
                 "The scientific helper policy differs from the frozen policy. Create an explicit revision before adopting a changed inference contract.",
+            ));
+        }
+        let frozen = report.receipt.as_ref().unwrap();
+        if frozen
+            .get("batch_policy")
+            .is_some_and(|p| p != &crate::batches::policy())
+            || (crate::batches::requires_policy(frozen) && frozen.get("batch_policy").is_none())
+        {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("BATCH_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "BATCH_POLICY_CHANGED_AFTER_FREEZE",
+                "Create an explicit revision and freeze the child to adopt a different batch processing contract.",
             ));
         }
         return Ok(());
@@ -887,9 +928,14 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         .values()
         .map(crate::output::artifact_descriptor)
         .collect::<Vec<_>>();
+    let mut generated = generated;
+    generated.extend(expected.batches.descriptors(true)?);
+    generated.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
     if manifest["schema"] != "goblin.native-data.v1"
         || manifest["resource_policy"] != crate::resources::policy()
         || manifest["resources"] != expected.resource_evidence()
+        || manifest["batch_policy"] != crate::batches::policy()
+        || manifest["batches"] != expected.batches.evidence()
         || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
         || manifest["inference"] != expected.inference.evidence()
         || manifest["inference_policy"] != crate::inference_policy::policy()
@@ -908,6 +954,16 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         if observed != artifact.bytes {
             return Err(GoblinError::compile(
                 "Native generated bytes differ from the interpreter reference.",
+            ));
+        }
+    }
+    for artifact in expected.batches.descriptors(true)? {
+        let observed = directory.join(artifact["name"].as_str().unwrap());
+        if sha256_file(&observed)? != artifact["sha256"].as_str().unwrap()
+            || fs::metadata(observed)?.len() != artifact["byte_count"].as_u64().unwrap()
+        {
+            return Err(GoblinError::compile(
+                "Native streamed output hash/size differs from interpreter reference.",
             ));
         }
     }

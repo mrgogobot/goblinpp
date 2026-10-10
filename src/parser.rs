@@ -145,6 +145,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "plot_fits_histogram"
             | "plot_fits_scatter"
     ) || crate::delimited::is_function(name)
+        || crate::batches::is_function(name)
         || (crate::science::is_function(name) && !crate::science::is_distribution_function(name))
         || crate::chemistry::is_function(name)
         || crate::electrical::is_function(name)
@@ -190,6 +191,9 @@ fn value_only_builtin(name: &str) -> bool {
                 | "plot_fits_scatter"
                 | "fits_export_csv"
                 | "fits_export_tsv"
+                | "batch_close"
+                | "stream_write"
+                | "stream_close"
         )
         && resolve(name).is_none()
         && !is_unit(name)

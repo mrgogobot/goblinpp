@@ -1,5 +1,10 @@
 # WB-3 requirements and proposed strict research profile
 
+Alpha.28 adds serial CSV/TSV batches and incremental outputs with explicit
+budgets and exact-ID text, including files above 1 GiB. See
+[BATCHES_STREAMING.md](BATCHES_STREAMING.md). FITS batching, joins, parallelism,
+physical blinding and end-to-end WB-3 validation remain separate work.
+
 Alpha.27 local implementation update: IID bootstrap/resampling, standard-normal
 transforms, flat row-major matrices, homogeneous covariance/Cholesky/multivariate
 sampling, audited loop budgets and bounded CSV/TSV column scans are implemented.
@@ -21,14 +26,14 @@ historical and are not modified by this note.
 Implementation update: alpha.23 supplies combined scalar FITS cuts and CSV/TSV
 projection in both engines, including exact unscaled signed 64-bit IDs as text.
 See [FITS_SUBSETS.md](FITS_SUBSETS.md). This is the first extraction stage only;
-FITS writing, general integer arithmetic, streaming output and physical
-blinding are not implemented. Alpha.24 implements the core GBL-007 distribution
+FITS writing, general integer arithmetic and physical blinding are not
+implemented; incremental CSV/TSV output arrives in alpha.28. Alpha.24 implements the core GBL-007 distribution
 functions in both engines: stable copy sorting, type-7 quantiles/median,
 explicit population/sample standard deviation and unweighted ECDF. Policies
 are recorded in new run/freeze receipts; see [STATISTICS.md](STATISTICS.md).
 Alpha.26 implements explicit PCG32 seeded streams and replayable evidence;
-see [RANDOMNESS.md](RANDOMNESS.md). Bootstrap, normal/covariance sampling and
-weighted distributions remain acceptance goals. Exact platform fixtures are
+see [RANDOMNESS.md](RANDOMNESS.md). Alpha.27 supplies IID bootstrap and
+normal/covariance sampling foundations; weighted distributions remain acceptance goals. Exact platform fixtures are
 gated by CI, not assumed from one local build.
 
 ## Requested priorities and present coverage
@@ -40,7 +45,7 @@ gated by CI, not assumed from one local build.
 | P0 | Multi-column FITS filtering/export | GBL-006 alpha.23 local CSV/TSV stage; exact unscaled IDs and both engines covered; FITS writer/physical blinding pending |
 | P0 | dot, cross, norm, unit, matrix multiply | Alpha.27 locally adds vector_norm/vector_unit and flat row-major transpose/multiply |
 | P0 | Covariance, Cholesky, multivariate normal | Alpha.27 homogeneous-unit foundation, explicit ddof/tolerance/stream; mixed-unit matrices pending |
-| P0 | Streaming and declared iteration budget | Alpha.27 budget <=50M and bounded numeric column scans <=1GiB; actual 400,000-orbit workload not measured |
+| P0 | Streaming and declared iteration budget | Alpha.27 budget <=50M and scans <=1GiB; alpha.28 serial CSV/TSV batches and outputs <=64GiB explicit ceiling; actual 400,000-orbit workload not measured |
 | P1 | Hash-based row partitioning | GBL-020; exact stable IDs, fixed hash/encoding and declared fold mapping |
 | P1 | Formal permitted-column controls | GBL-021; enforcement and evidence disclosure must be designed, not only logged |
 | P1 | Bootstrap/resampling | Alpha.27 explicit IID replacement mean/median replicates; no implicit CI, weighted/paired/block schemes pending |

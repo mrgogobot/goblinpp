@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.27 CLI check, run, and verify contracts", {
+test("actual alpha.28 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.27 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.27/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.28/);
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');
@@ -197,6 +197,19 @@ test("actual alpha.27 CLI check, run, and verify contracts", {
     assert.equal(invoke(core.goblinArgs("verify", dir)).status, 0);
   }
   fs.writeFileSync(bad, "for i in range(3) {\n x = i\n");
+  const batchSource = path.join(root, "batch_catalogue.gbl");
+  fs.writeFileSync(batchSource, fs.readFileSync(path.join(__dirname, "..", "..", "examples", "batch_catalogue.gbl")));
+  fs.writeFileSync(path.join(root, "batch_catalogue.csv"), fs.readFileSync(path.join(__dirname, "..", "..", "examples", "batch_catalogue.csv")));
+  const batchPreview = invoke(core.goblinArgs("check", batchSource, ["--json"]));
+  assert.equal(batchPreview.status, 0, batchPreview.stderr);
+  assert.equal(JSON.parse(batchPreview.stdout).generated_output_preview[0].metadata.complete, true);
+  for (const extra of [[], ["--compile"]]) {
+    const result = invoke(core.goblinArgs("run", batchSource, extra));
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /rows = 4; total measurement = 11/);
+    const dir = /^RUN_DIR=(.+)$/m.exec(result.stdout)?.[1];
+    assert.equal(invoke(core.goblinArgs("verify", dir)).status, 0);
+  }
   const rejected = invoke(core.goblinArgs("check", bad, ["--json"]));
   assert.equal(rejected.status, 2);
   const diagnostic = core.parseCheckResponse(rejected.stdout, rejected.stderr, rejected.status);

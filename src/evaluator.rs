@@ -79,6 +79,7 @@ pub fn is_data_function(name: &str) -> bool {
         || crate::resampling::is_function(name)
         || crate::matrix::is_function(name)
         || crate::streaming::is_function(name)
+        || crate::batches::is_function(name)
         || crate::fits::is_selection_function(name)
         || crate::delimited::is_function(name)
         || matches!(
@@ -140,6 +141,7 @@ pub struct Evaluation {
     pub warnings: Vec<String>,
     pub sealed: BTreeMap<String, Value>,
     pub generated: BTreeMap<String, GeneratedOutput>,
+    pub batches: crate::batches::Batches,
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
     pub interaction: Interaction,
@@ -172,6 +174,7 @@ impl Evaluation {
             warnings: Vec::new(),
             sealed: BTreeMap::new(),
             generated: BTreeMap::new(),
+            batches: crate::batches::Batches::default(),
             constants_used: BTreeMap::new(),
             paranoid: false,
             interaction: Interaction::default(),
@@ -199,6 +202,7 @@ impl Evaluation {
         for statement in &program.statements {
             self.eval_stmt(statement)?;
         }
+        self.batches.finish()?;
         Ok(self)
     }
 
@@ -627,6 +631,38 @@ impl Evaluation {
         }
         if crate::streaming::is_function(name) {
             return self.eval_streaming_call(name, args);
+        }
+        if crate::batches::is_function(name) {
+            if matches!(name, "csv_stream_open" | "tsv_stream_open") {
+                let output_name = args[0].text(name)?;
+                if self.generated.contains_key(output_name)
+                    || self
+                        .generated
+                        .contains_key(&format!("{output_name}.partial"))
+                {
+                    return Err(GoblinError::artifact(
+                        "Stream output name conflicts with a generated artifact.",
+                    ));
+                }
+            }
+            if matches!(name, "csv_batch_open" | "tsv_batch_open") {
+                let requested = Path::new(args[0].text(name)?);
+                let path = if requested.is_absolute() {
+                    requested.to_owned()
+                } else {
+                    self.base_dir.join(requested)
+                };
+                let key = path.canonicalize()?;
+                if self.tables.contains_key(&key)
+                    || self.scans.contains_key(&key)
+                    || self.data.contains_key(&key)
+                {
+                    return Err(GoblinError::data(
+                        "Batch inputs cannot also be opened with eager/FITS/scan readers in the same run.",
+                    ));
+                }
+            }
+            return self.batches.call(&self.base_dir, name, args);
         }
         if crate::random::is_function(name) {
             return self.randomness.call(name, args);
@@ -1498,7 +1534,7 @@ impl Evaluation {
     }
 
     fn add_output(&mut self, artifact: GeneratedOutput) -> Result<()> {
-        if self.generated.contains_key(&artifact.name) {
+        if self.generated.contains_key(&artifact.name) || self.batches.has_name(&artifact.name) {
             return Err(GoblinError::artifact(format!(
                 "Generated output {:?} is declared more than once. Goblin++ refuses ambiguous overwrites.",
                 artifact.name
@@ -1533,6 +1569,11 @@ impl Evaluation {
                 path.display()
             ))
         })?;
+        if self.batches.has_source(&key) {
+            return Err(GoblinError::data(
+                "Batch input cannot also be read as FITS in one run.",
+            ));
+        }
         if !self.data.contains_key(&key) {
             self.data.insert(
                 key.clone(),
@@ -1578,6 +1619,11 @@ impl Evaluation {
             return Err(GoblinError::data("Refusing symbolic-link table input."));
         }
         let key = path.canonicalize()?;
+        if self.batches.has_source(&key) {
+            return Err(GoblinError::data(
+                "Batch input cannot also use eager table reads in one run.",
+            ));
+        }
         let delimiter = if name.starts_with("csv_") {
             b','
         } else {
@@ -1642,6 +1688,11 @@ impl Evaluation {
             return Err(GoblinError::data("Refusing symbolic-link streaming input."));
         }
         let key = path.canonicalize()?;
+        if self.batches.has_source(&key) {
+            return Err(GoblinError::data(
+                "Batch input cannot also use scan reads in one run.",
+            ));
+        }
         let delimiter = if name.starts_with("csv_") {
             b','
         } else {
@@ -1784,10 +1835,14 @@ impl Evaluation {
                     evidence_sha256: None,
                 }
             }))
+            .chain(self.batches.imports())
             .collect()
     }
 
     pub fn copy_data_evidence(&self, sha256: &str, destination: &Path) -> Result<String> {
+        if let Some(result) = self.batches.copy_input(sha256, destination) {
+            return result;
+        }
         if let Some(scan) = self.scans.values().find(|s| s.sha256 == sha256) {
             return scan.copy_evidence(destination);
         }
@@ -1834,6 +1889,9 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
 /// Validate before evaluating arguments; never silently change refusal ordering
 /// or prompt/write side effects while keeping the dispatch frame off the stack.
 fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::batches::is_function(name) {
+        return crate::batches::require_arity(name, args.len());
+    }
     if crate::streaming::is_function(name) {
         return crate::streaming::require_arity(name, args.len());
     }

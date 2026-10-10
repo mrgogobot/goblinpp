@@ -57,7 +57,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -68,7 +68,7 @@ def main() -> None:
                 report = json.loads((root / directory / "receipt.json").read_text())
                 exact_evidence = {key: report[key] for key in
                                   ("rng_policy", "rng", "inference_policy", "inference",
-                                   "resource_policy", "resources", "sealed_artifacts")}
+                                   "resource_policy", "resources", "batch_policy", "batches", "sealed_artifacts")}
                 if parity_evidence is not None:
                     assert exact_evidence == parity_evidence, example
                 parity_evidence = exact_evidence
@@ -119,6 +119,11 @@ def main() -> None:
                 if example == "streaming_catalogue":
                     assert "rows = 3; sum = 33; mean = 11; min = 10; max = 12" in run.stdout
                     assert report["resource_policy"]["streaming"]["id"] == "goblin.delimited-scan.v1"
+                if example == "batch_catalogue":
+                    assert "rows = 4; total measurement = 11" in run.stdout
+                    assert report["batches"]["readers"][0]["rows"] == 4
+                    assert report["generated_artifacts"][0]["metadata"]["complete"] is True
+                    assert (root / directory / "outputs/processed.csv").read_text() == "source_id,doubled\n9007199254740993,5\n18446744073709551615,8\n42,3\n7,6\n"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

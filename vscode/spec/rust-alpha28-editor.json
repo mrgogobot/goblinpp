@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.27",
+  "runtime": "goblin++ 0.1.0-alpha.28",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
@@ -148,6 +148,14 @@
     {"spelling":"covariance","kind":"function","detail":"Flat row-major observations by variables; explicit ddof 0 or 1, divisor observations-ddof; homogeneous units squared. No mixed-unit covariance.","snippet":"covariance(${1:values}, ${2:observations}, ${3:variables}, ${4:1})"},
     {"spelling":"cholesky","kind":"function","detail":"Positive-definite flat n-by-n matrix, explicit relative symmetry tolerance; lower-triangle factor, no jitter, clipping or silent repair.","snippet":"cholesky(${1:values}, ${2:n}, ${3:0})"},
     {"spelling":"mvnormal","kind":"function","detail":"One multivariate-normal vector from homogeneous mean and squared-unit covariance; explicit n, symmetry tolerance and seeded stream; no implicit regularization.","snippet":"mvnormal(${1:mean_values}, ${2:covariance_values}, ${3:n}, ${4:0}, ${5:0})"},
+    {"spelling":"csv_batch_open","kind":"function","detail":"Serial CSV reader: path, exact columns, row limit, decoded batch byte limit (<=8 MiB), file limit (<=64 GiB). Snapshots to disk first; returns run-local text handle, not a security capability. Exact IDs remain text.","snippet":"csv_batch_open(\"${1:data.csv}\", [\"${2:id}\", \"${3:value}\"], ${4:4096}, ${5:8388608}, ${6:2147483648})"},
+    {"spelling":"tsv_batch_open","kind":"function","detail":"Serial TSV reader with explicit row/batch/file limits. Requested columns in order; immutable disk snapshot; exact IDs remain text. Must read EOF and close.","snippet":"tsv_batch_open(\"${1:data.tsv}\", [\"${2:id}\", \"${3:value}\"], ${4:4096}, ${5:8388608}, ${6:2147483648})"},
+    {"spelling":"batch_next","kind":"function","detail":"Next bounded flat row-major TEXT batch; empty means observed EOF. Release batch=[] before next read; not a process-wide RAM quota.","snippet":"batch_next(${1:reader})"},
+    {"spelling":"batch_close","kind":"function","detail":"Close reader only after observed EOF. Early/double close refuses; unfinished lifecycle prevents PASS.","snippet":"batch_close(${1:reader})"},
+    {"spelling":"csv_stream_open","kind":"function","detail":"Create exclusive incremental CSV output with headers and explicit file byte budget <=64 GiB. Returns run-local writer handle; failed run output marked .partial and incomplete.","snippet":"csv_stream_open(\"${1:processed.csv}\", [\"${2:id}\", \"${3:value}\"], ${4:2147483648})"},
+    {"spelling":"tsv_stream_open","kind":"function","detail":"Create incremental quoted TSV output; filename, header array, explicit file byte limit. No overwrites; failed-run outputs incomplete.","snippet":"tsv_stream_open(\"${1:processed.tsv}\", [\"${2:id}\", \"${3:value}\"], ${4:2147483648})"},
+    {"spelling":"stream_write","kind":"function","detail":"Write flat array of complete rows incrementally; return row count. <=100000 cells and 8 MiB per call; preserves exact text and quantity units. May be a statement.","snippet":"stream_write(${1:writer}, ${2:batch})"},
+    {"spelling":"stream_close","kind":"function","detail":"Sync and close writer; no later writes or double close. Required before PASS; partial output is evidence, not a complete catalogue.","snippet":"stream_close(${1:writer})"},
     {"spelling":"csv_scan_stats","kind":"function","detail":"Bounded streaming numeric CSV column scan; returns [count,sum,mean,min,max]; <=1 GiB file, <=1 MiB record, <=1024 columns; missing/nonnumeric data refuses.","snippet":"csv_scan_stats(\"${1:data.csv}\", \"${2:value}\")"},
     {"spelling":"tsv_scan_stats","kind":"function","detail":"Bounded streaming numeric TSV column scan; returns [count,sum,mean,min,max]; input hash and parsed-byte evidence preserved; not full generic streaming tables.","snippet":"tsv_scan_stats(\"${1:data.tsv}\", \"${2:value}\")"},
     {

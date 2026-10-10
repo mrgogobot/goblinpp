@@ -41,10 +41,11 @@ fn goblin_data_call(name: &str, values: Vec<Result<Value, String>>, env: &HashMa
 fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
     GOBLIN_DATA.with(|data| {
         let data = data.borrow();
+        data.batches.finish().map_err(|e|e.pretty())?;
         let imports = data.data_imports();
         let manifest = if let Ok(path) = std::env::var("GOBLIN_NATIVE_DATA_PATH") {
             std::path::PathBuf::from(path)
-        } else if imports.is_empty() && data.generated.is_empty() && data.randomness.evidence().streams.is_empty() && data.inference.evidence()["functions"].as_array().is_some_and(|f| f.is_empty()) {
+        } else if imports.is_empty() && data.generated.is_empty() && data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty()) && data.randomness.evidence().streams.is_empty() && data.inference.evidence()["functions"].as_array().is_some_and(|f| f.is_empty()) {
             return Ok(());
         } else {
             let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos();
@@ -54,6 +55,9 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
             dir.join("native-data.json")
         };
         let directory = manifest.parent().ok_or("Native data manifest has no directory.")?.join("native-outputs");
+        if std::env::var("GOBLIN_NATIVE_DATA_PATH").is_err() {
+            preserve_batch_inputs(&data,manifest.parent().unwrap())?;
+        }
         std::fs::create_dir(&directory).map_err(|e| e.to_string())?;
         let mut artifacts = Vec::new();
         for output in data.generated.values() {
@@ -63,10 +67,62 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
             file.sync_all().map_err(|e| e.to_string())?;
             artifacts.push(goblinpp::output::artifact_descriptor(output));
         }
-        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps)});
+        artifacts.extend(data.batches.publish(&directory,true).map_err(|e|e.pretty())?);
+        artifacts.sort_by(|a,b|a["name"].as_str().cmp(&b["name"].as_str()));
+        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
         let mut file = OpenOptions::new().write(true).create_new(true).open(&manifest).map_err(|e| e.to_string())?;
         file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
         Ok(())
     })
+}
+
+fn goblin_data_abort() {
+    GOBLIN_DATA.with(|data| {
+        let mut data=data.borrow_mut();
+        if data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty())
+            && data.batches.evidence()["readers"].as_array().is_some_and(|r|r.is_empty()) {
+                data.batches=goblinpp::batches::Batches::default();
+                return;
+            }
+        let saved=(||->Result<(),String>{
+            let stamp=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e|e.to_string())?.as_nanos();
+            let directory=std::path::PathBuf::from(format!("goblin-native-incomplete-{}-{stamp}",std::process::id()));
+            std::fs::create_dir(&directory).map_err(|e|e.to_string())?;
+            preserve_batch_inputs(&data,&directory)?;
+            let artifacts=data.batches.publish(&directory.join("outputs"),false).map_err(|e|e.pretty())?;
+            let evidence=serde_json::json!({"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
+            let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-failure.json")).map_err(|e|e.to_string())?;
+            file.write_all(&serde_json::to_vec_pretty(&evidence).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
+            file.sync_all().map_err(|e|e.to_string())?;
+            eprintln!("INCOMPLETE_DATA_DIR={}",directory.display());
+            Ok(())
+        })();
+        if let Err(error)=saved {
+            eprintln!("Unable to preserve incomplete stream outputs: {error}");
+            if let Some(directory)=data.batches.staging_directory() {eprintln!("RECOVERABLE_STAGING_DIR={}",directory.display());}
+        } else {
+            // process::exit does not run TLS destructors: clean up only after
+            // successfully preserving the disk snapshots and partial outputs.
+            data.batches=goblinpp::batches::Batches::default();
+        }
+    });
+}
+
+fn preserve_batch_inputs(data: &goblinpp::evaluator::Evaluation, directory: &std::path::Path) -> Result<(),String> {
+    if data.batches.imports().is_empty() {return Ok(());}
+    let mut inputs=Vec::new();
+    let inputs_dir=directory.join("batch-inputs");
+    std::fs::create_dir(&inputs_dir).map_err(|e|e.to_string())?;
+    for import in data.batches.imports() {
+        let path=inputs_dir.join(&import.sha256);
+        if !path.exists() {
+            data.batches.copy_input(&import.sha256,&path).ok_or("Missing batch snapshot")?.map_err(|e|e.pretty())?;
+        }
+        inputs.push(serde_json::json!({"source":import.path,"path":format!("batch-inputs/{}",import.sha256),"sha256":import.sha256,"byte_count":import.byte_count}));
+    }
+    let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-inputs.json")).map_err(|e|e.to_string())?;
+    file.write_all(&serde_json::to_vec_pretty(&inputs).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
+    file.sync_all().map_err(|e|e.to_string())?;
+    Ok(())
 }

@@ -1,5 +1,12 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-10: alpha.28 adds bounded serial CSV/TSV batch
+processing and incremental CSV/TSV output in both engines. Exact IDs stay text;
+full disk input snapshots, explicit budgets and incomplete outputs are audited.
+See [BATCHES_STREAMING.md](BATCHES_STREAMING.md). This advances GBL-011/012;
+it is not general streaming FITS, joins, a whole-process memory cap, concurrency,
+or an end-to-end WB-3 certification.
+
 Implementation update, 2026-10-07: alpha.27 locally implements IID replacement
 bootstrap/resampling, explicit-stream normal transforms, flat matrix operations,
 homogeneous covariance/Cholesky/sampling, configurable audited loop budgets and

@@ -1,4 +1,13 @@
-# Goblin++ Rust Engine 0.1.0-alpha.27 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.28 (local, unreleased)
+
+Alpha.28 adds serial CSV/TSV batches and incremental file writers in both
+engines: **load, process, release, next**. Explicit row/decoded-byte/file budgets,
+exact catalogue-ID text, immutable disk snapshots, required EOF/close lifecycle,
+and labelled `.partial` failure outputs are audited. Batch files may exceed
+1 GiB, up to an explicit 64 GiB ceiling; existing eager/scan limits stay unchanged.
+Start with `examples/batch_catalogue.gbl` and
+[Serial batch guide](docs/BATCHES_STREAMING.md). No threads or whole-process RAM
+quota are claimed. Rust stays at 1.92.0; no new dependencies.
 
 Alpha.27 adds explicit-stream IID bootstrap/resampling, standard-normal draws,
 flat row-major matrix operations, covariance and Cholesky/multivariate-normal
@@ -14,7 +23,8 @@ coercion. See [resampling](docs/RESAMPLING.md),
 This is a bounded foundation, not a complete out-of-core analysis system:
 normal transforms can differ in their last bits across platforms; mixed-unit
 covariance requires explicit standardization; streaming currently supplies
-numeric column reductions, not arbitrary joins or streaming bootstrap.
+numeric column reductions plus alpha.28 serial batches, not automatic joins or
+streaming bootstrap.
 Rust stays pinned at 1.92.0; no new dependencies. Encryption and
 `COMPLETELY_MAD` remain separate proposals. Historical Chinese documents and
 community-review material remain unchanged.
@@ -68,6 +78,7 @@ Goblin++ is an evidence-first scientific language. This release begins the audit
 - [Seeded scientific RNG, explicit streams and evidence replay](docs/RANDOMNESS.md)
 - [Compound-unit input and historical freeze migration](docs/COMPOUND_UNITS.md)
 - [CSV/TSV, local modules and compiled scientific I/O](docs/DATA_MODULES_NATIVE.md)
+- [Serial CSV/TSV batches and incremental outputs](docs/BATCHES_STREAMING.md)
 - [Lossless numeric text and explicit presentation precision](docs/NUMERIC_TEXT.md)
 - [Numeric comparison, math identity and reproducibility](docs/NUMERIC_REPRODUCIBILITY.md)
 

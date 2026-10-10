@@ -1,5 +1,6 @@
 pub mod ast;
 pub mod audit;
+pub mod batches;
 pub mod chemistry;
 pub mod comparison;
 pub mod compiler;

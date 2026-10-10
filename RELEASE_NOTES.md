@@ -1,4 +1,28 @@
-# 0.1.0-alpha.27 (local, unreleased, auditable inference foundations)
+# 0.1.0-alpha.28 (local, unreleased, serial table batches)
+
+- Eight explicit CSV/TSV batch/writer functions, available in interpreted,
+  audited compiled and standalone execution. Flat row-major text batches retain
+  exact catalogue IDs; original row order and lossless quoting are preserved.
+- Caller-selected row, decoded batch and file budgets: <=8 MiB/100,000 cells per
+  batch, <=64 GiB per file, <=1 MiB per logical record, <=1024 columns. Existing
+  eager/scan APIs keep their limits. No threading or general process RAM quota.
+- Private disk snapshots protect the parsed input identity; SHA-256, full input
+  evidence, requested columns, limits, counts and lifecycle states are recorded.
+  PASS requires observed EOF and explicit closes. Failed stream outputs carry
+  `.partial` names and `complete=false`, including late ledger failures.
+- Native/reference checks compare batch evidence and on-disk output hashes;
+  standalone failure paths preserve partial outputs and batch input snapshots.
+- New freezes pin the batch contract; old non-batch freezes and historical
+  verification remain supported. Preview checks validate lifecycle without
+  registering evidence; temporary I/O staging is cleaned up.
+- VS Code 0.1.23 and JetBrains 0.3.13 add shared completion/help/highlighting.
+  No Rust upgrade, dependency additions, encryption or `COMPLETELY_MAD` changes.
+
+See [BATCHES_STREAMING.md](docs/BATCHES_STREAMING.md) and
+`examples/batch_catalogue.gbl`. Large snapshots require sufficient disk space.
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.27 (auditable inference foundations)
 
 - Explicit-stream resampling, bootstrap means/medians and Box-Muller standard
   normal draws using the existing PCG32 v1 seed/stream contract. No implicit

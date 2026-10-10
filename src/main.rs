@@ -378,6 +378,14 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
             break;
         }
     }
+    if error.is_none() {
+        error = evaluation.batches.finish().err();
+    }
+    let mut output_preview=evaluation.generated.values().map(|artifact| json!({"name":artifact.name,"media_type":artifact.media_type,"byte_count":artifact.bytes.len(),"producer":artifact.producer,"metadata":artifact.metadata})).collect::<Vec<_>>();
+    match evaluation.batches.descriptors(error.is_none()) {
+        Ok(outputs) => output_preview.extend(outputs),
+        Err(found) => error = Some(found),
+    }
     let report = json!({
         "schema": "goblin.check.v1", "goblin_version": goblinpp::VERSION,
         "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
@@ -389,12 +397,14 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "inference_preview": evaluation.inference.evidence(),
         "resource_policy": goblinpp::resources::policy(),
         "resources_preview": evaluation.resource_evidence(),
+        "batch_policy": goblinpp::batches::policy(),
+        "batches_preview": evaluation.batches.evidence(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
         "paranoid_mode": parsed.paranoid(), "inline_rust": parsed.inline_rust.iter().map(|block| json!({"sha256": block.sha256, "requires_compile": true})).collect::<Vec<_>>(),
         "stdout_preview": evaluation.stdout, "sealed_preview": evaluation.sealed.iter().map(|(name, value)| (name.clone(), value.to_json())).collect::<serde_json::Map<_,_>>(),
-        "generated_output_preview": evaluation.generated.values().map(|artifact| json!({"name": artifact.name, "media_type": artifact.media_type, "byte_count": artifact.bytes.len(), "producer": artifact.producer, "metadata": artifact.metadata})).collect::<Vec<_>>(),
+        "generated_output_preview": output_preview,
         "warnings": evaluation.warnings,
         "diagnostic": error.as_ref().map(|value| json!({"code": value.code, "category": value.category, "message": value.message, "classification": value.classification})),
     });
@@ -407,7 +417,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
             source_sha,
             parsed.canonical_sha256()?,
             parsed.inline_rust.len(),
-            evaluation.generated.len(),
+            output_preview.len(),
             report["status"].as_str().unwrap()
         );
         for block in &parsed.inline_rust {
@@ -497,6 +507,16 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
             return Err(GoblinError::protocol(
                 "RESOURCE_POLICY_CHANGED_AFTER_FREEZE",
                 "The resource policy differs from the freeze. Compilation refused; create an explicit revision.",
+            ));
+        }
+        let frozen = freeze.receipt.as_ref().unwrap();
+        if !goblinpp::batches::frozen_policy_matches(frozen)
+            || (frozen.get("batch_policy").is_none()
+                && goblinpp::batches::program_uses_batches(&parsed.program))
+        {
+            return Err(GoblinError::protocol(
+                "BATCH_POLICY_CHANGED_AFTER_FREEZE",
+                "Batch processing is not pinned by this freeze. Compilation refused; create an explicit revision and freeze the child.",
             ));
         }
     }
@@ -650,6 +670,11 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             yn(report.inference_evidence_same),
             yn(report.resource_policy_same),
             yn(report.resource_evidence_same)
+        );
+        println!(
+            "BATCH_POLICY_SAME ............ {}\nBATCH_EVIDENCE_SAME .......... {}",
+            yn(report.batch_policy_same),
+            yn(report.batch_evidence_same)
         );
     }
     Ok(0)

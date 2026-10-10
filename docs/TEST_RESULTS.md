@@ -1,4 +1,50 @@
-# Alpha.27 inference and bounded resources (local, unreleased)
+# Alpha.28 serial table batches (local, unreleased)
+
+Verified locally on 2026-10-10, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **295 passed**, 0 failed/ignored/filtered in the full
+  `cargo test --locked --offline --all-targets` run. Formatting,
+  warning-denying Clippy and optimized build pass. No new dependencies or
+  compiler upgrade; Cargo.lock changes only the Goblin++ version.
+- Nineteen batch integration gates cover exact catalogue-ID text, requested
+  column order, CSV/TSV quoting and multiline records, byte/row/handle limits,
+  immutable input snapshots, interpreter/native/standalone execution, output
+  parity, malformed and oversized input, discarded results, lifecycle refusal,
+  legacy-output collisions, freeze-policy migration, independent tamper
+  detection and partial-output preservation, including late ledger failure.
+- VS Code 0.1.23: **18 passed**, 0 failed/skipped, including actual CLI
+  preview and interpreted/compiled batch execution with verification.
+  Shared vocabulary: 271 unique spellings.
+- JetBrains 0.3.13: **16 passed**, 0 failed/skipped. Offline installer build
+  passes against cached IntelliJ 2024.3.7/JDK 21. This does not certify new live
+  CLion/PyCharm installations or every IDE version.
+- Report-checker Python tests: **14 passed**, 0 failed. All **179** tracked
+  Chinese/community-review files remain byte-identical to pre-change HEAD.
+- The opt-in real-file memory harness processed 2 MiB, 64 MiB and
+  **1,075,839,251 bytes (1.002 GiB; 1,028,527 rows)** with verified receipts and
+  exact input/output byte hashes. Peak process RSS for the largest input was
+  **19,300,352 bytes (18.4 MiB)**; peak decoded batch allocation was
+  4,653,056 bytes (4.44 MiB). The measured engine hash and complete evidence
+  are in [BATCH_MEMORY_alpha28.json](verification/BATCH_MEMORY_alpha28.json).
+
+This is a measured bounded, serial copy workflow, not a general process-memory
+quota or full WB-3 science validation. Programs can intentionally accumulate
+arrays; callers must release each batch before fetching the next. Full input
+snapshots consume disk and retain unselected columns: column projection is
+not physical blinding. Batch outputs preserve exact values; this does not
+guarantee universal bitwise transcendental mathematics across machines.
+Abrupt termination, exhausted storage and hostile filesystem races are not
+guaranteed recoverable by this stage. No worker threads were introduced.
+
+After packaging, `tools/verify_local.py <package-receipt>` checks hashes,
+ZIP/inventory integrity, preserved notices and an isolated installation; runs
+thirteen shipped examples in both modes (26 audited runs); compares exact
+batch/RNG/inference/resource evidence and seals; and independently verifies
+each receipt. Packaging results are reported separately because this record
+is included in the immutable archive before those checks run.
+See [BATCHES_STREAMING.md](BATCHES_STREAMING.md) for the API, lifecycle and limits.
+
+## Previous stage: Alpha.27 inference and bounded resources
 
 Verified locally on 2026-10-07, macOS arm64, retained Rust 1.92.0:
 

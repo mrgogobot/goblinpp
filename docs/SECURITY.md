@@ -24,6 +24,18 @@ Everyday runs still preserve the starting source, stdout, stderr, a hashed recei
 
 Neither mode is an OS sandbox or an authenticated authorship claim. In particular, authorized inline Rust runs with the user's full filesystem and network authority.
 
+## Serial batch I/O
+
+Alpha.28 CSV/TSV batch calls use explicit limits and immutable private disk
+snapshots, not whole-file RAM arrays. These limits bound I/O buffers and returned
+batches, **not all process memory**: user copies, arrays and logs can still grow.
+Snapshots preserve the entire input, not just selected columns, so projection
+is not physical blinding. Handles are run-local text identifiers, not secrets.
+Temporary staging is cleaned after ordinary completion; if standalone failure
+preservation itself fails, `RECOVERABLE_STAGING_DIR` identifies retained staging.
+Disk exhaustion, abrupt termination and hostile filesystem races are not
+crash-recovery or sandbox guarantees. See [BATCHES_STREAMING.md](BATCHES_STREAMING.md).
+
 ## Inline Rust
 
 Inline Rust has the authority of the user who runs the compiled program. It can read, modify, transmit, or delete anything that operating-system account can access. Goblin++ does not pretend a content hash is a sandbox.

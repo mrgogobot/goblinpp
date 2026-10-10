@@ -183,6 +183,7 @@ fn build_data_program(
     fs::create_dir(&project)?;
     fs::create_dir(project.join("src"))?;
     let modules = [
+        ("batches", include_str!("batches.rs")),
         ("ast", include_str!("ast.rs")),
         ("constants", include_str!("constants.rs")),
         ("chemistry", include_str!("chemistry.rs")),
@@ -320,6 +321,11 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     };
     let data_finish = if requires_data_runtime(program) {
         "goblin_data_finish(goblin_loop_steps)?;"
+    } else {
+        ""
+    };
+    let data_abort = if requires_data_runtime(program) {
+        "goblin_data_abort();"
     } else {
         ""
     };
@@ -665,7 +671,7 @@ fn goblin_main() -> Result<(), String> {{
     Ok(())
 }}
 
-fn main() {{ if let Err(error) = goblin_main() {{ eprintln!("GOBLIN NATIVE ERROR\n\n{{error}}"); std::process::exit(1); }} }}
+fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN NATIVE ERROR\n\n{{error}}"); std::process::exit(1); }} }}
 "#,
         version = crate::VERSION,
         body = body,
@@ -957,6 +963,9 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             generate_expr(expr)?
         ),
         Expr::Call { name, args } if crate::evaluator::is_data_function(name) => {
+            if crate::batches::is_function(name) {
+                crate::batches::require_arity(name, args.len())?;
+            }
             if crate::random::is_function(name) {
                 crate::random::require_arity(name, args.len())?;
             }
@@ -981,6 +990,7 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                                 || crate::resampling::is_function(name)
                                 || crate::matrix::is_function(name)
                                 || crate::streaming::is_function(name)
+                                || crate::batches::is_function(name)
                             {
                                 format!("Ok(({code})?)")
                             } else {

@@ -1,4 +1,10 @@
-# VS Code extension 0.1.22 (local, unreleased)
+# VS Code extension 0.1.23 (local, unreleased)
+
+Adds eight alpha.28 serial CSV/TSV batch and writer functions to shared
+completion/help/highlighting; explicit budgets, EOF/close and incomplete outputs
+are explained. No executable bundled or automatically installed.
+
+## Previous stage: 0.1.22
 
 Updated for Rust alpha.27: completion, highlighting, help and a bootstrap
 snippet for explicit-stream resampling, normal sampling, flat row-major

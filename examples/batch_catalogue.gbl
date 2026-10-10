@@ -1,0 +1,33 @@
+GO_PARANOID
+GO_LOOP_BUDGET 50000000
+
+# Input paths are relative to this saved program, not the terminal directory.
+# Request two columns, at most 4096 rows / 8 MiB decoded batch / 2 GiB file.
+reader = csv_batch_open("batch_catalogue.csv", ["source_id", "measurement"], 4096, 8388608, 2147483648)
+writer = csv_stream_open("processed.csv", ["source_id", "doubled"], 2147483648)
+count = 0
+total = 0
+
+while true {
+    batch = batch_next(reader)
+    if len(batch) == 0 { break }
+
+    # Batches are flat, row-major arrays of TEXT, including exact catalogue IDs.
+    for offset in range(0, len(batch), 2) {
+        source_id = batch[offset]
+        measurement = parse_number(batch[offset + 1])
+        doubled = measurement * 2
+        stream_write(writer, [source_id, to_text(doubled)])
+        total = total + measurement
+        count = count + 1
+    }
+    # Release this batch before fetching the next; do not accumulate batches.
+    batch = []
+}
+
+batch_close(reader)
+stream_close(writer)
+print("rows = {count}; total measurement = {total}")
+print("Incremental output: RUN_DIR/outputs/processed.csv")
+seal count
+seal total

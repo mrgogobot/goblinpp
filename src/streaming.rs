@@ -190,7 +190,7 @@ fn field(row: &mut Vec<String>, bytes: &mut Vec<u8>) -> Result<()> {
     }
     Ok(())
 }
-fn record(reader: &mut impl Read, delimiter: u8) -> Result<Option<Vec<String>>> {
+pub(crate) fn record(reader: &mut impl Read, delimiter: u8) -> Result<Option<Vec<String>>> {
     let mut row = Vec::new();
     let mut cell = Vec::new();
     let mut size = 0;

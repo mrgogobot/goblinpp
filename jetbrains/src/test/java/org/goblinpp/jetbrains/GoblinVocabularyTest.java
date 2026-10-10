@@ -8,6 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void serialBatchesHaveCompletionAndExplicitLimits() {
+        for (String name : new String[]{"csv_batch_open", "tsv_batch_open", "batch_next", "batch_close", "csv_stream_open", "tsv_stream_open", "stream_write", "stream_close"}) {
+            assertEquals("function", GoblinVocabulary.find(name).kind());
+            assertTrue(GoblinVocabulary.find(name).snippet().contains(name));
+        }
+        assertTrue(GoblinVocabulary.find("csv_batch_open").detail().contains("64 GiB"));
+        assertTrue(GoblinVocabulary.find("batch_next").detail().contains("not a process-wide RAM quota"));
+        assertTrue(GoblinVocabulary.find("csv_stream_open").detail().contains("incomplete"));
+    }
+    @Test
     void inferenceHelpersStateTheirScientificChoices() {
         for (String name : new String[]{"resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal", "csv_scan_stats", "tsv_scan_stats"}) {
             assertEquals("function", GoblinVocabulary.find(name).kind());

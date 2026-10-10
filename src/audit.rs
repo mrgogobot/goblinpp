@@ -27,6 +27,8 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub batch_policy_same: bool,
+    pub batch_evidence_same: bool,
     pub resource_policy_same: bool,
     pub resource_evidence_same: bool,
     pub inference_policy_same: bool,
@@ -73,6 +75,19 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         parser_mode.as_ref().err().map(|e| e.to_string()),
     ));
     let schema = string_at(&receipt, &["schema"]);
+    let batch_evidence_needed = receipt.get("batch_policy").is_some()
+        || receipt.get("batches").is_some()
+        || crate::batches::requires_policy(&receipt);
+    if batch_evidence_needed {
+        checks.push(check(
+            "BATCH_POLICY_SUPPORTED",
+            receipt["batch_policy"] == crate::batches::policy(),
+            None,
+            None,
+            None,
+        ));
+        checks.push(check("BATCH_LIFECYCLE_EVIDENCE",crate::batches::validate_evidence(&receipt),None,None,Some("Structural integrity and input/output binding; not numerical replay or a process RAM quota.".into())));
+    }
     if receipt.get("inference_policy").is_some()
         || receipt.get("inference").is_some()
         || crate::inference_policy::requires_policy(&receipt)
@@ -697,6 +712,12 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 {
                     return false;
                 }
+                if batch_evidence_needed
+                    && (m["batch_policy"] != receipt["batch_policy"]
+                        || m["batches"] != receipt["batches"])
+                {
+                    return false;
+                }
                 let mut expected = receipt["data_imports"].clone();
                 if let Some(entries) = expected.as_array_mut() {
                     for entry in entries {
@@ -726,6 +747,12 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                             return false;
                         };
                         expected_object.remove("path");
+                        if expected["producer"] == "stream_write"
+                            && expected["metadata"]["complete"] == false
+                        {
+                            expected["name"] = expected["metadata"]["requested_name"].clone();
+                            expected["metadata"]["complete"] = Value::Bool(true);
+                        }
                         let path = run_dir.join("native-outputs").join(name);
                         *native == expected
                             && sha256_file(&path).ok().as_deref() == native["sha256"].as_str()
@@ -783,6 +810,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let rng_evidence_same = at(&left, &["rng"]) == at(&right, &["rng"]);
     let resource_policy_same = at(&left, &["resource_policy"]) == at(&right, &["resource_policy"]);
     let resource_evidence_same = at(&left, &["resources"]) == at(&right, &["resources"]);
+    let batch_policy_same = at(&left, &["batch_policy"]) == at(&right, &["batch_policy"]);
+    let batch_evidence_same = at(&left, &["batches"]) == at(&right, &["batches"]);
     let statistics_policy_same =
         at(&left, &["statistics_policy"]) == at(&right, &["statistics_policy"]);
     let math_environment_same =
@@ -804,6 +833,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let execution_engine_same =
         at(&left, &["execution", "engine"]) == at(&right, &["execution", "engine"]);
     let equivalent_result = canonical_program_same
+        && batch_evidence_same
         && inference_evidence_same
         && resource_evidence_same
         && rng_evidence_same
@@ -836,6 +866,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "INFERENCE_POLICY_CHANGE"
     } else if !resource_policy_same {
         "RESOURCE_POLICY_CHANGE"
+    } else if !batch_policy_same {
+        "BATCH_POLICY_CHANGE"
     } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
@@ -850,6 +882,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        batch_policy_same,
+        batch_evidence_same,
         inference_policy_same,
         inference_evidence_same,
         resource_policy_same,
