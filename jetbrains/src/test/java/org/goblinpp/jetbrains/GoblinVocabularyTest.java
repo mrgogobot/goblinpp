@@ -8,6 +8,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void arrayPlotCompletionDocumentsScientificEvidence() {
+        for (String name : new String[]{"plot_line", "plot_scatter", "plot_histogram"}) {
+            var entry = GoblinVocabulary.find(name);
+            assertEquals("function", entry.kind());
+            assertTrue(entry.snippet().contains(name));
+            assertTrue(entry.detail().contains("sidecar"));
+        }
+        assertTrue(GoblinVocabulary.find("plot_line").detail().contains("supplied order"));
+        assertTrue(GoblinVocabulary.find("plot_histogram").detail().contains("2..500"));
+    }
+    @Test
+    void clockCompletionDocumentsCapturedTextAndUtc() {
+        var entry = GoblinVocabulary.find("time_date");
+        assertEquals("function", entry.kind());
+        assertTrue(entry.snippet().contains("utc"));
+        assertTrue(entry.detail().contains("DD-MM-YYYY:HH:MM:SS"));
+        assertTrue(entry.detail().contains("not certified time"));
+    }
+    @Test
     void serialBatchesHaveCompletionAndExplicitLimits() {
         for (String name : new String[]{"csv_batch_open", "tsv_batch_open", "batch_next", "batch_close", "csv_stream_open", "tsv_stream_open", "stream_write", "stream_close"}) {
             assertEquals("function", GoblinVocabulary.find(name).kind());

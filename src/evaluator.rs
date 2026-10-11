@@ -75,7 +75,9 @@ pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 pub fn is_data_function(name: &str) -> bool {
-    crate::random::is_function(name)
+    crate::plots::is_function(name)
+        || crate::clock::is_function(name)
+        || crate::random::is_function(name)
         || crate::resampling::is_function(name)
         || crate::matrix::is_function(name)
         || crate::streaming::is_function(name)
@@ -145,6 +147,7 @@ pub struct Evaluation {
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
     pub interaction: Interaction,
+    pub clock: crate::clock::Clock,
     pub randomness: crate::random::Randomness,
     pub inference: crate::inference_policy::Trace,
     loop_iterations: u64,
@@ -178,6 +181,7 @@ impl Evaluation {
             constants_used: BTreeMap::new(),
             paranoid: false,
             interaction: Interaction::default(),
+            clock: crate::clock::Clock::default(),
             randomness: crate::random::Randomness::default(),
             inference: crate::inference_policy::Trace::default(),
             loop_iterations: 0,
@@ -620,6 +624,32 @@ impl Evaluation {
 
     #[inline(never)]
     fn eval_builtin_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        if crate::plots::is_function(name) {
+            let outputs = crate::plots::call(name, args)?;
+            // Preflight the complete pair before inserting either artifact.
+            for output in &outputs {
+                if self.generated.contains_key(&output.name) || self.batches.has_name(&output.name)
+                {
+                    return Err(GoblinError::artifact(format!(
+                        "Plot output {:?} already exists. Refusing either half of the figure/evidence pair.",
+                        output.name
+                    )));
+                }
+            }
+            let result = outputs[0].name.clone();
+            for output in outputs {
+                self.add_output(output)?;
+            }
+            return Ok(Value::Text(result));
+        }
+        if crate::clock::is_function(name) {
+            let mode = args
+                .first()
+                .map(|v| v.text("time_date() mode"))
+                .transpose()?
+                .unwrap_or("local");
+            return self.clock.capture(mode).map(Value::Text);
+        }
         if crate::resampling::is_function(name) || crate::matrix::is_function(name) {
             let result = if crate::resampling::is_function(name) {
                 crate::resampling::call(name, args, &mut self.randomness)?
@@ -1889,6 +1919,12 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
 /// Validate before evaluating arguments; never silently change refusal ordering
 /// or prompt/write side effects while keeping the dispatch frame off the stack.
 fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::plots::is_function(name) {
+        return crate::plots::require_arity(name, args.len());
+    }
+    if crate::clock::is_function(name) {
+        return require_args_one_of(name, args, &[0, 1]);
+    }
     if crate::batches::is_function(name) {
         return crate::batches::require_arity(name, args.len());
     }

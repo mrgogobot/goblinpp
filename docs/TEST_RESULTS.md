@@ -1,4 +1,141 @@
-# Alpha.28 serial table batches (local, unreleased)
+# Alpha.31 embedded plot provenance (local, unreleased)
+
+Verified locally on 2026-10-11, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **363 passed**, 0 failed/ignored/filtered in the final full
+  `cargo test --locked --offline --all-targets` suite. Formatting,
+  warning-denying Clippy and optimized build pass. No new dependency crates.
+- **18 additional provenance gates** (6 unit/compatibility + 12 integration)
+  cover independent canonical manifest hashes, PNG/SVG embedding, repeat
+  exact bytes, settings/data/order/name changes, stripping and full ordinary
+  rehash attempts, duplicate metadata, altered SHA-256 with recomputed PNG CRC,
+  unsafe names, compressed/oversized/noncanonical/unknown/duplicate JSON fields,
+  malformed PNG signatures/lengths/CRC/trailing bytes, invalid SVG escaping/
+  UTF-8/entities, exact legacy v1 reconstruction, old-freeze migration and
+  receipt/pair policy mismatch. The original 30 plotting gates also pass,
+  including interpreted/audited-native/standalone output parity.
+- Existing VS Code 0.1.25: **20 passed**, 0 failed/skipped, including real
+  alpha.31 CLI preview/run/compile/verify and `PLOT_PROVENANCE` checks.
+  Its installer is retained unchanged: no new function signatures or reinstall.
+- Existing JetBrains 0.3.15 installer/source retained unchanged from the
+  alpha.30 local stage's 18 passing tests below. No new IDE-version or new
+  JetBrains test-run claim is made for this metadata-only engine stage.
+- Report-checker Python tests: **14 passed**. All **179** tracked Chinese/
+  community-review files remain unchanged.
+- `tools/verify_plot_compat.py` extracted the immutable real alpha.30 bundle
+  into a disposable directory. The new engine verified its eight plot/evidence
+  artifacts by original v1 reconstruction, without claiming embedded links.
+  Its old plot freeze inspected correctly, refused new v2 execution before
+  output, and succeeded after explicit revision and a child freeze. Its old
+  non-plot energy freeze still executed and verified. All **seven** legacy
+  FITS/output-demo artifacts retained exact hashes, byte counts and metadata.
+- Original alpha.30 ZIP and both retained editor installer hashes were checked
+  unchanged. No commit, push, public release or user-prefix installation is
+  performed by these checks.
+
+`tools/verify_local.py <package-receipt>` independently checks all ZIP/plugin
+hashes and inventory files, installs only under a temporary prefix, and exercises
+fifteen examples in both modes (**30 audited runs**). It recomputes canonical
+manifest digests with Python, reads PNG iTXt/CRC and SVG metadata independently,
+checks all four fields, and compares exact interpreted/compiled artifact hashes
+(clock outputs are deliberately separate readings). Package validation occurs
+after creating the immutable ZIP; its result is included in the handoff.
+
+This establishes tested consistency/reconstruction, **not authenticated authorship,
+certified time, an OS sandbox or proof of scientific correctness**. A complete
+internally consistent replacement still needs a trusted original digest or
+future signature to distinguish it.
+
+## Previous local stage: Alpha.30 evidence-first array plotting
+
+Verified locally on 2026-10-11, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **345 passed**, 0 failed/ignored/filtered in the full
+  `cargo test --locked --offline --all-targets` suite. Formatting,
+  warning-denying Clippy and optimized build pass. No dependency additions;
+  Cargo.lock changes only the Goblin++ version.
+- Thirty plotting gates cover line/scatter/histogram and PNG/SVG reconstruction,
+  exact f64 bits/signed zero and input order, SI conversion and independent
+  axis dimensions, mismatched/empty/nonnumeric/mixed-unit/nonfinite refusal,
+  histogram edge inclusion/counts/constant data/collapsed edges, safe spans,
+  bin types/limits, filenames, escaped SVG Unicode, missing PNG glyph refusal,
+  label limits/bidirectional controls, case-sensitive units, malformed evidence,
+  wrong arity/shadowing, atomic output-pair collisions, missing sidecars,
+  changed settings/images and resealed tampering, native/standalone parity,
+  pinned policy and old freeze/receipt compatibility, 100,000-item boundaries,
+  and distinct tick labels for narrow/adjacent-value ranges.
+- VS Code 0.1.25: **20 passed**, 0 failed/skipped, including real preview,
+  interpreted/compiled plotting and independent run verification. Both
+  editors use **275 unique vocabulary entries**.
+- JetBrains 0.3.15: **18 passed**, 0 failed/skipped; offline package build
+  against cached IntelliJ 2024.3.7/JDK 21 passes. The packaged vocabulary
+  and version were checked. This is not certification of every IDE build.
+- Report-checker Python tests: **14 passed**. All **179** tracked Chinese/
+  community-review files remain byte-identical to pre-change HEAD.
+- The previous alpha.29 bundled engine and alpha.30 were both run on the same
+  `output_demo.gbl`/sample FITS bytes. All **seven output artifacts**, including
+  its **three FITS plots**, matched exactly in SHA-256, byte count and metadata.
+- A generated PNG was visually inspected for readable axes/ticks, case-correct
+  units and unclipped labels. The exact data/settings sidecar was independently
+  verified; tick-display rounding never changes authoritative values or seals.
+
+`tools/verify_local.py <package-receipt>` checks archive/plugin hashes and every
+inventory item, installs under a temporary prefix, and exercises fifteen shipped
+examples in both modes (**30 audited runs**). It independently verifies receipts
+and plotting reconstruction, checks sidecar links/hashes and preserves existing
+clock/RNG/inference/resource parity rules. Packaging results are reported after
+creation because this record is included in the immutable archive beforehand.
+
+This is local evidence, not new Linux/Windows CI or full WB-3 validation.
+Plot reconstruction is consistency checking, not authenticated authorship.
+No Git commit, push, GitHub/Zenodo publication or user-prefix installation was
+performed for this local build. Error bars, multiple series and log axes are
+later stages. See [ARRAY_PLOTS.md](ARRAY_PLOTS.md).
+
+## Previous stage: Alpha.29 captured local/UTC date/time
+
+Verified locally on 2026-10-11, macOS arm64, retained Rust 1.92.0:
+
+- Rust: **315 passed**, 0 failed/ignored/filtered, full
+  `cargo test --locked --offline --all-targets`. Formatting,
+  warning-denying Clippy and optimized build pass. Cargo.lock changes only
+  the Goblin++ version; no new dependency or compiler upgrade.
+- Twenty clock gates cover UTC/default/explicit local calls, leap day,
+  date rollover, non-hour offsets, repeated daylight-saving local time,
+  pre-epoch dates, four-digit years, strict modes/types/arity, discarded
+  results/shadowing, call/replay budgets, snapshot strings, preserved later
+  failures, clock preview, native replay/export parity, standalone evidence,
+  resealed tampering/removal detection, old freeze/receipt compatibility and
+  exact clock-input diffs.
+- VS Code 0.1.24: **19 passed**, 0 failed/skipped, including real CLI
+  clock preview and interpreted/compiled execution with independent
+  verification. Shared vocabulary: 272 unique spellings.
+- JetBrains 0.3.14: **17 passed**, 0 failed/skipped; offline build passes
+  against cached IntelliJ 2024.3.7/JDK 21. This does not certify every IDE
+  version or a new live CLion/PyCharm installation.
+- Report-checker Python tests: **14 passed**. All **179** tracked Chinese/
+  community-review files remain byte-identical to pre-change HEAD.
+
+Clock verification checks preserved evidence consistency, not actual clock
+accuracy or independently certified time. Display text uses second resolution;
+receipt UTC instants retain nanoseconds and captured offsets. Successful
+compiled audits replay reference readings; separate executions naturally have
+different clock inputs. No authoritative seals are rounded to conceal that.
+
+After packaging, `tools/verify_local.py <package-receipt>` checks hashes,
+ZIP/inventory integrity and isolated installation; exercises fourteen shipped
+examples in both modes (28 audited runs); independently verifies every receipt;
+and checks exact native/reference clock parity within each compiled run.
+It does not require separate live-clock runs to have identical timestamp seals.
+Packaging results are reported separately because this record is included in
+the immutable archive before those checks run.
+
+The alpha.28 large-file memory benchmark below is retained historical evidence,
+not a newly repeated alpha.29 RSS benchmark. No cross-platform CI claim or
+GitHub/Zenodo publication is made by this local stage.
+See [CLOCK_TIME.md](CLOCK_TIME.md) and `examples/clock_time.gbl`.
+
+## Previous stage: Alpha.28 serial table batches
 
 Verified locally on 2026-10-10, macOS arm64, retained Rust 1.92.0:
 

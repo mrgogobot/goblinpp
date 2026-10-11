@@ -57,7 +57,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -69,6 +69,18 @@ def main() -> None:
                 exact_evidence = {key: report[key] for key in
                                   ("rng_policy", "rng", "inference_policy", "inference",
                                    "resource_policy", "resources", "batch_policy", "batches", "sealed_artifacts")}
+                if example != "clock_time":
+                    exact_evidence["generated_artifacts"] = report["generated_artifacts"]
+                if example == "clock_time":
+                    # Separate executions read different clocks; compare no rounded seals.
+                    exact_evidence.pop("sealed_artifacts")
+                    assert len(report["clock"]["readings"]) == 2
+                    assert report["clock_policy"]["authority"] == "not-certified-time"
+                    if extra:
+                        native = json.loads((root / directory / "native-data.json").read_text())
+                        assert native["clock"] == report["clock"]
+                    stamps = report["clock"]["readings"]
+                    assert (root / directory / "outputs/run_time.txt").read_text() == f"Local: {stamps[0]['value']}\nUTC: {stamps[1]['value']}\n"
                 if parity_evidence is not None:
                     assert exact_evidence == parity_evidence, example
                 parity_evidence = exact_evidence
@@ -124,6 +136,52 @@ def main() -> None:
                     assert report["batches"]["readers"][0]["rows"] == 4
                     assert report["generated_artifacts"][0]["metadata"]["complete"] is True
                     assert (root / directory / "outputs/processed.csv").read_text() == "source_id,doubled\n9007199254740993,5\n18446744073709551615,8\n42,3\n7,6\n"
+                if example == "array_plots":
+                    assert report["plot_policy"] == "goblin.array-plots.v2"
+                    assert len(report["generated_artifacts"]) == 8
+                    descriptors = {item["name"]: item for item in report["generated_artifacts"]}
+                    for name in ["motion.png", "motion.svg", "measurements.png", "mass_distribution.svg"]:
+                        figure = (root / directory / "outputs" / name).read_bytes()
+                        sidecar = (root / directory / "outputs" / f"{name}.plot.json").read_bytes()
+                        assert descriptors[name]["metadata"]["evidence_sha256"] == hashlib.sha256(sidecar).hexdigest()
+                        settings = json.loads(sidecar)
+                        core = {key: settings[key] for key in ("schema", "input", "derived")}
+                        canonical = json.dumps(core, sort_keys=True, ensure_ascii=True,
+                                               separators=(",", ":")).encode()
+                        manifest_hash = hashlib.sha256(canonical).hexdigest()
+                        assert settings["manifest_sha256"] == manifest_hash
+                        assert descriptors[name]["metadata"]["manifest_sha256"] == manifest_hash
+                        if name.endswith(".png"):
+                            import struct
+                            import zlib
+                            offset = 8
+                            found = []
+                            while offset < len(figure):
+                                size = struct.unpack(">I", figure[offset:offset+4])[0]
+                                kind = figure[offset+4:offset+8]
+                                data = figure[offset+8:offset+8+size]
+                                crc = struct.unpack(">I", figure[offset+8+size:offset+12+size])[0]
+                                assert zlib.crc32(kind + data) == crc
+                                if kind == b"iTXt" and data.startswith(b"Goblin++ provenance\0"):
+                                    prefix = b"Goblin++ provenance\0\0\0\0\0"
+                                    assert data.startswith(prefix)
+                                    found.append(json.loads(data[len(prefix):]))
+                                offset += size + 12
+                            assert offset == len(figure) and len(found) == 1
+                            embedded = found[0]
+                        else:
+                            from xml.etree import ElementTree as ET
+                            tree = ET.fromstring(figure)
+                            metadata = tree.findall("{http://www.w3.org/2000/svg}metadata")
+                            assert len(metadata) == 1 and metadata[0].attrib["id"] == "goblin-provenance"
+                            embedded = json.loads(metadata[0].text)
+                        assert embedded == {"schema": "goblin.plot-provenance.v1",
+                                            "plot_policy": report["plot_policy"],
+                                            "manifest_sha256": manifest_hash,
+                                            "evidence_name": f"{name}.plot.json"}
+                        assert settings["figure_sha256"] == hashlib.sha256(figure).hexdigest()
+                        assert settings["derived"]["sampling"] == "none"
+                        assert settings["derived"]["axis_scale"] == "linear-SI"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

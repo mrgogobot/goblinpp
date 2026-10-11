@@ -1,4 +1,31 @@
-# Goblin++ Rust Engine 0.1.0-alpha.28 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.31 (local, unreleased)
+
+Alpha.31 embeds a versioned provenance link in standard PNG/SVG array plots.
+Exact data/settings form a canonical manifest core; its SHA-256 is embedded
+before the finished image is hashed. Receipts link image, sidecar and manifest
+digests. Verification checks metadata and reconstructs exact bytes. No circular
+hashes, hidden timestamps, new codec, signing or authorship claim. Alpha.30 plot
+evidence remains verifiable; frozen old plotting programs require an explicit
+revision/child freeze to adopt policy v2. Existing FITS plots are unchanged.
+See [Plot provenance](docs/PLOT_PROVENANCE.md). Both existing alpha.30 editor
+plugins remain compatible; Rust stays 1.92.0 with no new dependencies.
+
+Alpha.30 adds array-based `plot_line`, `plot_scatter` and `plot_histogram`
+in PNG/SVG, with strict numeric/unit checks and no silent sampling or dropped
+rows. Each figure includes exact data/settings evidence; `goblin++ verify`
+rebuilds and checks the pair. Interpreter/native output parity is enforced.
+See [Array plotting guide](docs/ARRAY_PLOTS.md) and `examples/array_plots.gbl`.
+VS Code 0.1.25 and JetBrains 0.3.15 include completion/help. Rust stays 1.92.0;
+no new dependencies. Multi-series, error bars and log axes are future stages.
+
+Alpha.29 adds `time_date()` for captured system local date/time and
+`time_date("utc")` for UTC, as ordinary text in **DD-MM-YYYY:HH:MM:SS** format.
+Use it in everyday programs or scientific exports; stored values never refresh
+on output. Audited receipts preserve every reading and its offset. Compiled
+audit comparisons replay the same readings; standalone programs read their own
+clock. This is system time, **not certified time or a monotonic timer**.
+See [Captured date/time](docs/CLOCK_TIME.md) and `examples/clock_time.gbl`.
+Both editor plugins include completion/help. Rust stays at 1.92.0.
 
 Alpha.28 adds serial CSV/TSV batches and incremental file writers in both
 engines: **load, process, release, next**. Explicit row/decoded-byte/file budgets,

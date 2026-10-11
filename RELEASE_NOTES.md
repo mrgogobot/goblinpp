@@ -1,4 +1,64 @@
-# 0.1.0-alpha.28 (local, unreleased, serial table batches)
+# 0.1.0-alpha.31 (local, unreleased, embedded plot provenance)
+
+- Standard PNG uncompressed iTXt/SVG metadata embed the SHA-256 of an
+  independent canonical data/settings manifest, without circular hashes.
+- Finished figure/sidecar hashes and manifest links remain in the run receipt;
+  verification checks policy, metadata and exact independent reconstruction.
+- Missing/duplicate/changed provenance, malformed lengths/CRC, unsupported
+  encodings, unsafe filenames and altered links refuse. Same inputs/settings/
+  filename under the same policy reproduce identical bytes; no hidden timestamp.
+- Historical alpha.30 v1 plots still verify unchanged. New plots use v2;
+  frozen older plotting programs require an explicit revision/child freeze.
+- Existing FITS outputs retain their bytes. Interpreter/native parity;
+  both existing alpha.30 editor plugins retained, no reinstall needed.
+- Checksum-only, not signing, secrecy, fraud detection or certified provenance.
+  Trusted external hashes/signatures remain necessary against complete rewrites.
+- Rust stays 1.92.0; no new dependencies or Chinese/community-review edits.
+
+See [PLOT_PROVENANCE.md](docs/PLOT_PROVENANCE.md).
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.30 (evidence-first array plotting)
+
+- `plot_line`, `plot_scatter`, `plot_histogram` accept numeric arrays and explicit
+  labels, output PNG/SVG, and preserve all points. x/y lengths and dimensions
+  within each axis must match; nonfinite/missing/nonnumeric data refuses.
+- Actual SI units, linear axes, ticks/grid, supplied line order, explicit
+  histogram bins and zero count baseline. No hidden sorting or sampling.
+- Exact data/settings sidecars with linked hashes; independent verification
+  rerenders figure bytes, including resealed-image tamper refusal. Both names
+  are collision-checked before either output is added.
+- Native/interpreter parity and standalone evidence. Plot policy pinned in new
+  freezes; historical non-plot evidence remains supported.
+- Case-sensitive PNG labels; Unicode via escaped SVG, explicit refusal for
+  unsupported PNG characters. No silent truncation or unit-case changes.
+- VS Code 0.1.25 and JetBrains 0.3.15. Rust stays 1.92.0, no new dependencies.
+  Error bars/multi-series/log axes remain later work. AES-256-GCM and
+  COMPLETELY_MAD remain roadmap proposals. Chinese/community-review unchanged.
+
+See [ARRAY_PLOTS.md](docs/ARRAY_PLOTS.md) and `examples/array_plots.gbl`.
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.29 (captured date/time)
+
+- `time_date()` and `time_date("local")` capture system local date/time;
+  `time_date("utc")` captures UTC. Immutable ordinary text, formatted
+  DD-MM-YYYY:HH:MM:SS, usable with or without GO_PARANOID/seal.
+- Versioned clock policy/readings in run receipts and new freezes, exact
+  native/reference replay, standalone native evidence, independent consistency
+  and tamper checks, and CLOCK_INPUT_CHANGE diff classification.
+- Historical non-clock receipts/freezes remain supported. Explicit revision
+  is required before an unpinned older frozen program adopts clock calls.
+- VS Code 0.1.24 and JetBrains 0.3.14 add completion/help/highlighting.
+  No compiler upgrade or new dependencies; Rust remains 1.92.0.
+- System clocks are not certified time. AES-256-GCM encryption and
+  COMPLETELY_MAD strict policy remain roadmap proposals, not shipped features.
+  Chinese/community-review material is unchanged.
+
+See [CLOCK_TIME.md](docs/CLOCK_TIME.md) and `examples/clock_time.gbl`.
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.28 (serial table batches)
 
 - Eight explicit CSV/TSV batch/writer functions, available in interpreted,
   audited compiled and standalone execution. Flat row-major text batches retain

@@ -69,6 +69,8 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "inference_policy": crate::inference_policy::policy(),
         "resource_policy": crate::resources::policy(),
         "batch_policy": crate::batches::policy(),
+        "clock_policy": crate::clock::policy(),
+        "plot_policy": crate::plots::POLICY,
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
@@ -150,6 +152,22 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
         if freeze_path(source).exists() {
             let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            if frozen["plot_policy"] != crate::plots::POLICY
+                && crate::plots::program_uses_plots(&current.program)
+            {
+                return Err(protocol(
+                    "PLOT_POLICY_NOT_FROZEN",
+                    "This historical freeze did not pin the current plot provenance policy. Create a revision and freeze the child before plotting.",
+                ));
+            }
+            if frozen.get("clock_policy").is_none()
+                && crate::clock::program_uses_clock(&current.program)
+            {
+                return Err(protocol(
+                    "CLOCK_POLICY_NOT_FROZEN",
+                    "This historical freeze did not pin clock inputs. Create an explicit revision and freeze the child before using time_date().",
+                ));
+            }
             if frozen.get("batch_policy").is_none()
                 && crate::batches::program_uses_batches(&current.program)
             {
@@ -193,12 +211,21 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             let absolute_binary = binary.canonicalize()?;
             let native_results = run_dir.join("native-results.tsv");
             let absolute_native_results = run_dir.canonicalize()?.join("native-results.tsv");
+            let clock_replay = run_dir.canonicalize()?.join("clock-replay.json");
+            write_private_json_exclusive(
+                &clock_replay,
+                &serde_json::to_value(evaluation.clock.evidence())?,
+            )?;
+            receipt["execution"]["compiler"]["clock_replay_path"] = json!("clock-replay.json");
+            receipt["execution"]["compiler"]["clock_replay_sha256"] =
+                json!(sha256_file(&clock_replay)?);
             let mut child = Command::new(&absolute_binary)
                 .args(&options.program_args)
                 .current_dir(source_parent)
                 .env("GOBLIN_NATIVE_RESULT_PATH", &absolute_native_results)
                 .env("GOBLIN_SOURCE_ARGV0", source.to_string_lossy().as_ref())
                 .env("GOBLIN_STDIN_REPLAY", "1")
+                .env("GOBLIN_CLOCK_REPLAY_PATH", &clock_replay)
                 .env("GOBLIN_NATIVE_DATA_BASE", source_parent.canonicalize()?)
                 .env(
                     "GOBLIN_NATIVE_DATA_PATH",
@@ -293,6 +320,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     receipt["inference"] = evaluation.inference.evidence();
     receipt["resources"] = evaluation.resource_evidence();
     receipt["batches"] = evaluation.batches.evidence();
+    receipt["clock"] = serde_json::to_value(evaluation.clock.evidence())?;
     if evaluation.interaction.evidence_needed() {
         let evidence_path = run_dir.join("interaction.json");
         let evidence = json!({
@@ -675,6 +703,22 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             ));
         }
         let frozen = report.receipt.as_ref().unwrap();
+        if !crate::plots::frozen_policy_matches(frozen) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("PLOT_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "PLOT_POLICY_CHANGED_AFTER_FREEZE",
+                "Create a revision and freeze the child to adopt a different plotting contract.",
+            ));
+        }
+        if !crate::clock::frozen_policy_matches(frozen) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("CLOCK_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "CLOCK_POLICY_CHANGED_AFTER_FREEZE",
+                "Create an explicit revision and freeze the child to adopt a different clock contract.",
+            ));
+        }
         if frozen
             .get("batch_policy")
             .is_some_and(|p| p != &crate::batches::policy())
@@ -932,6 +976,9 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
     generated.extend(expected.batches.descriptors(true)?);
     generated.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
     if manifest["schema"] != "goblin.native-data.v1"
+        || manifest["clock_policy"] != crate::clock::policy()
+        || manifest["plot_policy"] != crate::plots::POLICY
+        || manifest["clock"] != serde_json::to_value(expected.clock.evidence())?
         || manifest["resource_policy"] != crate::resources::policy()
         || manifest["resources"] != expected.resource_evidence()
         || manifest["batch_policy"] != crate::batches::policy()

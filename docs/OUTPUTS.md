@@ -1,6 +1,13 @@
 # Audited files and plots
 
-Goblin++ 0.1.0-alpha.19 can produce text, Markdown, CSV, TSV, JSON, SVG, and PNG artifacts in interpreted and audited compiled runs. Generated files never appear beside the source program. They are created exclusively inside the unique run directory:
+Alpha.31 embeds manifest links in general array-plot PNG/SVG; see
+[PLOT_PROVENANCE.md](PLOT_PROVENANCE.md). Legacy FITS plots stay unchanged.
+Alpha.30 adds general array plotting in both engines. Start with
+[ARRAY_PLOTS.md](ARRAY_PLOTS.md): `plot_line`, `plot_scatter`, `plot_histogram`
+preserve exact data/settings and support reconstruction verification. They do
+not sample rows. The FITS APIs below retain historical sampling behavior.
+
+Goblin++ through alpha.30 can produce text, Markdown, CSV, TSV, JSON, SVG, and PNG artifacts in interpreted and audited compiled runs. Generated files never appear beside the source program. They are created exclusively inside the unique run directory:
 
 ```text
 RUN_DIR/outputs/filename
@@ -12,7 +19,7 @@ Generated-output calls do not require `GO_PARANOID` or `seal`. They receive the 
 
 ## Text
 
-`write_text` accepts a filename followed by one or more values. Each value becomes one line. Text values use the same `{variable}` interpolation as `print`.
+`write_text` accepts a filename followed by one or more values. Each value becomes one line. Since alpha.20, source string templates capture values immediately; stored text is never interpolated again at write time.
 
 ```goblin
 samples = 12
@@ -113,5 +120,5 @@ Editing, replacing, truncating, or deleting an output causes verification to fai
 - Both engines share the Rust output helpers. Audited compiled runs compare native bytes against reference output; standalone binary output has a separate boundary described in [the native I/O guide](DATA_MODULES_NATIVE.md).
 - Each output is limited to 64 MiB in this first stage.
 - Output filenames are flat and live under `RUN_DIR/outputs`.
-- Bulk FITS-to-table export awaits explicit row-selection and filtering semantics.
+- Bulk FITS subsets are available via explicit cuts and `fits_export_csv`/`fits_export_tsv`; see [FITS_SUBSETS.md](FITS_SUBSETS.md).
 - FITS writing is not yet implemented; a trustworthy writer must preserve schema, headers, units, and provenance explicitly.

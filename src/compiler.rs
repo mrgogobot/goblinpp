@@ -183,6 +183,9 @@ fn build_data_program(
     fs::create_dir(&project)?;
     fs::create_dir(project.join("src"))?;
     let modules = [
+        ("plots", include_str!("plots.rs")),
+        ("plot_provenance", include_str!("plot_provenance.rs")),
+        ("clock", include_str!("clock.rs")),
         ("batches", include_str!("batches.rs")),
         ("ast", include_str!("ast.rs")),
         ("constants", include_str!("constants.rs")),
@@ -963,6 +966,14 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             generate_expr(expr)?
         ),
         Expr::Call { name, args } if crate::evaluator::is_data_function(name) => {
+            if crate::plots::is_function(name) {
+                crate::plots::require_arity(name, args.len())?;
+            }
+            if crate::clock::is_function(name) && args.len() > 1 {
+                return Err(GoblinError::compile(
+                    "time_date() expects zero or one text argument.",
+                ));
+            }
             if crate::batches::is_function(name) {
                 crate::batches::require_arity(name, args.len())?;
             }
@@ -987,6 +998,8 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                         // the interpreter; never consume a later draw.
                         Ok(
                             if crate::random::is_function(name)
+                                || crate::clock::is_function(name)
+                                || crate::plots::is_function(name)
                                 || crate::resampling::is_function(name)
                                 || crate::matrix::is_function(name)
                                 || crate::streaming::is_function(name)

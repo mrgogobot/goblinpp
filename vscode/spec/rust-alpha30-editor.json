@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.28",
+  "runtime": "goblin++ 0.1.0-alpha.30",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "statements": [
@@ -136,6 +136,9 @@
     }
   ],
   "functions": [
+    {"spelling":"plot_line","kind":"function","detail":"PNG/SVG array line plot: filename, x, y, title, x label, y label. Every finite point in supplied order; matching lengths, homogeneous units per axis, SI labels, exact data/settings sidecar and reconstruction verification.","snippet":"plot_line(\"${1:motion.png}\", ${2:x}, ${3:y}, \"${4:Motion}\", \"${5:time}\", \"${6:distance}\")"},
+    {"spelling":"plot_scatter","kind":"function","detail":"PNG/SVG array scatter: filename, x, y, title, x label, y label. No sampling/dropped rows; matching lengths, homogeneous units per axis, SI labels, exact data/settings sidecar. Unicode labels: SVG.","snippet":"plot_scatter(\"${1:measurements.svg}\", ${2:x}, ${3:y}, \"${4:Measurements}\", \"${5:x}\", \"${6:y}\")"},
+    {"spelling":"plot_histogram","kind":"function","detail":"PNG/SVG numeric array histogram: filename, values, explicit integer bins 2..500, title, x label. Uniform bins, final right edge included, count baseline zero; all values preserved in exact data/settings sidecar.","snippet":"plot_histogram(\"${1:distribution.png}\", ${2:values}, ${3:20}, \"${4:Distribution}\", \"${5:measurement}\")"},
     {"spelling":"resample","kind":"function","detail":"Independent numeric sample with replacement; explicit pre-seeded stream required, positive count <=100,000; units preserved.","snippet":"resample(${1:values}, ${2:count}, ${3:0})"},
     {"spelling":"bootstrap_mean","kind":"function","detail":"IID replacement bootstrap mean replicates; explicit repetitions and seeded stream; no implicit interval or seed. At most 1,000,000 sample selections.","snippet":"bootstrap_mean(${1:values}, ${2:1000}, ${3:0})"},
     {"spelling":"bootstrap_median","kind":"function","detail":"IID replacement bootstrap median replicates; explicit repetitions and seeded stream; no automatic confidence interval.","snippet":"bootstrap_median(${1:values}, ${2:1000}, ${3:0})"},
@@ -151,6 +154,7 @@
     {"spelling":"csv_batch_open","kind":"function","detail":"Serial CSV reader: path, exact columns, row limit, decoded batch byte limit (<=8 MiB), file limit (<=64 GiB). Snapshots to disk first; returns run-local text handle, not a security capability. Exact IDs remain text.","snippet":"csv_batch_open(\"${1:data.csv}\", [\"${2:id}\", \"${3:value}\"], ${4:4096}, ${5:8388608}, ${6:2147483648})"},
     {"spelling":"tsv_batch_open","kind":"function","detail":"Serial TSV reader with explicit row/batch/file limits. Requested columns in order; immutable disk snapshot; exact IDs remain text. Must read EOF and close.","snippet":"tsv_batch_open(\"${1:data.tsv}\", [\"${2:id}\", \"${3:value}\"], ${4:4096}, ${5:8388608}, ${6:2147483648})"},
     {"spelling":"batch_next","kind":"function","detail":"Next bounded flat row-major TEXT batch; empty means observed EOF. Release batch=[] before next read; not a process-wide RAM quota.","snippet":"batch_next(${1:reader})"},
+    {"spelling":"time_date","kind":"function","detail":"Capture system local time as DD-MM-YYYY:HH:MM:SS text; time_date(\"utc\") captures UTC. Fixed at call time. Optional; clock readings and UTC offsets recorded in audited runs; not certified time. Maximum 16,384 calls.","snippet":"time_date(${1:\"utc\"})"},
     {"spelling":"batch_close","kind":"function","detail":"Close reader only after observed EOF. Early/double close refuses; unfinished lifecycle prevents PASS.","snippet":"batch_close(${1:reader})"},
     {"spelling":"csv_stream_open","kind":"function","detail":"Create exclusive incremental CSV output with headers and explicit file byte budget <=64 GiB. Returns run-local writer handle; failed run output marked .partial and incomplete.","snippet":"csv_stream_open(\"${1:processed.csv}\", [\"${2:id}\", \"${3:value}\"], ${4:2147483648})"},
     {"spelling":"tsv_stream_open","kind":"function","detail":"Create incremental quoted TSV output; filename, header array, explicit file byte limit. No overwrites; failed-run outputs incomplete.","snippet":"tsv_stream_open(\"${1:processed.tsv}\", [\"${2:id}\", \"${3:value}\"], ${4:2147483648})"},

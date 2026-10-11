@@ -1,0 +1,15 @@
+GO_PARANOID
+
+# Array plots use every point and append the actual SI units to axis labels.
+elapsed = [0 s, 1 s, 2 s, 3 s, 4 s]
+distance = [0 m, 2 m, 5 m, 9 m, 14 m]
+measurements = [1 kg, 1.2 kg, 1.4 kg, 1.4 kg, 1.8 kg, 2 kg]
+
+plot_line("motion.png", elapsed, distance, "Distance over time", "elapsed time", "distance")
+plot_line("motion.svg", elapsed, distance, "Distance over time", "elapsed time", "distance")
+plot_scatter("measurements.png", elapsed, distance, "Measured positions", "elapsed time", "distance")
+plot_histogram("mass_distribution.svg", measurements, 5, "Mass measurements", "mass")
+
+print("Figures and exact data/settings sidecars are in RUN_DIR/outputs.")
+seal distance
+seal measurements

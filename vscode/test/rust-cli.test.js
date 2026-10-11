@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.28 CLI check, run, and verify contracts", {
+test("actual alpha.31 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,36 @@ test("actual alpha.28 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.28/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.31/);
+
+  const clock = path.join(root, "clock.gbl");
+  const plots = path.join(root, "plots.gbl");
+  fs.writeFileSync(plots, 'GO_PARANOID\nplot_line("motion.svg", [0 s, 1 s], [0 m, 2 m], "Motion", "time", "distance")\n');
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", plots, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    const receipt = JSON.parse(fs.readFileSync(path.join(directory, "receipt.json"), "utf8"));
+    assert.equal(receipt.plot_policy, "goblin.array-plots.v2");
+    assert.equal(receipt.generated_artifacts.length, 2);
+    const verified = invoke(core.goblinArgs("verify", directory));
+    assert.equal(verified.status, 0, verified.stderr);
+    assert.match(verified.stdout, /PLOT_RECONSTRUCTION:motion.svg/);
+    assert.match(verified.stdout, /PLOT_PROVENANCE:motion.svg/);
+  }
+  fs.writeFileSync(clock, 'GO_PARANOID\na = time_date()\nb = time_date("utc")\nprint("local = {a}; UTC = {b}")\nseal b\n');
+  const clockPreview = invoke(core.goblinArgs("check", clock, ["--json"]));
+  assert.equal(clockPreview.status, 0, clockPreview.stderr);
+  assert.equal(JSON.parse(clockPreview.stdout).clock_preview.readings.length, 2);
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", clock, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    const receipt = JSON.parse(fs.readFileSync(path.join(directory, "receipt.json"), "utf8"));
+    assert.equal(receipt.clock.readings.length, 2);
+    assert.equal(receipt.clock.readings[1].mode, "utc");
+    assert.equal(invoke(core.goblinArgs("verify", directory)).status, 0);
+  }
 
   const source = path.join(root, "everyday.gbl");
   fs.writeFileSync(source, 'x = 2\nprint("x = {x}")\nwrite_text("answer.txt", "x = {x}")\n');

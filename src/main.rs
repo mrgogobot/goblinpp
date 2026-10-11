@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 use clap::{Args, Parser, Subcommand};
 use goblinpp::ast::Stmt;
 use goblinpp::audit::{diff_runs, verify_run};
@@ -398,6 +399,9 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "resource_policy": goblinpp::resources::policy(),
         "resources_preview": evaluation.resource_evidence(),
         "batch_policy": goblinpp::batches::policy(),
+        "clock_policy": goblinpp::clock::policy(),
+        "plot_policy": goblinpp::plots::POLICY,
+        "clock_preview": evaluation.clock.evidence(),
         "batches_preview": evaluation.batches.evidence(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
@@ -510,6 +514,24 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
             ));
         }
         let frozen = freeze.receipt.as_ref().unwrap();
+        if !goblinpp::plots::frozen_policy_matches(frozen)
+            || (frozen["plot_policy"] != goblinpp::plots::POLICY
+                && goblinpp::plots::program_uses_plots(&parsed.program))
+        {
+            return Err(GoblinError::protocol(
+                "PLOT_POLICY_CHANGED_AFTER_FREEZE",
+                "Plotting is not pinned by this freeze. Compilation refused; create a revision and freeze the child.",
+            ));
+        }
+        if !goblinpp::clock::frozen_policy_matches(frozen)
+            || (frozen.get("clock_policy").is_none()
+                && goblinpp::clock::program_uses_clock(&parsed.program))
+        {
+            return Err(GoblinError::protocol(
+                "CLOCK_POLICY_CHANGED_AFTER_FREEZE",
+                "Clock inputs are not pinned by this freeze. Compilation refused; create an explicit revision and freeze the child.",
+            ));
+        }
         if !goblinpp::batches::frozen_policy_matches(frozen)
             || (frozen.get("batch_policy").is_none()
                 && goblinpp::batches::program_uses_batches(&parsed.program))
@@ -521,7 +543,7 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "clock_policy":goblinpp::clock::policy(), "plot_policy":goblinpp::plots::POLICY, "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -676,6 +698,15 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             yn(report.batch_policy_same),
             yn(report.batch_evidence_same)
         );
+        println!(
+            "CLOCK_POLICY_SAME ............ {}\nCLOCK_READINGS_SAME .......... {}",
+            yn(report.clock_policy_same),
+            yn(report.clock_readings_same)
+        );
+        println!(
+            "PLOT_POLICY_SAME ............. {}",
+            yn(report.plot_policy_same)
+        );
     }
     Ok(0)
 }
@@ -823,6 +854,10 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "string_functions": ["to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
+        "clock_functions": ["time_date"],
+        "plot_functions": ["plot_line", "plot_scatter", "plot_histogram"],
+        "plot_policy": goblinpp::plots::POLICY,
+        "clock_policy": goblinpp::clock::policy(),
         "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
         "numeric_comparison_functions": ["is_close", "same_bits"],
         "math_policy": goblinpp::math_policy::policy(),
@@ -843,12 +878,12 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "deprecated_math_aliases": ["sin", "cos", "tan", "asin", "acos", "atan", "atan2"],
         "fits_functions": ["fits_hdu_count", "fits_header", "fits_axis", "fits_count", "fits_pixel", "fits_mean", "fits_rows", "fits_columns", "fits_column", "fits_column_valid_count", "fits_column_mean", "fits_column_min", "fits_column_max", "fits_select_stats", "fits_column_text", "fits_where", "fits_all", "fits_any", "fits_export_csv", "fits_export_tsv"],
         "fits_subset_policy": {"schema":"goblin.fits-subset.v1", "exact_ids":"unscaled signed i64 decimal text, not arithmetic", "null_marker":"\\N", "physical_blinding":false, "chunk_bytes_limit":8388608, "output_bytes_limit":67108864, "filter_depth_limit":16, "filter_node_limit":256},
-        "output_functions": ["write_text", "write_csv", "write_tsv", "write_json", "plot_fits_histogram", "plot_fits_scatter"],
+        "output_functions": ["write_text", "write_csv", "write_tsv", "write_json", "plot_fits_histogram", "plot_fits_scatter", "plot_line", "plot_scatter", "plot_histogram"],
         "table_functions": ["csv_rows", "csv_columns", "csv_headers", "csv_column", "csv_numbers", "tsv_rows", "tsv_columns", "tsv_headers", "tsv_column", "tsv_numbers"],
         "module_limits": {"max_files":32,"max_bytes_per_file":1048576,"definitions_only":true},
         "table_limits": {"max_bytes":16777216,"max_rows":100000,"max_columns":1024,"max_cells":1000000,"missing_numeric_policy":"REFUSE"},
         "pending_from_python_reference": ["Ed25519 ledger signing", "interrupted-head recovery", "adopt legacy freeze", "normative corpus commands"],
-        "known_limits": ["GO_PARANOID observes source bytes at postflight, not continuously, and is not an OS sandbox", "input and argument text is stored in run evidence; do not enter secrets", "check will not consume stdin and reports input required", "input and argv return text; parse_number converts finite unitless decimals and parse_integer accepts safe decimal integers only", "numbers remain f64 quantities, not a distinct exact integer type; integer parsing and remainder are limited to exactly representable values", "len(text) counts Unicode scalar values, not grapheme clusters; text operations do not normalize Unicode", "arrays are one-dimensional, homogeneous, and limited to 100000 items; slices, assignments, and direct iteration use independent values rather than shared Go-style backing storage", "loops share a 1000000-iteration ceiling", "g_func requires a return on the reached path, has no implicit global capture, and is limited to 16 active calls", "coordinate helpers use Euclidean Cartesian geometry, inclination from +z, and azimuth from +x toward +y", "relativistic velocity addition is collinear special relativity only; reference frames, tensors, curved spacetime, orbital propagation, and uncertainty propagation are not implemented", "chemistry uses an explicitly scoped abridged common-element registry; isotope-specific masses, charge, hydrates, reactions, pH, kinetics, equilibria, and biological sequence semantics are not inferred", "electrical helpers cover scalar DC/passive calculations and explicit KCL/KVL residuals; they do not infer circuit topology, solve simultaneous networks, model AC phasors, semiconductors, tolerances, or uncertainty", "ee_power uses the passive sign convention, so negative power represents delivery rather than invalid data", "data-using compilation requires Cargo and cached locked crates; standalone binaries lack launcher custody and freeze checks", "switch uses exact equality, first match, and no fallthrough", "plots use explicitly labelled deterministic row samples rather than silently implying full-population rendering", "JPEG output is omitted because it is lossy", "inline Rust cannot mutate sealed Goblin variables", "ASCII tables are discovered but not read", "compressed images, random groups, bit, complex, and variable-array columns are not read", "FITS WCS and declared units are reported but not interpreted"]
+        "known_limits": ["GO_PARANOID observes source bytes at postflight, not continuously, and is not an OS sandbox", "input and argument text is stored in run evidence; do not enter secrets", "check will not consume stdin and reports input required", "input and argv return text; parse_number converts finite unitless decimals and parse_integer accepts safe decimal integers only", "numbers remain f64 quantities, not a distinct exact integer type; integer parsing and remainder are limited to exactly representable values", "len(text) counts Unicode scalar values, not grapheme clusters; text operations do not normalize Unicode", "arrays are one-dimensional, homogeneous, and limited to 100000 items; slices, assignments, and direct iteration use independent values rather than shared Go-style backing storage", "loops share a default 1000000-body-entry budget; GO_LOOP_BUDGET can declare up to 50000000", "g_func requires a return on the reached path, has no implicit global capture, and is limited to 16 active calls", "coordinate helpers use Euclidean Cartesian geometry, inclination from +z, and azimuth from +x toward +y", "relativistic velocity addition is collinear special relativity only; reference frames, tensors, curved spacetime, orbital propagation, and uncertainty propagation are not implemented", "chemistry uses an explicitly scoped abridged common-element registry; isotope-specific masses, charge, hydrates, reactions, pH, kinetics, equilibria, and biological sequence semantics are not inferred", "electrical helpers cover scalar DC/passive calculations and explicit KCL/KVL residuals; they do not infer circuit topology, solve simultaneous networks, model AC phasors, semiconductors, tolerances, or uncertainty", "ee_power uses the passive sign convention, so negative power represents delivery rather than invalid data", "data-using compilation requires Cargo and cached locked crates; standalone binaries lack launcher custody and freeze checks", "switch uses exact equality, first match, and no fallthrough", "FITS plots use explicit deterministic row samples; array plots use all finite supplied points and preserve exact data/settings sidecars", "JPEG output is omitted because it is lossy", "inline Rust cannot mutate sealed Goblin variables", "ASCII tables are discovered but not read", "compressed images, random groups, bit, complex, and variable-array columns are not read", "FITS WCS and declared units are reported but not interpreted"]
     });
     if json_output {
         emit_json(&report);

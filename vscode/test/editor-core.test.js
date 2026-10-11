@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha28-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha30-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -21,6 +21,17 @@ const grammar = JSON.parse(
 const manifest = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
 );
+
+test("alpha.30 array plots expose no-sampling and evidence contracts", () => {
+  const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+  for (const name of ["plot_line", "plot_scatter", "plot_histogram"]) {
+    const entry = runtimeVocabulary.functions.find((item) => item.spelling === name);
+    assert.ok(entry.detail.includes("sidecar"));
+    assert.ok(entry.snippet.includes(name));
+    assert.ok(builtins.test(name + "("));
+  }
+  assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "plot_line").detail.includes("supplied order"));
+});
 
 test("alpha.27 scientific helpers expose explicit conventions and highlighting", () => {
   for (const name of ["resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal", "csv_scan_stats", "tsv_scan_stats"]) {
@@ -42,6 +53,13 @@ test("alpha.28 batch completion and highlighting explain lifecycle and limits", 
   }
   assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "csv_batch_open").detail.includes("64 GiB"));
   assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "batch_next").detail.includes("not a process-wide RAM quota"));
+});
+
+test("alpha.29 clock completion documents capture, UTC, format and authority", () => {
+  const entry = runtimeVocabulary.functions.find((item) => item.spelling === "time_date");
+  assert.ok(entry.snippet.includes('"utc"'));
+  for (const word of ["DD-MM-YYYY:HH:MM:SS", "Fixed at call time", "not certified time", "16,384"]) assert.ok(entry.detail.includes(word));
+  assert.ok(JSON.stringify(grammar).includes("time_date"));
 });
 
 test("commands are explicit argument arrays without a shell string", () => {
@@ -151,8 +169,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 271);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 271);
+  assert.equal(entries.length, 275);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 275);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -329,7 +347,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.23");
+  assert.equal(manifest.version, "0.1.25");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);

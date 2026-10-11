@@ -1,4 +1,12 @@
-# Goblin++ for Visual Studio Code 0.1.23 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.25 (local, unreleased)
+
+Version 0.1.25 adds alpha.30 array plot completion, hover help and highlighting.
+Help explains SI axes, no sampling, explicit bins and exact data/settings
+sidecars. See [Array plotting](../docs/ARRAY_PLOTS.md).
+
+Version 0.1.24 adds alpha.29 `time_date()` completion, hover help and
+highlighting. Help distinguishes captured local/UTC text from certified time.
+See [Clock guide](../docs/CLOCK_TIME.md). Existing features are retained.
 
 Version 0.1.23 adds alpha.28 CSV/TSV batch and incremental-writer completion,
 hover help and highlighting. Help explains text IDs, EOF/close, explicit byte
@@ -14,7 +22,7 @@ Alpha.26 adds completion, hover help and a `seeded` snippet for
 Explicit scientific PCG32 streams are reproducible, not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Editor support 0.1.23 for the Goblin++ Rust engine **0.1.0-alpha.28**. Unit help
+Editor support 0.1.25 for the Goblin++ Rust engine **0.1.0-alpha.30**. Unit help
 explains compound suffixes, coefficient-versus-quantity powers and grouped
 denominators; see `docs/COMPOUND_UNITS.md` for migration rules. Completion,
 snippets, highlighting and help include `sort`, `median`, `quantile`,
@@ -40,7 +48,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.23.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.25.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

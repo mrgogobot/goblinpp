@@ -35,17 +35,22 @@ fn from_data_value(value: goblinpp::evaluator::Value) -> Value {
 fn goblin_data_call(name: &str, values: Vec<Result<Value, String>>, env: &HashMap<String, Value>) -> Result<Value, String> {
     let values = values.into_iter().map(|v| data_value(v?)).collect::<Result<Vec<_>,_>>()?;
     let env = env.iter().map(|(k,v)| Ok((k.clone(), data_value(v.clone())?))).collect::<Result<HashMap<_,_>,String>>()?;
-    GOBLIN_DATA.with(|data| data.borrow_mut().native_data_call(name, values, env).map(from_data_value).map_err(|e| e.pretty()))
+    GOBLIN_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        data.clock.configure_native_replay().map_err(|e| e.pretty())?;
+        data.native_data_call(name, values, env).map(from_data_value).map_err(|e| e.pretty())
+    })
 }
 
 fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
     GOBLIN_DATA.with(|data| {
         let data = data.borrow();
+        data.clock.finish().map_err(|e|e.pretty())?;
         data.batches.finish().map_err(|e|e.pretty())?;
         let imports = data.data_imports();
         let manifest = if let Ok(path) = std::env::var("GOBLIN_NATIVE_DATA_PATH") {
             std::path::PathBuf::from(path)
-        } else if imports.is_empty() && data.generated.is_empty() && data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty()) && data.randomness.evidence().streams.is_empty() && data.inference.evidence()["functions"].as_array().is_some_and(|f| f.is_empty()) {
+        } else if imports.is_empty() && data.generated.is_empty() && data.clock.evidence().readings.is_empty() && data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty()) && data.randomness.evidence().streams.is_empty() && data.inference.evidence()["functions"].as_array().is_some_and(|f| f.is_empty()) {
             return Ok(());
         } else {
             let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos();
@@ -69,7 +74,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         }
         artifacts.extend(data.batches.publish(&directory,true).map_err(|e|e.pretty())?);
         artifacts.sort_by(|a,b|a["name"].as_str().cmp(&b["name"].as_str()));
-        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
+        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "plot_policy":goblinpp::plots::POLICY, "clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(), "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
         let mut file = OpenOptions::new().write(true).create_new(true).open(&manifest).map_err(|e| e.to_string())?;
         file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
@@ -81,6 +86,7 @@ fn goblin_data_abort() {
     GOBLIN_DATA.with(|data| {
         let mut data=data.borrow_mut();
         if data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty())
+            && data.clock.evidence().readings.is_empty()
             && data.batches.evidence()["readers"].as_array().is_some_and(|r|r.is_empty()) {
                 data.batches=goblinpp::batches::Batches::default();
                 return;
@@ -91,7 +97,7 @@ fn goblin_data_abort() {
             std::fs::create_dir(&directory).map_err(|e|e.to_string())?;
             preserve_batch_inputs(&data,&directory)?;
             let artifacts=data.batches.publish(&directory.join("outputs"),false).map_err(|e|e.pretty())?;
-            let evidence=serde_json::json!({"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
+            let evidence=serde_json::json!({"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(),"batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
             let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-failure.json")).map_err(|e|e.to_string())?;
             file.write_all(&serde_json::to_vec_pretty(&evidence).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
             file.sync_all().map_err(|e|e.to_string())?;

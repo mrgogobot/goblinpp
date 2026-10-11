@@ -1,6 +1,6 @@
 # Write your first Goblin++ programs
 
-This short tutorial uses the Rust engine 0.1.0-alpha.17. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
+This short tutorial uses the Rust engine 0.1.0-alpha.30. Create a new `.gbl` file in a trusted project folder. The VS Code extension helps you type it; Goblin++ decides what it means.
 
 ## 1. Begin with an everyday calculation
 
@@ -29,7 +29,7 @@ for n in range(1, 6) {
 print("total = {total}")
 ```
 
-`range(1, 6)` visits 1 through 5: its stop is excluded. `while condition { ... }` also works when the condition is Boolean. The interpreter and compiler share a one-million-loop-body-iteration limit; it catches a runaway loop but is not a security sandbox.
+`range(1, 6)` visits 1 through 5: its stop is excluded. `while condition { ... }` also works when the condition is Boolean. Both engines default to one million loop-body entries; `GO_LOOP_BUDGET` can declare up to 50 million. This catches runaway loops but is not a security sandbox.
 
 You can also name a reusable calculation. Type `g_func` in the editor for a starter snippet:
 
@@ -96,4 +96,37 @@ Use **Goblin++: Verify Run Directory** on the `RUN_DIR` reported by a run. Freez
 
 ## Current boundaries
 
-FITS and generated-output calls work in the interpreter, not yet in compiled runs (including inside `g_func`). Inline Rust requires a separately reviewed exact hash and has your account's full OS authority. One-dimensional arrays and `g_func` functions are available; nested collections remain future work. No editor color or completion is a substitute for checking the data and testing the claim. Data first; goblins last.
+FITS and generated-output calls work in both engines, including inside `g_func`, using the shared locked Cargo helper runtime. Native compilation needs the Rust toolchain and cached dependencies. Inline Rust requires a separately reviewed exact hash and has your account's full OS authority. One-dimensional arrays and `g_func` functions are available; nested collections remain future work. No editor color or completion is a substitute for checking the data and testing the claim. Data first; goblins last.
+
+## 6. Label a result with its captured time
+
+```goblin
+captured_utc = time_date("utc")
+print("Captured UTC = {captured_utc}")
+write_text("capture.txt", "UTC: {captured_utc}")
+seal captured_utc
+```
+
+The text uses DD-MM-YYYY:HH:MM:SS. `time_date()` without an argument
+uses local system time. Each call captures once: later prints/files do not
+refresh the stored value. The optional seal preserves that text explicitly.
+Receipts also record clock readings and UTC offsets; a system clock is not
+certified time. See [Clock guide](../../docs/CLOCK_TIME.md).
+
+## 7. Plot arrays without losing the evidence
+
+```goblin
+elapsed = [0 s, 1 s, 2 s, 3 s]
+distance = [0 m, 2 m, 5 m, 9 m]
+plot_line("motion.png", elapsed, distance, "Motion", "time", "distance")
+plot_scatter("positions.svg", elapsed, distance, "Positions", "time", "distance")
+plot_histogram("distances.svg", distance, 3, "Distances", "distance")
+```
+
+Use **Run Current File** or **Run Compiled Current File**. Every supplied value is
+plotted; each axis appends its actual SI unit. The run's `outputs` folder contains
+each figure and its exact `.plot.json` data/settings sidecar. Keep both, along
+with the receipt. **Verify Run Directory** reconstructs them, not just their hashes.
+Mixed units within an axis, mismatched lengths and missing/nonfinite values refuse.
+Use SVG for Unicode labels; PNG refuses unsupported glyphs instead of substituting
+them. See [Array plotting guide](../../docs/ARRAY_PLOTS.md).

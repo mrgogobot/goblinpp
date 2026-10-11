@@ -1,0 +1,10 @@
+GO_PARANOID
+
+# Each call captures a fixed string. Default is system local time.
+da_time = time_date()
+utc_time = time_date("utc")
+print("local = {da_time}")
+print("UTC = {utc_time}")
+write_text("run_time.txt", "Local: {da_time}\nUTC: {utc_time}")
+seal da_time
+seal utc_time

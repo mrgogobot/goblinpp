@@ -210,6 +210,7 @@ fn value_only_builtin(name: &str) -> bool {
                 | "ecdf"
         )
         || crate::numeric_comparison::is_function(name)
+        || crate::clock::is_function(name)
         || crate::streaming::is_function(name)
         || crate::resampling::is_function(name)
         || crate::matrix::is_function(name)
@@ -227,7 +228,9 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
             Stmt::Function { name, params, body } => {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
-                if crate::numeric_comparison::is_function(name)
+                if crate::plots::is_function(name)
+                    || crate::numeric_comparison::is_function(name)
+                    || crate::clock::is_function(name)
                     || crate::streaming::is_function(name)
                     || crate::resampling::is_function(name)
                     || crate::matrix::is_function(name)
@@ -241,7 +244,9 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 }
                 require_writable_name(name)?;
                 for param in params {
-                    if crate::science::is_distribution_function(param)
+                    if crate::plots::is_function(param)
+                        || crate::science::is_distribution_function(param)
+                        || crate::clock::is_function(param)
                         || crate::streaming::is_function(param)
                         || crate::resampling::is_function(param)
                         || crate::matrix::is_function(param)

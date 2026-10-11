@@ -1,6 +1,24 @@
 # Next-build notes
 
-## Current sequence — 2026-10-06
+## Current sequence — 2026-10-11
+
+Alpha.31 adds embedded manifest links in standard array-plot PNG/SVG, with
+acyclic hashes, exact reconstruction, historical v1 compatibility and explicit
+old-freeze migration. See [PLOT_PROVENANCE.md](PLOT_PROVENANCE.md). This is
+checksum-only, not signing. Existing FITS plots and both editor plugins remain
+unchanged. Next scientific plotting stages remain those listed below.
+
+Alpha.30 adds evidence-first array line/scatter/histogram plots in both engines;
+see [ARRAY_PLOTS.md](ARRAY_PLOTS.md). Next: error bars, multiple series/legends
+and explicitly checked logarithmic axes. No hidden transforms or seal rounding.
+The alpha.29 clock additions are retained.
+
+Alpha.27 inference/matrices/loop budgets and alpha.28 serial table batches
+are implemented. Alpha.29 adds captured local/UTC date/time with audited
+native replay; see [CLOCK_TIME.md](CLOCK_TIME.md). The sequence below is
+historical. Clock timestamps are labels/inputs, not certified time.
+
+## Earlier sequence — 2026-10-06
 
 Alpha.25 compound-unit input is implemented; the original report below is
 historical, not current behavior. Alpha.26 supplies the explicit scientific

@@ -383,7 +383,7 @@ fn expanded_bounds(
     (x_min, x_max, y_min, y_max)
 }
 
-fn xml(value: &str) -> String {
+pub(crate) fn xml(value: &str) -> String {
     value
         .replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -406,14 +406,14 @@ fn number(value: f64) -> String {
     }
 }
 
-struct Canvas {
+pub(crate) struct Canvas {
     width: usize,
     height: usize,
-    pixels: Vec<u8>,
+    pub(crate) pixels: Vec<u8>,
 }
 
 impl Canvas {
-    fn new(width: usize, height: usize) -> Self {
+    pub(crate) fn new(width: usize, height: usize) -> Self {
         Self {
             width,
             height,
@@ -429,7 +429,14 @@ impl Canvas {
         self.pixels[offset..offset + 3].copy_from_slice(&colour);
     }
 
-    fn line(&mut self, mut x0: isize, mut y0: isize, x1: isize, y1: isize, colour: [u8; 3]) {
+    pub(crate) fn line(
+        &mut self,
+        mut x0: isize,
+        mut y0: isize,
+        x1: isize,
+        y1: isize,
+        colour: [u8; 3],
+    ) {
         let dx = (x1 - x0).abs();
         let sx = if x0 < x1 { 1 } else { -1 };
         let dy = -(y1 - y0).abs();
@@ -452,7 +459,14 @@ impl Canvas {
         }
     }
 
-    fn fill_rect(&mut self, left: usize, top: usize, right: usize, bottom: usize, colour: [u8; 3]) {
+    pub(crate) fn fill_rect(
+        &mut self,
+        left: usize,
+        top: usize,
+        right: usize,
+        bottom: usize,
+        colour: [u8; 3],
+    ) {
         for y in top.min(self.height)..bottom.min(self.height) {
             for x in left.min(self.width)..right.min(self.width) {
                 self.set(x as isize, y as isize, colour);
@@ -460,7 +474,7 @@ impl Canvas {
         }
     }
 
-    fn dot(&mut self, x: isize, y: isize, colour: [u8; 3]) {
+    pub(crate) fn dot(&mut self, x: isize, y: isize, colour: [u8; 3]) {
         for dy in -1..=1 {
             for dx in -1..=1 {
                 self.set(x + dx, y + dy, colour);
@@ -500,7 +514,7 @@ impl Canvas {
     }
 }
 
-fn glyph(ch: char) -> [u8; 7] {
+pub(crate) fn glyph(ch: char) -> [u8; 7] {
     match ch {
         'A' => [14, 17, 17, 31, 17, 17, 17],
         'B' => [30, 17, 17, 30, 17, 17, 30],
@@ -553,7 +567,7 @@ fn glyph(ch: char) -> [u8; 7] {
     }
 }
 
-fn encode_png(width: usize, height: usize, rgb: &[u8]) -> Vec<u8> {
+pub(crate) fn encode_png(width: usize, height: usize, rgb: &[u8]) -> Vec<u8> {
     let mut filtered = Vec::with_capacity((width * 3 + 1) * height);
     for row in rgb.chunks_exact(width * 3) {
         filtered.push(0);
@@ -588,7 +602,7 @@ fn zlib_store(bytes: &[u8]) -> Vec<u8> {
     output
 }
 
-fn png_chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
+pub(crate) fn png_chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
     output.extend_from_slice(&(data.len() as u32).to_be_bytes());
     output.extend_from_slice(kind);
     output.extend_from_slice(data);
@@ -598,7 +612,7 @@ fn png_chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
     output.extend_from_slice(&crc32(&crc_input).to_be_bytes());
 }
 
-fn crc32(bytes: &[u8]) -> u32 {
+pub(crate) fn crc32(bytes: &[u8]) -> u32 {
     let mut crc = u32::MAX;
     for byte in bytes {
         crc ^= *byte as u32;

@@ -27,6 +27,9 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub plot_policy_same: bool,
+    pub clock_policy_same: bool,
+    pub clock_readings_same: bool,
     pub batch_policy_same: bool,
     pub batch_evidence_same: bool,
     pub resource_policy_same: bool,
@@ -66,6 +69,15 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    if crate::plots::requires_policy(&receipt) || receipt.get("plot_policy").is_some() {
+        checks.push(check(
+            "PLOT_POLICY_SUPPORTED",
+            crate::plots::supports_policy(&receipt["plot_policy"]),
+            None,
+            None,
+            None,
+        ));
+    }
     let parser_mode = crate::parser::evidence_mode(&receipt);
     checks.push(check(
         "PARSER_POLICY_SUPPORTED",
@@ -75,6 +87,49 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         parser_mode.as_ref().err().map(|e| e.to_string()),
     ));
     let schema = string_at(&receipt, &["schema"]);
+    let clock_evidence_needed = crate::clock::requires_policy(&receipt)
+        || receipt.get("clock_policy").is_some()
+        || receipt.get("clock").is_some();
+    if clock_evidence_needed {
+        checks.push(check(
+            "CLOCK_POLICY_SUPPORTED",
+            receipt["clock_policy"] == crate::clock::policy(),
+            None,
+            None,
+            None,
+        ));
+        let valid = crate::clock::verify_evidence(&receipt["clock"]);
+        checks.push(check("CLOCK_READINGS_CONSISTENT", valid.is_ok(), None, None,
+            Some(valid.err().map_or_else(|| "Captured clock inputs are internally consistent, not independently certified time.".into(), |e| e.to_string()))));
+        let compiler = &receipt["execution"]["compiler"];
+        if compiler.get("clock_replay_path").is_some()
+            || compiler.get("clock_replay_sha256").is_some()
+            || (receipt["status"] == "PASS"
+                && receipt["execution"]["engine"] == "rust-native-compiled")
+        {
+            let safe = compiler["clock_replay_path"] == "clock-replay.json";
+            checks.push(check("CLOCK_REPLAY_PATH", safe, None, None, None));
+            if safe {
+                compare_file(
+                    &mut checks,
+                    "CLOCK_REPLAY_SHA256",
+                    &run_dir.join("clock-replay.json"),
+                    compiler["clock_replay_sha256"].as_str().map(str::to_string),
+                );
+                let matches = crate::clock::read_replay(&run_dir.join("clock-replay.json"))
+                    .ok()
+                    .and_then(|e| serde_json::to_value(e).ok())
+                    .is_some_and(|v| v == receipt["clock"]);
+                checks.push(check(
+                    "CLOCK_REPLAY_MATCHES_READINGS",
+                    matches,
+                    None,
+                    None,
+                    None,
+                ));
+            }
+        }
+    }
     let batch_evidence_needed = receipt.get("batch_policy").is_some()
         || receipt.get("batches").is_some()
         || crate::batches::requires_policy(&receipt);
@@ -467,6 +522,40 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                         actual_bytes.map(|value| value.to_string()),
                         None,
                     ));
+                    if matches!(
+                        artifact["producer"].as_str(),
+                        Some("array_plot" | "array_plot_evidence")
+                    ) {
+                        let result = verify_plot_artifact(run_dir, artifact, artifacts);
+                        let detail = result.as_ref().err().map(|e| e.to_string());
+                        checks.push(check(
+                            &format!("PLOT_POLICY_MATCH:{name}"),
+                            artifact["metadata"]["plot_policy"] == receipt["plot_policy"],
+                            string_at(&receipt, &["plot_policy"]),
+                            string_at(artifact, &["metadata", "plot_policy"]),
+                            None,
+                        ));
+                        if artifact["producer"] == "array_plot"
+                            && artifact["metadata"]["plot_policy"] == crate::plots::POLICY
+                        {
+                            checks.push(check(
+                                &format!("PLOT_PROVENANCE:{name}"),
+                                result.is_ok(),
+                                None,
+                                None,
+                                Some(detail.clone().unwrap_or_else(
+                                    || "Embedded manifest link verified; checksum-only, not authenticated authorship.".into(),
+                                )),
+                            ));
+                        }
+                        checks.push(check(
+                            &format!("PLOT_RECONSTRUCTION:{name}"),
+                            result.is_ok(),
+                            None,
+                            None,
+                            detail,
+                        ));
+                    }
                 }
             } else {
                 checks.push(check(
@@ -694,6 +783,17 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 if m["schema"] != "goblin.native-data.v1" {
                     return false;
                 }
+                if (crate::plots::requires_policy(&receipt) || receipt.get("plot_policy").is_some())
+                    && m["plot_policy"] != receipt["plot_policy"]
+                {
+                    return false;
+                }
+                if clock_evidence_needed
+                    && (m["clock_policy"] != receipt["clock_policy"]
+                        || m["clock"] != receipt["clock"])
+                {
+                    return false;
+                }
                 if receipt.get("rng").is_some() && m["rng"] != receipt["rng"] {
                     return false;
                 }
@@ -812,6 +912,9 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let resource_evidence_same = at(&left, &["resources"]) == at(&right, &["resources"]);
     let batch_policy_same = at(&left, &["batch_policy"]) == at(&right, &["batch_policy"]);
     let batch_evidence_same = at(&left, &["batches"]) == at(&right, &["batches"]);
+    let plot_policy_same = at(&left, &["plot_policy"]) == at(&right, &["plot_policy"]);
+    let clock_policy_same = at(&left, &["clock_policy"]) == at(&right, &["clock_policy"]);
+    let clock_readings_same = at(&left, &["clock"]) == at(&right, &["clock"]);
     let statistics_policy_same =
         at(&left, &["statistics_policy"]) == at(&right, &["statistics_policy"]);
     let math_environment_same =
@@ -833,6 +936,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let execution_engine_same =
         at(&left, &["execution", "engine"]) == at(&right, &["execution", "engine"]);
     let equivalent_result = canonical_program_same
+        && clock_readings_same
         && batch_evidence_same
         && inference_evidence_same
         && resource_evidence_same
@@ -868,6 +972,12 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "RESOURCE_POLICY_CHANGE"
     } else if !batch_policy_same {
         "BATCH_POLICY_CHANGE"
+    } else if !plot_policy_same {
+        "PLOT_POLICY_CHANGE"
+    } else if !clock_policy_same {
+        "CLOCK_POLICY_CHANGE"
+    } else if canonical_program_same && status_same && !clock_readings_same {
+        "CLOCK_INPUT_CHANGE"
     } else if source_bytes_same && equivalent_result {
         "IDENTICAL_RESULT"
     } else if !source_bytes_same && equivalent_result && protocol_notation {
@@ -882,6 +992,9 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        plot_policy_same,
+        clock_policy_same,
+        clock_readings_same,
         batch_policy_same,
         batch_evidence_same,
         inference_policy_same,
@@ -1006,6 +1119,54 @@ fn normalized_generated_artifacts(receipt: &Value) -> Vec<(String, String, Value
         })
         .unwrap_or_default()
 }
+fn verify_plot_artifact(run_dir: &Path, artifact: &Value, artifacts: &[Value]) -> Result<()> {
+    let is_figure = artifact["producer"] == "array_plot";
+    let partner = artifact["metadata"][if is_figure {
+        "evidence_name"
+    } else {
+        "figure_name"
+    }]
+    .as_str()
+    .ok_or_else(|| GoblinError::artifact("Plot partner metadata missing."))?;
+    let matches = artifacts
+        .iter()
+        .filter(|a| a["name"] == partner)
+        .collect::<Vec<_>>();
+    if matches.len() != 1 {
+        return Err(GoblinError::artifact("Plot pair is missing or ambiguous."));
+    }
+    let (figure, evidence) = if is_figure {
+        (artifact, matches[0])
+    } else {
+        (matches[0], artifact)
+    };
+    fn read(run_dir: &Path, descriptor: &Value, limit: usize) -> Result<Vec<u8>> {
+        use std::io::Read;
+        let name = descriptor["name"]
+            .as_str()
+            .ok_or_else(|| GoblinError::artifact("Plot name missing."))?;
+        crate::output::validate_name(name)?;
+        let path = descriptor["path"]
+            .as_str()
+            .filter(|p| *p == format!("outputs/{name}"))
+            .and_then(|p| generated_artifact_path(run_dir, p))
+            .ok_or_else(|| GoblinError::artifact("Unsafe plot evidence path."))?;
+        let mut bytes = Vec::new();
+        fs::File::open(path)?
+            .take((limit + 1) as u64)
+            .read_to_end(&mut bytes)?;
+        if bytes.len() > limit {
+            return Err(GoblinError::artifact(
+                "Plot verification byte limit exceeded.",
+            ));
+        }
+        Ok(bytes)
+    }
+    let figure_bytes = read(run_dir, figure, crate::output::MAX_OUTPUT_BYTES)?;
+    let evidence_bytes = read(run_dir, evidence, crate::plots::MAX_EVIDENCE_BYTES)?;
+    crate::plots::verify_pair(&figure_bytes, &evidence_bytes, figure, evidence)
+}
+
 fn normalized_imports(receipt: &Value) -> Vec<(String, String, Value)> {
     receipt
         .get("data_imports")
