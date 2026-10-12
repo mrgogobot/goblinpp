@@ -196,6 +196,7 @@ fn build_data_program(
         ("evaluator", include_str!("evaluator.rs")),
         ("fits", include_str!("fits.rs")),
         ("fits_selection", include_str!("fits_selection.rs")),
+        ("fits_batch", include_str!("fits_batch.rs")),
         ("hashing", include_str!("hashing.rs")),
         ("inline_rust", include_str!("inline_rust.rs")),
         ("interaction", include_str!("interaction.rs")),
@@ -226,7 +227,7 @@ fn build_data_program(
         ),
     ];
     for (name, contents) in modules {
-        if name != "fits_selection" {
+        if !matches!(name, "fits_selection" | "fits_batch") {
             lib.push_str(&format!("pub mod {name};\n"));
         }
         files.push((format!("src/{name}.rs"), contents.into()));

@@ -23,6 +23,7 @@ pub fn is_function(name: &str) -> bool {
         name,
         "csv_batch_open"
             | "tsv_batch_open"
+            | "fits_batch_open"
             | "batch_next"
             | "batch_close"
             | "csv_stream_open"
@@ -34,6 +35,7 @@ pub fn is_function(name: &str) -> bool {
 pub fn require_arity(name: &str, count: usize) -> Result<()> {
     let expected = match name {
         "csv_batch_open" | "tsv_batch_open" => 5,
+        "fits_batch_open" => 6,
         "csv_stream_open" | "tsv_stream_open" => 3,
         "stream_write" => 2,
         _ => 1,
@@ -137,6 +139,8 @@ struct Reader {
     indices: Vec<usize>,
     width: usize,
     reader: Option<BufReader<File>>,
+    fits: Option<crate::fits::batch::Source>,
+    fits_metadata: Option<Json>,
     pending: Option<Vec<String>>,
     rows_per_batch: usize,
     batch_bytes: usize,
@@ -149,11 +153,15 @@ struct Reader {
 }
 impl Reader {
     fn summary(&self, handle: &str) -> Json {
-        json!({"handle":handle,"path":self.source.display().to_string(),"sha256":self.sha256,
+        let mut summary = json!({"handle":handle,"path":self.source.display().to_string(),"sha256":self.sha256,
             "byte_count":self.bytes,"file_limit_bytes":self.limit,"columns":self.columns,
             "delimiter":self.delimiter,"rows_per_batch":self.rows_per_batch,
             "batch_limit_bytes":self.batch_bytes,"rows":self.rows,"batches":self.batches,
-            "peak_batch_bytes":self.peak,"eof":self.eof,"failed":self.failed,"closed":self.closed})
+            "peak_batch_bytes":self.peak,"eof":self.eof,"failed":self.failed,"closed":self.closed});
+        if let Some(metadata) = &self.fits_metadata {
+            summary["fits"] = metadata.clone();
+        }
+        summary
     }
     fn next(&mut self) -> Result<Vec<Value>> {
         if self.closed || self.failed {
@@ -167,6 +175,13 @@ impl Reader {
         let mut rows = 0;
         while rows < self.rows_per_batch {
             let selected = if let Some(row) = self.pending.take() {
+                row
+            } else if let Some(fits) = &mut self.fits {
+                let Some(row) = fits.next()? else {
+                    self.eof = true;
+                    self.fits = None;
+                    break;
+                };
                 row
             } else {
                 let Some(row) =
@@ -386,7 +401,7 @@ impl Batches {
     pub fn call(&mut self, base: &Path, name: &str, args: &[Value]) -> Result<Value> {
         require_arity(name, args.len())?;
         match name {
-            "csv_batch_open" | "tsv_batch_open" => {
+            "csv_batch_open" | "tsv_batch_open" | "fits_batch_open" => {
                 if self.readers.len() + self.writers.len() >= MAX_HANDLES
                     || self.readers.iter().filter(|r| !r.eof && !r.closed).count()
                         >= MAX_OPEN_READERS
@@ -395,11 +410,21 @@ impl Batches {
                         "Batch handle/open-reader limit exceeded.",
                     ));
                 }
-                let columns = headers(&args[1], name)?;
-                let row_limit =
-                    integer(&args[2], name, (MAX_BATCH_CELLS / columns.len()) as u64)? as usize;
-                let batch_bytes = integer(&args[3], name, MAX_BATCH_BYTES as u64)? as usize;
-                let limit = integer(&args[4], name, MAX_FILE_BYTES)?;
+                let is_fits = name == "fits_batch_open";
+                let hdu = if is_fits {
+                    Some(crate::fits::batch::hdu_argument(&args[1])?)
+                } else {
+                    None
+                };
+                let first = if is_fits { 2 } else { 1 };
+                let columns = headers(&args[first], name)?;
+                let row_limit = integer(
+                    &args[first + 1],
+                    name,
+                    (MAX_BATCH_CELLS / columns.len()) as u64,
+                )? as usize;
+                let batch_bytes = integer(&args[first + 2], name, MAX_BATCH_BYTES as u64)? as usize;
+                let limit = integer(&args[first + 3], name, MAX_FILE_BYTES)?;
                 let requested = Path::new(args[0].text(name)?);
                 let path = if requested.is_absolute() {
                     requested.to_owned()
@@ -448,19 +473,34 @@ impl Batches {
                 }
                 saved.sync_all()?;
                 let hash = format!("{:x}", digest.finalize());
-                if input.metadata()?.len() != count || sha256_file(&path)? != hash {
+                // Bound the stability recheck too: a growing original must not
+                // turn this into an unbounded read after the bounded snapshot.
+                let mut original = File::open(&path)?.take(count + 1);
+                let mut original_digest = Sha256::new();
+                loop {
+                    let n = original.read(&mut buffer)?;
+                    if n == 0 {
+                        break;
+                    }
+                    original_digest.update(&buffer[..n]);
+                }
+                if input.metadata()?.len() != count
+                    || format!("{:x}", original_digest.finalize()) != hash
+                {
                     return Err(GoblinError::data(
                         "Batch input changed during snapshot; processing refused.",
                     ));
                 }
-                let delimiter = if name.starts_with("csv_") {
+                let delimiter = if is_fits {
+                    0
+                } else if name.starts_with("csv_") {
                     b','
                 } else {
                     b'\t'
                 };
                 let mut reader = BufReader::with_capacity(BUFFER_BYTES, File::open(&snapshot)?);
                 use std::io::BufRead;
-                if reader.fill_buf()?.starts_with(&[0xef, 0xbb, 0xbf]) {
+                if !is_fits && reader.fill_buf()?.starts_with(&[0xef, 0xbb, 0xbf]) {
                     reader.consume(3);
                 }
                 self.readers.push(Reader {
@@ -473,7 +513,10 @@ impl Batches {
                     columns,
                     indices: Vec::new(),
                     width: 0,
-                    reader: Some(reader),
+                    reader: if is_fits { None } else { Some(reader) },
+                    fits: None,
+                    fits_metadata: hdu
+                        .map(|hdu| json!({"policy":crate::fits::batch::POLICY_ID,"hdu":hdu})),
                     pending: None,
                     rows_per_batch: row_limit,
                     batch_bytes,
@@ -487,6 +530,13 @@ impl Batches {
                 let index = self.readers.len() - 1;
                 let r = &mut self.readers[index];
                 let result = (|| {
+                    if let Some(hdu) = hdu {
+                        let fits = crate::fits::batch::Source::open(&r.snapshot, hdu, &r.columns)?;
+                        r.fits_metadata = Some(fits.metadata());
+                        r.width = r.columns.len();
+                        r.fits = Some(fits);
+                        return Ok(Value::Text(format!("@goblin-reader-{index}")));
+                    }
                     let names = crate::streaming::record(r.reader.as_mut().unwrap(), delimiter)?
                         .ok_or_else(|| GoblinError::data("Batch input requires a header."))?;
                     let mut seen = std::collections::HashSet::new();
@@ -510,6 +560,7 @@ impl Batches {
                 if result.is_err() {
                     r.failed = true;
                     r.reader = None;
+                    r.fits = None;
                 }
                 result
             }
@@ -520,6 +571,7 @@ impl Batches {
                 if result.is_err() {
                     r.failed = true;
                     r.reader = None;
+                    r.fits = None;
                 }
                 result
             }
@@ -671,10 +723,26 @@ impl Batches {
             "writers":self.writers.iter().enumerate().map(|(i,w)|w.summary(&format!("@goblin-writer-{i}"))).collect::<Vec<_>>()})
     }
     pub fn imports(&self) -> Vec<DataImport> {
-        self.readers.iter().enumerate().map(|(i,r)|DataImport {path:r.source.display().to_string(),
-            sha256:r.sha256.clone(),byte_count:r.bytes,format:if r.delimiter==b',' {"CSV-UTF8"} else {"TSV-UTF8"}.into(),
-            access:vec![json!({"operation":"batch_read","policy":POLICY_ID,"summary":r.summary(&format!("@goblin-reader-{i}"))}).to_string()],
-            evidence_path:None,evidence_sha256:None}).collect()
+        self.readers
+            .iter()
+            .enumerate()
+            .map(|(i, r)| DataImport {
+                path: r.source.display().to_string(),
+                sha256: r.sha256.clone(),
+                byte_count: r.bytes,
+                format: if r.fits_metadata.is_some() {
+                    "FITS"
+                } else if r.delimiter == b',' {
+                    "CSV-UTF8"
+                } else {
+                    "TSV-UTF8"
+                }
+                .into(),
+                access: vec![reader_access(&r.summary(&format!("@goblin-reader-{i}"))).to_string()],
+                evidence_path: None,
+                evidence_sha256: None,
+            })
+            .collect()
     }
     pub fn copy_input(&self, hash: &str, destination: &Path) -> Option<Result<String>> {
         self.readers.iter().find(|r| r.sha256 == hash).map(|r| {
@@ -715,6 +783,11 @@ impl Batches {
         }
         Ok(descriptors)
     }
+}
+fn reader_access(summary: &Json) -> Json {
+    let fits = summary.get("fits").is_some();
+    json!({"operation":if fits {"fits_batch_read"} else {"batch_read"},
+        "policy":if fits {crate::fits::batch::POLICY_ID} else {POLICY_ID},"summary":summary})
 }
 fn copy_exclusive(source: &Path, destination: &Path) -> Result<()> {
     let mut input = File::open(source)?;
@@ -789,10 +862,20 @@ pub fn validate_evidence(receipt: &Json) -> bool {
     }
     let pass = receipt["status"] == "PASS";
     for (i, r) in readers.iter().enumerate() {
+        let fits = r.get("fits").is_some();
         if r["handle"] != format!("@goblin-reader-{i}")
             || !names(&r["columns"])
             || !hash(&r["sha256"])
-            || !matches!(r["delimiter"].as_u64(), Some(9 | 44))
+            || !(if fits {
+                r["delimiter"] == 0
+                    && receipt["fits_batch_policy"] == crate::fits::batch::policy()
+                    && r["fits"]["policy"] == crate::fits::batch::POLICY_ID
+                    && r["fits"]["hdu"]
+                        .as_u64()
+                        .is_some_and(|n| n < crate::fits::batch::MAX_HDUS as u64)
+            } else {
+                matches!(r["delimiter"].as_u64(), Some(9 | 44))
+            })
         {
             return false;
         }
@@ -838,7 +921,7 @@ pub fn validate_evidence(receipt: &Json) -> bool {
         {
             return false;
         }
-        let access = json!({"operation":"batch_read","policy":POLICY_ID,"summary":r}).to_string();
+        let access = reader_access(r).to_string();
         if !imports.iter().any(|d| {
             d["path"] == r["path"]
                 && d["sha256"] == r["sha256"]

@@ -1,5 +1,10 @@
 # WB-3 requirements and proposed strict research profile
 
+Alpha.32 supplies bounded fixed-width FITS BINTABLE column batches with incremental
+CSV/TSV writers and exact-ID text, completing the serial input-format extension
+to alpha.28. See [FITS_BATCHES.md](FITS_BATCHES.md). This does not implement FITS
+writing, gzip, joins, parallelism, physical blinding or certify the WB-3 workflow.
+
 Alpha.28 adds serial CSV/TSV batches and incremental outputs with explicit
 budgets and exact-ID text, including files above 1 GiB. See
 [BATCHES_STREAMING.md](BATCHES_STREAMING.md). FITS batching, joins, parallelism,

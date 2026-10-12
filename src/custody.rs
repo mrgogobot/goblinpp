@@ -144,6 +144,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "inference_policy": crate::inference_policy::policy(),
         "resource_policy": crate::resources::policy(),
         "batch_policy": crate::batches::policy(),
+        "fits_batch_policy": crate::fits::batch::policy(),
         "clock_policy": crate::clock::policy(),
         "plot_policy": crate::plots::POLICY,
         "created_at": timestamp(),
@@ -265,6 +266,16 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         && receipt.get("resource_policy").is_none())
         || receipt["resource_policy"] == crate::resources::policy();
     let batch_supported = crate::batches::frozen_policy_matches(&receipt);
+    let fits_batch_supported = crate::fits::batch::frozen_policy_matches(&receipt);
+    if receipt.get("fits_batch_policy").is_some() || crate::fits::batch::requires_policy(&receipt) {
+        checks.push(custody_check(
+            "FITS_BATCH_POLICY_SUPPORTED",
+            fits_batch_supported,
+            None,
+            None,
+            None,
+        ));
+    }
     let clock_supported = crate::clock::frozen_policy_matches(&receipt);
     let plot_supported = crate::plots::frozen_policy_matches(&receipt);
     if receipt.get("plot_policy").is_some() || crate::plots::requires_policy(&receipt) {
@@ -445,6 +456,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "FREEZE_RESOURCE_POLICY_UNSUPPORTED"
     } else if !batch_supported {
         "FREEZE_BATCH_POLICY_UNSUPPORTED"
+    } else if !fits_batch_supported {
+        "FREEZE_FITS_BATCH_POLICY_UNSUPPORTED"
     } else if !clock_supported {
         "FREEZE_CLOCK_POLICY_UNSUPPORTED"
     } else if !plot_supported {

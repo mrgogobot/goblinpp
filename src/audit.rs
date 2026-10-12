@@ -27,6 +27,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub fits_batch_policy_same: bool,
     pub plot_policy_same: bool,
     pub clock_policy_same: bool,
     pub clock_readings_same: bool,
@@ -142,6 +143,22 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
             None,
         ));
         checks.push(check("BATCH_LIFECYCLE_EVIDENCE",crate::batches::validate_evidence(&receipt),None,None,Some("Structural integrity and input/output binding; not numerical replay or a process RAM quota.".into())));
+    }
+    let fits_batch_needed = receipt.get("fits_batch_policy").is_some()
+        || crate::fits::batch::requires_policy(&receipt)
+        || receipt["batches"]["readers"]
+            .as_array()
+            .is_some_and(|a| a.iter().any(|r| r.get("fits").is_some()));
+    if fits_batch_needed {
+        checks.push(check(
+            "FITS_BATCH_POLICY_SUPPORTED",
+            receipt["fits_batch_policy"] == crate::fits::batch::policy(),
+            None,
+            None,
+            None,
+        ));
+        checks.push(check("FITS_BATCH_INPUT_SCHEMA",crate::fits::batch::validate_snapshots(run_dir,&receipt),None,None,
+            Some("Preserved FITS schema and row-count binding; not replay of arbitrary scientific processing or physical blinding.".into())));
     }
     if receipt.get("inference_policy").is_some()
         || receipt.get("inference").is_some()
@@ -818,6 +835,9 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 {
                     return false;
                 }
+                if fits_batch_needed && m["fits_batch_policy"] != receipt["fits_batch_policy"] {
+                    return false;
+                }
                 let mut expected = receipt["data_imports"].clone();
                 if let Some(entries) = expected.as_array_mut() {
                     for entry in entries {
@@ -911,6 +931,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let resource_policy_same = at(&left, &["resource_policy"]) == at(&right, &["resource_policy"]);
     let resource_evidence_same = at(&left, &["resources"]) == at(&right, &["resources"]);
     let batch_policy_same = at(&left, &["batch_policy"]) == at(&right, &["batch_policy"]);
+    let fits_batch_policy_same =
+        at(&left, &["fits_batch_policy"]) == at(&right, &["fits_batch_policy"]);
     let batch_evidence_same = at(&left, &["batches"]) == at(&right, &["batches"]);
     let plot_policy_same = at(&left, &["plot_policy"]) == at(&right, &["plot_policy"]);
     let clock_policy_same = at(&left, &["clock_policy"]) == at(&right, &["clock_policy"]);
@@ -972,6 +994,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "RESOURCE_POLICY_CHANGE"
     } else if !batch_policy_same {
         "BATCH_POLICY_CHANGE"
+    } else if !fits_batch_policy_same {
+        "FITS_BATCH_POLICY_CHANGE"
     } else if !plot_policy_same {
         "PLOT_POLICY_CHANGE"
     } else if !clock_policy_same {
@@ -996,6 +1020,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         clock_policy_same,
         clock_readings_same,
         batch_policy_same,
+        fits_batch_policy_same,
         batch_evidence_same,
         inference_policy_same,
         inference_evidence_same,

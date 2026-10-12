@@ -145,7 +145,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "plot_fits_histogram"
             | "plot_fits_scatter"
     ) || crate::delimited::is_function(name)
-        || crate::batches::is_function(name)
+        || (crate::batches::is_function(name) && name != "fits_batch_open")
         || (crate::science::is_function(name) && !crate::science::is_distribution_function(name))
         || crate::chemistry::is_function(name)
         || crate::electrical::is_function(name)
@@ -209,6 +209,7 @@ fn value_only_builtin(name: &str) -> bool {
                 | "std_sample"
                 | "ecdf"
         )
+        || name == "fits_batch_open"
         || crate::numeric_comparison::is_function(name)
         || crate::clock::is_function(name)
         || crate::streaming::is_function(name)
@@ -229,6 +230,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::plots::is_function(name)
+                    || name == "fits_batch_open"
                     || crate::numeric_comparison::is_function(name)
                     || crate::clock::is_function(name)
                     || crate::streaming::is_function(name)
@@ -245,6 +247,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 require_writable_name(name)?;
                 for param in params {
                     if crate::plots::is_function(param)
+                        || param == "fits_batch_open"
                         || crate::science::is_distribution_function(param)
                         || crate::clock::is_function(param)
                         || crate::streaming::is_function(param)

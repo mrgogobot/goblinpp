@@ -1,4 +1,25 @@
-# 0.1.0-alpha.31 (local, unreleased, embedded plot provenance)
+# 0.1.0-alpha.32 (local, unreleased, bounded FITS batches)
+
+- `fits_batch_open(path, hdu, columns, rows, batch_bytes, file_bytes)` projects
+  supported scalar/fixed-ASCII BINTABLE fields into bounded row-major text batches.
+  Original row order, exact unscaled i64 IDs, explicit null markers and finite
+  scaling are preserved; selected names are exact/case-sensitive and units audited.
+- Existing incremental CSV/TSV writers, EOF/close requirements, immutable snapshots,
+  hashes, native/reference parity and `.partial` failure output behavior apply.
+- Independent preserved-schema checks and versioned FITS policy in runs/freezes;
+  older non-FITS-batch evidence remains supported. Historical freezes require an
+  explicit revision/child freeze before adopting the new API.
+- Explicit limits: <=64 GiB files, <=8 MiB/100,000 cells per returned batch,
+  <=1 MiB raw rows/total raw headers and <=128 HDUs. No process-wide RAM quota,
+  gzip, FITS writer, threads, hidden cuts or physical-blinding claim.
+- VS Code 0.1.26 and JetBrains 0.3.16; Rust 1.92.0 and dependencies unchanged.
+  Chinese/community-review snapshots untouched. Encryption and COMPLETELY_MAD
+  remain roadmap proposals, not shipped features.
+
+See [FITS_BATCHES.md](docs/FITS_BATCHES.md) and `examples/fits_batches.gbl`.
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.31 (published, embedded plot provenance)
 
 - Standard PNG uncompressed iTXt/SVG metadata embed the SHA-256 of an
   independent canonical data/settings manifest, without circular hashes.

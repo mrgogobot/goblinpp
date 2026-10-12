@@ -57,7 +57,7 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -68,7 +68,7 @@ def main() -> None:
                 report = json.loads((root / directory / "receipt.json").read_text())
                 exact_evidence = {key: report[key] for key in
                                   ("rng_policy", "rng", "inference_policy", "inference",
-                                   "resource_policy", "resources", "batch_policy", "batches", "sealed_artifacts")}
+                                   "resource_policy", "resources", "batch_policy", "fits_batch_policy", "batches", "sealed_artifacts")}
                 if example != "clock_time":
                     exact_evidence["generated_artifacts"] = report["generated_artifacts"]
                 if example == "clock_time":
@@ -182,6 +182,14 @@ def main() -> None:
                         assert settings["figure_sha256"] == hashlib.sha256(figure).hexdigest()
                         assert settings["derived"]["sampling"] == "none"
                         assert settings["derived"]["axis_scale"] == "linear-SI"
+                if example == "fits_batches":
+                    assert "rows = 3; accepted = 1; missing Z = 1; outside cut = 1" in run.stdout
+                    assert report["fits_batch_policy"]["id"] == "goblin.serial-fits-batches.v1"
+                    reader = report["batches"]["readers"][0]
+                    assert reader["rows"] == reader["fits"]["table_rows"] == 3
+                    assert reader["closed"] and reader["eof"]
+                    assert reader["fits"]["units"] == "reported-not-converted"
+                    assert (root / directory / "outputs/selected_catalogue.csv").read_text() == "OBJECT,Z,QUALITY\nGALAXY,0.125,3\n"
                 verified = subprocess.run([str(binary), "verify", directory, "--json"],
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True

@@ -675,7 +675,10 @@ impl Evaluation {
                     ));
                 }
             }
-            if matches!(name, "csv_batch_open" | "tsv_batch_open") {
+            if matches!(
+                name,
+                "csv_batch_open" | "tsv_batch_open" | "fits_batch_open"
+            ) {
                 let requested = Path::new(args[0].text(name)?);
                 let path = if requested.is_absolute() {
                     requested.to_owned()

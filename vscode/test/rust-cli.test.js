@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.31 CLI check, run, and verify contracts", {
+test("actual alpha.32 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,7 @@ test("actual alpha.31 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.31/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.32/);
 
   const clock = path.join(root, "clock.gbl");
   const plots = path.join(root, "plots.gbl");

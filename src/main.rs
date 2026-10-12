@@ -399,6 +399,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "resource_policy": goblinpp::resources::policy(),
         "resources_preview": evaluation.resource_evidence(),
         "batch_policy": goblinpp::batches::policy(),
+        "fits_batch_policy": goblinpp::fits::batch::policy(),
         "clock_policy": goblinpp::clock::policy(),
         "plot_policy": goblinpp::plots::POLICY,
         "clock_preview": evaluation.clock.evidence(),
@@ -539,6 +540,15 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
             return Err(GoblinError::protocol(
                 "BATCH_POLICY_CHANGED_AFTER_FREEZE",
                 "Batch processing is not pinned by this freeze. Compilation refused; create an explicit revision and freeze the child.",
+            ));
+        }
+        if !goblinpp::fits::batch::frozen_policy_matches(frozen)
+            || (frozen.get("fits_batch_policy").is_none()
+                && goblinpp::fits::batch::program_uses(&parsed.program))
+        {
+            return Err(GoblinError::protocol(
+                "FITS_BATCH_POLICY_CHANGED_AFTER_FREEZE",
+                "FITS batches are not pinned by this freeze. Create a revision and freeze the child.",
             ));
         }
     }
@@ -697,6 +707,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             "BATCH_POLICY_SAME ............ {}\nBATCH_EVIDENCE_SAME .......... {}",
             yn(report.batch_policy_same),
             yn(report.batch_evidence_same)
+        );
+        println!(
+            "FITS_BATCH_POLICY_SAME ....... {}",
+            yn(report.fits_batch_policy_same)
         );
         println!(
             "CLOCK_POLICY_SAME ............ {}\nCLOCK_READINGS_SAME .......... {}",

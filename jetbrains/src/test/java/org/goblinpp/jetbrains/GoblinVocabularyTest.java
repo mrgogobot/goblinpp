@@ -37,6 +37,15 @@ final class GoblinVocabularyTest {
         assertTrue(GoblinVocabulary.find("csv_stream_open").detail().contains("incomplete"));
     }
     @Test
+    void fitsBatchesExplainExactIdsAndMissingValues() {
+        var entry = GoblinVocabulary.find("fits_batch_open");
+        assertEquals("function", entry.kind());
+        assertTrue(entry.snippet().contains("SOURCE_ID"));
+        assertTrue(entry.detail().contains("case-sensitive"));
+        assertTrue(entry.detail().contains("\\N"));
+        assertTrue(entry.detail().contains("not physical blinding"));
+    }
+    @Test
     void inferenceHelpersStateTheirScientificChoices() {
         for (String name : new String[]{"resample", "bootstrap_mean", "bootstrap_median", "rng_normal", "rng_normal_array", "matrix_transpose", "matrix_multiply", "vector_norm", "vector_unit", "covariance", "cholesky", "mvnormal", "csv_scan_stats", "tsv_scan_stats"}) {
             assertEquals("function", GoblinVocabulary.find(name).kind());

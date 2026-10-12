@@ -1,0 +1,51 @@
+GO_PARANOID
+
+# HDU 1 of the bundled sample contains OBJECT, Z and QUALITY.
+# Every batch is flat row-major TEXT, including numeric cells.
+reader = fits_batch_open("sample.fits", 1, ["OBJECT", "Z", "QUALITY"], 4096, 8388608, 2147483648)
+writer = csv_stream_open("selected_catalogue.csv", ["OBJECT", "Z", "QUALITY"], 2147483648)
+rows = 0
+accepted = 0
+missing_z = 0
+rejected = 0
+redshift_sum = 0
+
+while true {
+    batch = batch_next(reader)
+    if len(batch) == 0 { break }
+    selected = []
+    for offset in range(0, len(batch), 3) {
+        rows = rows + 1
+        z_text = batch[offset + 1]
+        if z_text == "\\N" {
+            # Missing values are explicit; account for them, never parse as 0.
+            missing_z = missing_z + 1
+        } else {
+            z_value = parse_number(z_text)
+            if z_value >= 0 and z_value < 2 {
+                # IDs, when present, should be copied as text in this same way.
+                selected = append(selected, batch[offset])
+                selected = append(selected, z_text)
+                selected = append(selected, batch[offset + 2])
+                accepted = accepted + 1
+                redshift_sum = redshift_sum + z_value
+            } else {
+                rejected = rejected + 1
+            }
+        }
+    }
+    written = stream_write(writer, selected)
+    selected = []
+    batch = []
+}
+batch_close(reader)
+stream_close(writer)
+
+print("rows = {rows}; accepted = {accepted}; missing Z = {missing_z}; outside cut = {rejected}")
+print("accepted redshift sum = {redshift_sum}")
+print("Incremental output: RUN_DIR/outputs/selected_catalogue.csv")
+seal rows
+seal accepted
+seal missing_z
+seal rejected
+seal redshift_sum

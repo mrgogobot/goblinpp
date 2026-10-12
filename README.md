@@ -1,4 +1,14 @@
-# Goblin++ Rust Engine 0.1.0-alpha.31 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.32 (local, unreleased)
+
+Alpha.32 adds bounded serial `fits_batch_open` for fixed-width BINTABLE columns,
+sharing the CSV/TSV incremental writers and EOF/close lifecycle. Exact catalogue
+IDs remain text; null markers, units, budgets, full input snapshots and partial
+outputs are audited. Interpreter/native parity and historical evidence are kept.
+Start with `examples/fits_batches.gbl` and [FITS batch guide](docs/FITS_BATCHES.md).
+VS Code 0.1.26 and JetBrains 0.3.16 add completion/help/highlighting. Rust stays
+1.92.0; no new dependencies. No gzip, FITS writing, threading, physical blinding
+or whole-process memory sandbox is added. Prior alpha.31 is published on
+[GitHub](https://github.com/mrgogobot/goblinpp/releases/tag/v0.1.0-alpha.31).
 
 Alpha.31 embeds a versioned provenance link in standard PNG/SVG array plots.
 Exact data/settings form a canonical manifest core; its SHA-256 is embedded

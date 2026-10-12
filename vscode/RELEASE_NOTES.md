@@ -1,4 +1,21 @@
-# VS Code extension 0.1.23 (local, unreleased)
+# VS Code extension 0.1.26 — FITS batches (local, unreleased)
+
+- Completion, hover help and highlighting for `fits_batch_open`.
+- Explicit six-argument limits, exact IDs, null markers and reported unit metadata.
+- Existing run/check/verify commands and extension identity retained.
+- Engine alpha.32 required for FITS batches; see `docs/FITS_BATCHES.md`.
+
+## Previous stage: 0.1.25
+
+Alpha.30 array plotting completion/help/highlighting, with SI axes, explicit
+bins and exact data/settings sidecars. Alpha.31 adds plot provenance in the engine.
+
+## Previous stage: 0.1.24
+
+Alpha.29 `time_date` completion/help/highlighting, distinguishing local/UTC
+captured text from certified time.
+
+## Previous stage: 0.1.23
 
 Adds eight alpha.28 serial CSV/TSV batch and writer functions to shared
 completion/help/highlighting; explicit budgets, EOF/close and incomplete outputs

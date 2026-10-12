@@ -458,6 +458,16 @@ fn cell_text(cell: Cell) -> String {
     }
 }
 
+pub(super) fn batch_cell_text(row: &[u8], column: &ColumnLayout, index: usize) -> Result<String> {
+    let cell = row_cell(row, column, index)?;
+    if matches!(&cell, Cell::Text(s) if s == super::batch::NULL_TEXT) {
+        return Err(GoblinError::data(
+            "Literal text collides with the FITS null marker \\N.",
+        ));
+    }
+    Ok(cell_text(cell))
+}
+
 fn write_row(bytes: &mut Vec<u8>, cells: &[String], delimiter: u8) -> Result<()> {
     // Unlike the older general-purpose TSV writer, never silently strip text.
     if delimiter == b'\t' && cells.iter().any(|s| s.contains(['\t', '\r', '\n'])) {

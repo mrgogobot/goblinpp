@@ -1,0 +1,49 @@
+{
+  "schema": "goblin.fits-batch-history-check.v1",
+  "gate": "PASS",
+  "new_engine": "goblin++ 0.1.0-alpha.32",
+  "new_engine_sha256": "b48fb62a6e2fbdd2aed26d014c1792e871c68f970870cbc78192c0394462a0a3",
+  "old_engine_sha256": "2a2650d4379f497b1d8858bfa44745b182c778c7275b8fed6fa57f9f878cdafc",
+  "old_archive_sha256": "791fa0df76c63098958150750237ec9fd1617bd2ceed3fcc7bb851547f57ad1c",
+  "cases": [
+    {
+      "case": "alpha31-energy-interpreter",
+      "receipt_core_sha256": "1e3a10c488bb4617072d5986854fc50b8400d05cacbcfccc4af63faeb11f5e85",
+      "verification": "PASS"
+    },
+    {
+      "case": "alpha31-energy-native",
+      "receipt_core_sha256": "1434a50b4a90432785070b51fc838671729ad682e6ce3041502ebae7d73dbf1f",
+      "verification": "PASS"
+    },
+    {
+      "case": "alpha31-batch_catalogue-interpreter",
+      "receipt_core_sha256": "2a514897305df823c2f9bd4da8cfb26c5e8d55ce994df7cb7b3ba4e1ba9b7bf9",
+      "verification": "PASS"
+    },
+    {
+      "case": "alpha31-batch_catalogue-native",
+      "receipt_core_sha256": "d1de796a30c3f614e95b9196e16c4168436d2df1c961e2be92557cd0eefac1b2",
+      "verification": "PASS"
+    },
+    {
+      "case": "alpha31-array_plots-interpreter",
+      "receipt_core_sha256": "667f3793fecc50bada104e9c2105842879fd60a166f6fd7b87610115ac7df81f",
+      "verification": "PASS"
+    },
+    {
+      "case": "alpha31-array_plots-native",
+      "receipt_core_sha256": "a5446355418530b62deb4d9066679211647c41306738765ed993f02dc38c4d2c",
+      "verification": "PASS"
+    },
+    {
+      "case": "actual-alpha31-energy-freeze-runs-in-both-new-engines",
+      "gate": "PASS"
+    },
+    {
+      "case": "actual-alpha31-unpinned-FITS-refuses-then-explicit-revision-passes-both-engines",
+      "gate": "PASS"
+    }
+  ],
+  "scope": "Actual local alpha.31 fixtures and freezes, not every historical release"
+}

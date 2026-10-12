@@ -69,6 +69,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "inference_policy": crate::inference_policy::policy(),
         "resource_policy": crate::resources::policy(),
         "batch_policy": crate::batches::policy(),
+        "fits_batch_policy": crate::fits::batch::policy(),
         "clock_policy": crate::clock::policy(),
         "plot_policy": crate::plots::POLICY,
         "math_environment": crate::math_policy::environment()?,
@@ -152,6 +153,14 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
         if freeze_path(source).exists() {
             let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            if frozen.get("fits_batch_policy").is_none()
+                && crate::fits::batch::program_uses(&current.program)
+            {
+                return Err(protocol(
+                    "FITS_BATCH_POLICY_NOT_FROZEN",
+                    "This historical freeze did not pin FITS batches. Create a revision and freeze the child before adopting fits_batch_open().",
+                ));
+            }
             if frozen["plot_policy"] != crate::plots::POLICY
                 && crate::plots::program_uses_plots(&current.program)
             {
@@ -731,6 +740,14 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
                 "Create an explicit revision and freeze the child to adopt a different batch processing contract.",
             ));
         }
+        if !crate::fits::batch::frozen_policy_matches(frozen) {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("FITS_BATCH_POLICY_CHANGED_AFTER_FREEZE");
+            return Err(protocol(
+                "FITS_BATCH_POLICY_CHANGED_AFTER_FREEZE",
+                "Create a revision and freeze the child to adopt a different FITS batch contract.",
+            ));
+        }
         return Ok(());
     }
     let subject = ledger::subject_for(source, root)?;
@@ -982,6 +999,7 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         || manifest["resource_policy"] != crate::resources::policy()
         || manifest["resources"] != expected.resource_evidence()
         || manifest["batch_policy"] != crate::batches::policy()
+        || manifest["fits_batch_policy"] != crate::fits::batch::policy()
         || manifest["batches"] != expected.batches.evidence()
         || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
         || manifest["inference"] != expected.inference.evidence()

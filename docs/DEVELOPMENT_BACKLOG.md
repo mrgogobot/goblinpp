@@ -1,5 +1,12 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-12: alpha.32 adds bounded serial FITS BINTABLE
+column batches and shared incremental CSV/TSV output, with exact-ID text, null
+markers, preserved schemas/snapshots, explicit budgets and partial failure outputs.
+See [FITS_BATCHES.md](FITS_BATCHES.md). This advances GBL-006/011/012; gzip,
+native FITS writing, general out-of-core joins, threading, physical blinding,
+mixed-unit covariance and end-to-end WB-3 validation remain separate work.
+
 Implementation update, 2026-10-10: alpha.28 adds bounded serial CSV/TSV batch
 processing and incremental CSV/TSV output in both engines. Exact IDs stay text;
 full disk input snapshots, explicit budgets and incomplete outputs are audited.

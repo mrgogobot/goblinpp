@@ -11,6 +11,8 @@ use std::sync::Arc;
 const CARD_BYTES: usize = 80;
 const BLOCK_BYTES: usize = 2880;
 
+#[path = "fits_batch.rs"]
+pub mod batch;
 #[path = "fits_selection.rs"]
 mod selection;
 pub use selection::{
@@ -295,6 +297,24 @@ impl FitsFile {
 
     pub fn inspect(path: impl AsRef<Path>, compute_hash: bool) -> Result<Self> {
         Self::open_internal(path.as_ref(), compute_hash)
+    }
+
+    /// Bounded metadata inspection of an already-private batch snapshot.
+    pub(crate) fn inspect_batch(path: &Path) -> Result<Self> {
+        let file = File::open(path)?;
+        let len = file.metadata()?.len();
+        let source = DataSource::File {
+            file: Arc::new(file),
+            len,
+        };
+        let hdus = parse_hdus_bounded(&source, true)?;
+        Ok(Self {
+            path: path.to_owned(),
+            byte_count: len,
+            sha256: String::new(),
+            hdus,
+            source,
+        })
     }
 
     fn open_internal(path: &Path, compute_hash: bool) -> Result<Self> {
@@ -799,16 +819,26 @@ impl FitsFile {
 }
 
 fn parse_hdus(source: &DataSource) -> Result<Vec<FitsHdu>> {
+    parse_hdus_bounded(source, false)
+}
+
+fn parse_hdus_bounded(source: &DataSource, bounded: bool) -> Result<Vec<FitsHdu>> {
     let mut hdus = Vec::new();
     let mut offset = 0_u64;
+    let mut header_budget = bounded.then_some(batch::MAX_HEADER_BYTES);
     while offset < source.len() {
+        if bounded && hdus.len() >= batch::MAX_HDUS {
+            return Err(GoblinError::data(
+                "FITS batch metadata exceeds the 128-HDU limit.",
+            ));
+        }
         if source.len() - offset < BLOCK_BYTES as u64 {
             return Err(GoblinError::data(format!(
                 "FITS HDU {} header is shorter than one 2880-byte block.",
                 hdus.len()
             )));
         }
-        let (header, cards, data_offset) = parse_header(source, offset)?;
+        let (header, cards, data_offset) = parse_header(source, offset, &mut header_budget)?;
         let index = hdus.len();
         let (kind, extension_type) = classify_hdu(index, &header)?;
         let bitpix_raw = integer(&header, "BITPIX")?;
@@ -858,7 +888,10 @@ fn parse_hdus(source: &DataSource) -> Result<Vec<FitsHdu>> {
             .checked_mul(gcount as u64)
             .and_then(|count| count.checked_mul(bitpix.unsigned_abs() as u64 / 8))
             .ok_or_else(|| GoblinError::data("FITS HDU byte size overflows this platform."))?;
-        let padded_length = data_length.div_ceil(BLOCK_BYTES as u64) * BLOCK_BYTES as u64;
+        let padded_length = data_length
+            .div_ceil(BLOCK_BYTES as u64)
+            .checked_mul(BLOCK_BYTES as u64)
+            .ok_or_else(|| GoblinError::data("FITS padded data length overflows."))?;
         let next_offset = data_offset
             .checked_add(padded_length)
             .ok_or_else(|| GoblinError::data("FITS HDU offset overflows this platform."))?;
@@ -1223,11 +1256,17 @@ fn unsupported_column(hdu: usize, column: &ColumnLayout) -> GoblinError {
 fn parse_header(
     source: &DataSource,
     header_offset: u64,
+    budget: &mut Option<usize>,
 ) -> Result<(BTreeMap<String, HeaderValue>, Vec<HeaderCard>, u64)> {
     let mut header = BTreeMap::new();
     let mut cards = Vec::new();
     let mut block_offset = header_offset;
     loop {
+        if let Some(remaining) = budget {
+            *remaining = remaining.checked_sub(BLOCK_BYTES).ok_or_else(|| {
+                GoblinError::data("FITS batch headers exceed the 1 MiB total raw-header limit.")
+            })?;
+        }
         if block_offset
             .checked_add(BLOCK_BYTES as u64)
             .is_none_or(|end| end > source.len())
@@ -1273,6 +1312,11 @@ fn parse_header(
                 )
             };
             if let Some(value) = value.clone() {
+                if budget.is_some() && header.contains_key(&keyword) {
+                    return Err(GoblinError::data(format!(
+                        "Duplicate valued FITS header {keyword}; batch metadata must be unambiguous."
+                    )));
+                }
                 header.insert(keyword.clone(), value);
             }
             cards.push(HeaderCard {

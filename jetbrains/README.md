@@ -1,5 +1,9 @@
 # Goblin++ for JetBrains IDEs
 
+Plugin 0.3.16 adds alpha.32 `fits_batch_open` completion/help/highlighting.
+Help explains exact IDs, explicit null markers, unit metadata and bounded
+serial processing. See [FITS_BATCHES.md](../docs/FITS_BATCHES.md).
+
 Plugin 0.3.15 adds alpha.30 array plotting completion/help/highlighting, including
 SI units, all-point line/scatter/histogram semantics and exact evidence sidecars.
 See [ARRAY_PLOTS.md](../docs/ARRAY_PLOTS.md).
@@ -21,7 +25,7 @@ It retains completions/quick help for alpha.26's four seeded scientific PCG32
 functions. Explicit seeds/streams and half-open bounds; not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Plugin 0.3.15 accompanies engine alpha.30. Unit completion and quick documentation
+Plugin 0.3.16 accompanies engine alpha.32. Unit completion and quick documentation
 explain compound suffixes, whole-quantity powers and grouped denominators.
 See `docs/COMPOUND_UNITS.md` in the engine package. Completion and quick documentation
 include stable copy sorting, type-7 quantiles/median, explicit sample/population
@@ -64,7 +68,7 @@ engine: the plugin does not reimplement scientific execution or custody rules.
 - an explicit executable override under **Settings | Tools | Goblin++**
 
 The editor vocabulary is generated at build time from
-[`../vscode/spec/rust-alpha30-editor.json`](../vscode/spec/rust-alpha30-editor.json)
+[`../vscode/spec/rust-alpha32-editor.json`](../vscode/spec/rust-alpha32-editor.json)
 and [`../vscode/spec/lexicon.v0.json`](../vscode/spec/lexicon.v0.json). This keeps
 the JetBrains plugin aligned with the reviewed Goblin++ editor contract instead
 of maintaining another hand-copied keyword list.

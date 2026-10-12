@@ -1,0 +1,49 @@
+{
+  "schema": "goblin.fits-batch-memory-check.v1",
+  "engine": "goblin++ 0.1.0-alpha.32",
+  "engine_sha256": "b48fb62a6e2fbdd2aed26d014c1792e871c68f970870cbc78192c0394462a0a3",
+  "platform": "darwin",
+  "results": [
+    {
+      "input_bytes": 2108160,
+      "rows": 525,
+      "peak_rss_bytes": 9781248,
+      "verification_peak_rss_bytes": 8273920,
+      "peak_batch_bytes": 56175,
+      "source_sha256": "d8bd4f74a237960a98bf3b98dfe1ec29ef98da0f5eefc7b50f477450a2cd0a1c",
+      "input_sha256": "2612e8381cd175582683a1cfb527582f565ff40014a5b824c00d1a44e5db8a97",
+      "output_sha256": "47359c34ab5151301a9aaffeacfac5917a515ea347adc8bc25b5351cc6df66d7",
+      "receipt_core_sha256": "2ed4e1f7a384a08c78d81d4d806a724392a635be2c798c6f0d07989db658928f",
+      "exact_ids_and_rows": true,
+      "verification": "PASS"
+    },
+    {
+      "input_bytes": 67118400,
+      "rows": 16778,
+      "peak_rss_bytes": 11452416,
+      "verification_peak_rss_bytes": 8241152,
+      "peak_batch_bytes": 438272,
+      "source_sha256": "d8bd4f74a237960a98bf3b98dfe1ec29ef98da0f5eefc7b50f477450a2cd0a1c",
+      "input_sha256": "df28b847f4c8ab6d15e4107411e54dee96aa3428537f67de22c05900a05244f1",
+      "output_sha256": "ae955f467db81ec98338acc8f5e4146595d27151e18a025bde7e83e874e38242",
+      "receipt_core_sha256": "196dddc43e8869195cd46f9425d8dada8e0942ad82cbf7c451861aab80d6ada3",
+      "exact_ids_and_rows": true,
+      "verification": "PASS"
+    },
+    {
+      "input_bytes": 1075847040,
+      "rows": 268960,
+      "peak_rss_bytes": 9650176,
+      "verification_peak_rss_bytes": 8290304,
+      "peak_batch_bytes": 438272,
+      "source_sha256": "d8bd4f74a237960a98bf3b98dfe1ec29ef98da0f5eefc7b50f477450a2cd0a1c",
+      "input_sha256": "ac61f8f4c14fb32f634732c650b21ada1d716d676dff2798f5628f6ce81f65db",
+      "output_sha256": "493e8f3c9a35cd4c1b37370d66aad7690b21435423202a1f366b73f5a8d20655",
+      "receipt_core_sha256": "57853503086ed5978bbf88f8347f60aefc6737bf4a5c8311ef57ea2124f4cd44",
+      "exact_ids_and_rows": true,
+      "verification": "PASS"
+    }
+  ],
+  "gate": "PASS",
+  "scope": "Measured synthetic serial FITS projection/export; not a process-wide RAM guarantee"
+}

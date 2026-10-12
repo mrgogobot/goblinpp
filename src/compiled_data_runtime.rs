@@ -75,6 +75,8 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         artifacts.extend(data.batches.publish(&directory,true).map_err(|e|e.pretty())?);
         artifacts.sort_by(|a,b|a["name"].as_str().cmp(&b["name"].as_str()));
         let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "plot_policy":goblinpp::plots::POLICY, "clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(), "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
+        let mut value = value;
+        value["fits_batch_policy"] = goblinpp::fits::batch::policy();
         let mut file = OpenOptions::new().write(true).create_new(true).open(&manifest).map_err(|e| e.to_string())?;
         file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
@@ -98,6 +100,8 @@ fn goblin_data_abort() {
             preserve_batch_inputs(&data,&directory)?;
             let artifacts=data.batches.publish(&directory.join("outputs"),false).map_err(|e|e.pretty())?;
             let evidence=serde_json::json!({"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(),"batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
+            let mut evidence = evidence;
+            evidence["fits_batch_policy"] = goblinpp::fits::batch::policy();
             let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-failure.json")).map_err(|e|e.to_string())?;
             file.write_all(&serde_json::to_vec_pretty(&evidence).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
             file.sync_all().map_err(|e|e.to_string())?;
