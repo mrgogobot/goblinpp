@@ -1,4 +1,28 @@
-# 0.1.0-alpha.34 (local, unreleased, offline evidence reports)
+# 0.1.0-alpha.35 (local, unreleased, Orbit scoped baseline checks)
+
+- Shared Rust module plus `goblin++ orbit` / standalone `goblin-orbit`, both
+  installed by the local bundle and source installer.
+- Explicit local directory, mandatory authorisation/trust declarations/reason,
+  separately expected baseline SHA-256, exclusive outside-scope destinations.
+- Bounded streaming file hashes, sorted entry inventories, descriptor-relative
+  Unix no-follow traversal; unsupported/unreadable/unstable/budget gaps are
+  incomplete, never successful coverage. Missing cannot be asserted across gaps.
+- Preserved observations and derived comparison reports through the alpha.34
+  reporting module; offline strict-schema/copy/classification verification and
+  optional independently retained report receipt anchor.
+- Explicit re-baselining preserves/pins immediate parent bytes; no overwrite,
+  automatic repair, elevation, network scanning, vulnerability diagnosis or
+  image/audio origin detection. No invented analyst findings or clean verdicts.
+- Disposable walkthrough and tests; permission/ACL auditing, atomic snapshots,
+  hostile-host assurance, signing and media analysis explicitly deferred.
+- Rust 1.92.0 retained; existing locked libc is additionally a direct Unix
+  dependency, without version changes. Scientific runtime semantics unchanged.
+  VS Code 0.1.27 / JetBrains 0.3.17 reused; Chinese snapshots unchanged.
+
+See [ORBIT.md](docs/ORBIT.md).
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.34 (published, offline evidence reports)
 
 - `evidence-report CASE.json --output NEW_DIRECTORY`: offline, bounded,
   expected-SHA-256-pinned evidence snapshots and structured Markdown/HTML reports.

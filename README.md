@@ -1,4 +1,19 @@
-# Goblin++ Rust Engine 0.1.0-alpha.34 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.35 (local, unreleased)
+
+Alpha.35 adds **Orbit read-only scoped baseline checks**, shared by
+`goblin++ orbit` and standalone `goblin-orbit`. Explicit local scope, bounded
+streaming hashes, no-follow traversal, independently pinned baselines and
+preserved observation reports distinguish matches, review-required changes and
+incomplete coverage. `MATCH` is not a clean-system verdict. No repairs,
+escalation, network probing or image/audio origin detection is included.
+Start with the disposable walkthrough in [Orbit](docs/ORBIT.md).
+Both executables are included in the local installer; current editor plugins
+remain compatible. Rust stays 1.92.0; the already locked libc version is now
+also a direct Unix dependency for descriptor-relative traversal. No dependency
+versions, science semantics or Chinese/community-review documents are changed.
+
+Alpha.34 is [published on GitHub](https://github.com/mrgogobot/goblinpp/releases/tag/v0.1.0-alpha.34)
+and [preserved on Zenodo](https://doi.org/10.5281/zenodo.23349396).
 
 Alpha.34 adds **offline forensic/authorised-security reporting**, not scanners
 or exploitation. `goblin++ evidence-report CASE.json --output NEW_DIRECTORY`

@@ -1,5 +1,14 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-13: alpha.35 adds the first Orbit module: explicit
+local read-only baseline checking, bounded Unix descriptor-relative traversal,
+external hash anchors, conservative incomplete coverage, exclusive destinations,
+immediate-parent re-baselining and the alpha.34 observation-report adapter.
+`MATCH` compares bytes/entry kinds only, not system safety or permissions/ACLs.
+No repairs, escalation, network scanning, signing, atomic snapshot or media-origin
+detection is shipped. See [ORBIT.md](ORBIT.md). These capabilities remain separate
+from the queued scientific joins/plotting/real regression fixtures.
+
 Implementation update, 2026-10-13: alpha.34 adds an offline evidence-reporting
 CLI for forensic analysis of supplied copies and authorised-security findings.
 Case/evidence hashes, readable reports and independent reconstruction are

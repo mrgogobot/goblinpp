@@ -253,6 +253,17 @@ fn build_data_program(
         "name = \"goblinpp\"\npath = \"src/main.rs\"",
         &format!("name = {binary_name:?}\npath = \"src/main.rs\""),
     );
+    // Standalone Orbit is an application adapter, not part of compiled science programs.
+    files[0].1 = files[0]
+        .1
+        .replace(
+            "[[bin]]\nname = \"goblin-orbit\"\npath = \"src/bin/goblin-orbit.rs\"\n",
+            "",
+        )
+        .replace(
+            "default-run = \"goblinpp\"",
+            &format!("default-run = {binary_name:?}"),
+        );
     files.push(("src/main.rs".into(), source.into()));
     let inventory = files.iter().map(|(path, text)| serde_json::json!({"path":path, "bytes":text.len(), "sha256":sha256_bytes(text.as_bytes())})).collect::<Vec<_>>();
     for (path, text) in files {

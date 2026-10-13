@@ -25,6 +25,8 @@ pub mod math_policy;
 pub mod matrix;
 pub mod modules;
 pub mod numeric_comparison;
+pub mod orbit;
+pub mod orbit_cli;
 pub mod output;
 pub mod parser;
 mod plot_provenance;

@@ -1,5 +1,26 @@
 # Security and trust boundaries
 
+## Orbit scoped observations
+
+Alpha.35 Orbit reads only an explicitly selected local directory and compares
+bytes/entry kinds with an externally hash-pinned baseline. It never follows
+symlinks, executes inspected content, escalates, repairs, probes networks or
+certifies a system clean. Incomplete/unsupported/unreadable/unstable coverage
+is never `MATCH`. Permissions/ACLs are not compared as a security policy.
+Reads may update OS access times. Directory handles and metadata checks do not
+provide an atomic snapshot or protection from a privileged/hostile filesystem.
+Use trusted output parents and acquired offline copies, not adversarial live
+mounts. This is not a hard I/O timeout or OS sandbox.
+
+Capture does not establish known-good state: trust/acquisition declarations
+remain user claims. Retain baseline and report hashes independently; a rewritten
+self-checksum is not an external anchor. Offline report verification checks
+copies/consistency, not original contents or observation truth. Baseline anchoring
+alone does not authenticate later observations. Partial/interrupted bundles
+require review, never implied success. Users remain responsible for authorised
+scope, confidentiality and lawful handling. No image/audio origin detector is
+included. See [Orbit](ORBIT.md) for exact bounds and the disposable tutorial.
+
 ## Offline evidence reports
 
 Alpha.34 `evidence-report` reads declared local evidence copies with expected

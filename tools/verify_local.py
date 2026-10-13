@@ -57,6 +57,10 @@ def main() -> None:
         subprocess.run([str(root / "install.sh"), "--prefix", str(prefix)], check=True)
         binary = prefix / "bin/goblin++"
         assert subprocess.check_output([str(binary), "--version"], text=True).strip() == f"goblin++ {version}"
+        orbit_binary = prefix / "bin/goblin-orbit"
+        assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
+        subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
+                        "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
         for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches"]:
             rng_evidence = None
             parity_evidence = None

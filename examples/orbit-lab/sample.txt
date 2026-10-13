@@ -1,0 +1,2 @@
+Goblin Orbit disposable test data.
+Original measurement: 12

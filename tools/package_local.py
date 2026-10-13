@@ -51,9 +51,10 @@ def main() -> None:
                           if line.startswith("pluginVersion="))
     releases = ROOT / "dist/releases"
     binary = ROOT / "target/release/goblinpp"
+    orbit_binary = ROOT / "target/release/goblin-orbit"
     vsix = releases / f"goblinpp-vscode-{extension_version}.vsix"
     plugin = releases / f"goblinpp-jetbrains-{plugin_version}.zip"
-    for artifact in (binary, vsix, plugin):
+    for artifact in (binary, orbit_binary, vsix, plugin):
         if not artifact.is_file():
             raise SystemExit(f"Build the required artifact first: {artifact}")
     observed = subprocess.check_output([str(binary), "--version"], text=True).strip()
@@ -62,6 +63,11 @@ def main() -> None:
     architecture = subprocess.check_output(["file", str(binary)], text=True)
     if "Mach-O" not in architecture or "arm64" not in architecture:
         raise SystemExit("This local bundle requires the macOS arm64 binary.")
+    if subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() != f"goblin-orbit {version}":
+        raise SystemExit("Standalone Orbit has the wrong version.")
+    architecture = subprocess.check_output(["file", str(orbit_binary)], text=True)
+    if "Mach-O" not in architecture or "arm64" not in architecture:
+        raise SystemExit("This local bundle requires macOS arm64 Orbit.")
 
     bundle_name = f"goblinpp-rust-v{version}-macos-arm64-local"
     archive = releases / f"{bundle_name}.zip"
@@ -83,6 +89,9 @@ def main() -> None:
         destination.parent.mkdir(parents=True)
         shutil.copy2(binary, destination)
         destination.chmod(0o755)
+        orbit_destination = destination.with_name("goblin-orbit")
+        shutil.copy2(orbit_binary, orbit_destination)
+        orbit_destination.chmod(0o755)
         editors = staged / "editors"
         editors.mkdir()
         for installer in (vsix, plugin):

@@ -272,10 +272,11 @@ dependencies = [
 
 [[package]]
 name = "goblinpp"
-version = "0.1.0-alpha.34"
+version = "0.1.0-alpha.35"
 dependencies = [
  "chrono",
  "clap",
+ "libc",
  "serde",
  "serde_json",
  "sha2",
