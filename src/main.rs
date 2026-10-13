@@ -392,6 +392,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
         "parser_policy": goblinpp::parser::PARSER_POLICY,
         "math_policy": goblinpp::math_policy::policy(),
+        "array_math_policy": goblinpp::array_math::policy(),
         "rng_policy": goblinpp::random::policy(),
         "rng_preview": evaluation.randomness.evidence(),
         "inference_policy": goblinpp::inference_policy::policy(),
@@ -515,6 +516,12 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
             ));
         }
         let frozen = freeze.receipt.as_ref().unwrap();
+        if frozen["array_math_policy"] != goblinpp::array_math::policy() {
+            return Err(GoblinError::protocol(
+                "ARRAY_MATH_POLICY_NOT_FROZEN",
+                "This freeze did not pin the current array arithmetic semantics. Compilation refused; create an explicit revision and freeze the child.",
+            ));
+        }
         if !goblinpp::plots::frozen_policy_matches(frozen)
             || (frozen["plot_policy"] != goblinpp::plots::POLICY
                 && goblinpp::plots::program_uses_plots(&parsed.program))
@@ -553,7 +560,7 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "clock_policy":goblinpp::clock::policy(), "plot_policy":goblinpp::plots::POLICY, "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "array_math_policy": goblinpp::array_math::policy(), "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "clock_policy":goblinpp::clock::policy(), "plot_policy":goblinpp::plots::POLICY, "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -690,6 +697,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
         println!(
             "STATISTICS_POLICY_SAME ....... {}",
             yn(report.statistics_policy_same)
+        );
+        println!(
+            "ARRAY_MATH_POLICY_SAME ....... {}",
+            yn(report.array_math_policy_same)
         );
         println!(
             "RNG_POLICY_SAME .............. {}\nRNG_EVIDENCE_SAME ............ {}",
@@ -874,6 +885,7 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "clock_policy": goblinpp::clock::policy(),
         "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
         "numeric_comparison_functions": ["is_close", "same_bits"],
+        "array_math_policy": goblinpp::array_math::policy(),
         "math_policy": goblinpp::math_policy::policy(),
         "science_functions": goblinpp::science::FUNCTIONS,
         "parser_policy": goblinpp::parser::PARSER_POLICY,

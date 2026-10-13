@@ -1,0 +1,31 @@
+GO_PARANOID
+
+# Square metres become metres; every element keeps the scalar unit checks.
+areas = [9 m^2, 16 m^2, 25 m^2]
+lengths = sqrt(areas)
+speeds = lengths / (2 s)
+offset = lengths + (1 m)
+
+# Multiplication pairs elements. A dot product remains an explicit reduction.
+left = [2, 4, 6]
+right = [3, 5, 7]
+products = left * right
+inner = dot(left, right)
+reciprocal = 1 / right
+
+# Copy semantics: these edits do not change lengths or areas.
+input_copy = areas
+changed = lengths
+changed[0] = 99 m
+
+print("lengths = {lengths}; speeds = {speeds}")
+print("pairwise products = {products}; dot product = {inner}")
+print("offset = {offset}; changed copy = {changed}")
+seal lengths
+seal speeds
+seal products
+seal inner
+seal offset
+seal reciprocal
+seal input_copy
+seal changed

@@ -10,7 +10,7 @@ const lexicon = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "spec", "lexicon.v0.json"), "utf8"),
 );
 const runtimeVocabulary = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha32-editor.json"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "..", "spec", "rust-alpha33-editor.json"), "utf8"),
 );
 const grammar = JSON.parse(
   fs.readFileSync(
@@ -64,6 +64,21 @@ test("alpha.32 FITS batches have exact-ID and missing-value completion", () => {
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
   assert.ok(builtins.test("fits_batch_open("));
   assert.ok(runtimeVocabulary.functions.find((v) => v.spelling === "batch_next").detail.includes("FITS"));
+});
+
+test("alpha.33 array maths help is explicit and limited to supported functions", () => {
+  const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
+  for (const name of ["sqrt", "min", "hypot", "sind", "atan2r"]) {
+    const entry = entries.find((entry) => entry.spelling === name);
+    assert.match(entry.detail, /element-wise/);
+    assert.match(entry.detail, /zero-based/);
+    assert.match(entry.detail, /No reduction/);
+  }
+  for (const name of ["dot", "matrix_multiply", "is_close", "same_bits"]) {
+    assert.doesNotMatch(entries.find((entry) => entry.spelling === name).detail, /Also element-wise/);
+  }
+  const snippets = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "snippets", "goblinpp.json"), "utf8"));
+  assert.match(snippets["Dimension-checked array maths"].body.join("\n"), /sqrt/);
 });
 
 test("alpha.29 clock completion documents capture, UTC, format and authority", () => {
@@ -358,7 +373,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.26");
+  assert.equal(manifest.version, "0.1.27");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);

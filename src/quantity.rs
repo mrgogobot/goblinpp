@@ -6,6 +6,21 @@ use std::fmt::{Display, Formatter};
 // Current was appended in alpha.17 so the first five positions remain stable
 // for historical Goblin++ evidence.
 pub type Dimension = [i32; 6];
+fn checked_dimension(
+    a: Dimension,
+    b: Dimension,
+    op: fn(i32, i32) -> Option<i32>,
+) -> Result<Dimension> {
+    let mut result = [0; 6];
+    for i in 0..6 {
+        result[i] = op(a[i], b[i])
+            .filter(|power| power.checked_abs().is_some())
+            .ok_or_else(|| {
+                GoblinError::dimension("Unit exponent overflow; refusing wrapped dimensions.")
+            })?;
+    }
+    Ok(result)
+}
 pub const DIMENSIONLESS: Dimension = [0, 0, 0, 0, 0, 0];
 pub const MASS: Dimension = [1, 0, 0, 0, 0, 0];
 pub const LENGTH: Dimension = [0, 1, 0, 0, 0, 0];
@@ -493,7 +508,7 @@ impl Quantity {
     pub fn checked_mul(self, rhs: Self) -> Result<Self> {
         Self::new(
             self.value_si * rhs.value_si,
-            add_dimension(self.dimension, rhs.dimension),
+            checked_dimension(self.dimension, rhs.dimension, i32::checked_add)?,
         )
     }
 
@@ -505,14 +520,14 @@ impl Quantity {
         }
         Self::new(
             self.value_si / rhs.value_si,
-            sub_dimension(self.dimension, rhs.dimension),
+            checked_dimension(self.dimension, rhs.dimension, i32::checked_sub)?,
         )
     }
 
     pub fn powi(self, power: i32) -> Result<Self> {
         Self::new(
             self.value_si.powi(power),
-            mul_dimension(self.dimension, power),
+            checked_dimension(self.dimension, [power; 6], i32::checked_mul)?,
         )
     }
 
@@ -611,16 +626,4 @@ pub fn format_dimension(dimension: Dimension) -> String {
     } else {
         format!("{numerator}/{}", negative.join("*"))
     }
-}
-
-fn add_dimension(left: Dimension, right: Dimension) -> Dimension {
-    std::array::from_fn(|index| left[index] + right[index])
-}
-
-fn sub_dimension(left: Dimension, right: Dimension) -> Dimension {
-    std::array::from_fn(|index| left[index] - right[index])
-}
-
-fn mul_dimension(dimension: Dimension, power: i32) -> Dimension {
-    dimension.map(|item| item * power)
 }

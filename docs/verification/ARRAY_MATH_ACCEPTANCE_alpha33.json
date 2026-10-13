@@ -1,0 +1,42 @@
+{
+  "schema": "goblin.local-acceptance-summary.v1",
+  "version": "0.1.0-alpha.33",
+  "date": "2026-10-13",
+  "gate": "PASS",
+  "scope": "Local macOS arm64 acceptance; remote GitHub CI and release publishing are not claimed completed",
+  "toolchain": "Rust 1.92.0",
+  "new_dependencies": false,
+  "engine_sha256": "2aa6a25a7f565adf36df80fd3f121afac85dfde492850bddd862b516032fc0d4",
+  "tests": {
+    "rust_full_suite": {"passed": 396, "failed": 0},
+    "elementwise_acceptance_subset": {"passed": 14, "included_in_full_suite": true, "rerun_after_final_test_edits": true},
+    "vscode": {"passed": 22, "failed": 0, "real_cli_enabled": true},
+    "jetbrains": {"passed": 20, "failed": 0},
+    "python_report_tools": {"passed": 14, "failed": 0},
+    "cargo_fmt_check": "PASS",
+    "cargo_clippy_all_targets_deny_warnings": "PASS",
+    "release_build": "PASS"
+  },
+  "gates": [
+    "Hand-calculated numeric and dimensional fixtures",
+    "All supported operators and mathematical functions; standalone native coverage",
+    "Equal-length arrays and ordered scalar repetition; no truncation/broadcasting",
+    "Independent result/input copies and unchanged destination after failure",
+    "Finite/domain/unit/exponent-overflow refusal with zero-based diagnostics",
+    "Empty-array arity/shape/type behavior and 100000-item budget",
+    "User functions/modules, one-time argument evaluation, CSV numeric input and exports",
+    "Interpreter/native seals and generated file equality; verify run evidence",
+    "Missing/unsupported policy refuses even after receipt rehash; policy-aware diff",
+    "Freeze enforcement, preserved protocol violation and explicit revision/child freeze",
+    "Actual hash-verified alpha.32 runs and old scalar outputs",
+    "Both editor installers built and tested"
+  ],
+  "historical_compatibility_report": "ARRAY_MATH_COMPATIBILITY_alpha33.json",
+  "limitations": [
+    "Historical receipts remain verifiable; all older freezes without array policy require explicit revision before new execution",
+    "No cross-platform bitwise transcendental guarantee; exact seals preserved",
+    "Per-operation item limit, not a process RAM sandbox or concurrency",
+    "Exact-ID joins, richer plots and real WB/entropic fixtures remain future stages",
+    "Chinese and community-review snapshots remain unchanged"
+  ]
+}

@@ -25,6 +25,9 @@ fn goblin_math_call(name: &str, values: Vec<Value>) -> Result<Value, String> {
         ));
     }
 
+    if goblin_elementwise::is_function(name) && values.iter().any(|value| matches!(value, Value::Array(_))) {
+        return goblin_array_apply(name, &values, |lane| goblin_math_call(name, lane));
+    }
     let quantities = values
         .into_iter()
         .map(as_q)

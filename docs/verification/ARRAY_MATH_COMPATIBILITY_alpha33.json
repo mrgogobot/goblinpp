@@ -1,0 +1,59 @@
+{
+  "schema": "goblin.array-math-history-check.v1",
+  "gate": "PASS",
+  "new_engine": "goblin++ 0.1.0-alpha.33",
+  "new_engine_sha256": "2aa6a25a7f565adf36df80fd3f121afac85dfde492850bddd862b516032fc0d4",
+  "old_engine_sha256": "b48fb62a6e2fbdd2aed26d014c1792e871c68f970870cbc78192c0394462a0a3",
+  "old_archive_sha256": "aa8c4502cbe2de0244028767408fd7dfa48ca44d901978b59b614e0d1ea5adfb",
+  "cases": [
+    {
+      "case": "actual-alpha32-energy-interpreter",
+      "historical_receipt_core_sha256": "0d551bac6d569a8c554feeddf5a0b1c8b95b405c19271ec8a878fd3df37ca543",
+      "verification": "PASS",
+      "unchanged_existing_output": "PASS"
+    },
+    {
+      "case": "actual-alpha32-energy-native",
+      "historical_receipt_core_sha256": "1e1b31e205ed474c0aef32bc4ebc05e7b0b17255630769fd6d140f787edaa9ec",
+      "verification": "PASS",
+      "unchanged_existing_output": "PASS"
+    },
+    {
+      "case": "actual-alpha32-arrays-interpreter",
+      "historical_receipt_core_sha256": "3d08a2da88cef3f2e0a1de56007a0d2466e5d8f2a8b69abf9316eb2bf615e0ef",
+      "verification": "PASS",
+      "unchanged_existing_output": "PASS"
+    },
+    {
+      "case": "actual-alpha32-arrays-native",
+      "historical_receipt_core_sha256": "6bbcd1b5c47e201f96a9148fea4b9f15882dbff3f616c1b59e6265aff0c5a599",
+      "verification": "PASS",
+      "unchanged_existing_output": "PASS"
+    },
+    {
+      "case": "actual-alpha32-fits_batches-interpreter",
+      "historical_receipt_core_sha256": "c7570560559df2b67cfda23d5369a0200f8791cc14a19d2d7f9e25132e4f0713",
+      "verification": "PASS"
+    },
+    {
+      "case": "actual-alpha32-fits_batches-native",
+      "historical_receipt_core_sha256": "932dfa29e9fffa587d42751f9f3e375625a472e06d76ffa8955c4f5b7b20a303",
+      "verification": "PASS"
+    },
+    {
+      "case": "actual-alpha32-array_plots-interpreter",
+      "historical_receipt_core_sha256": "3dab7650e8cd0e74698b2d365efa1ac1f942864b9c56fec200982498b5d5c6c6",
+      "verification": "PASS"
+    },
+    {
+      "case": "actual-alpha32-array_plots-native",
+      "historical_receipt_core_sha256": "bb723bb093cf5588de19a83ba8e9f593f7a2b5328ad486d981d5ae62b3be3a45",
+      "verification": "PASS"
+    },
+    {
+      "case": "actual-alpha32-freeze-remains-inspectable-but-requires-explicit-revision-both-engines",
+      "gate": "PASS"
+    }
+  ],
+  "scope": "Actual alpha.32 runs/scalar results/freeze in a disposable copy; not every historical release or real WB workflow"
+}

@@ -1,4 +1,14 @@
 {
+  "Dimension-checked array maths": {
+    "prefix": "arraymath",
+    "body": [
+      "${1:areas} = [9 m^2, 16 m^2, 25 m^2]",
+      "${2:lengths} = sqrt(${1:areas})",
+      "print(\"${2:lengths} = {${2:lengths}}\")",
+      "seal ${2:lengths}"
+    ],
+    "description": "Element-wise square root with dimensional checks and an independent result array; run with alpha.33+."
+  },
   "Explicit IID bootstrap": {
     "prefix": "bootstrap",
     "body": [

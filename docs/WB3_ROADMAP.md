@@ -1,5 +1,11 @@
 # WB-3 requirements and proposed strict research profile
 
+Alpha.33 supplies serial element-wise numeric array arithmetic and core math
+functions with strict shapes/dimensions and independent results. See
+[ARRAY_MATH.md](ARRAY_MATH.md). Next: exact-ID joins, error bars/multi-series/log
+axes, then real science fixtures with independently reviewed expected values
+and declared tolerances. Those stages are not implemented by alpha.33.
+
 Alpha.32 supplies bounded fixed-width FITS BINTABLE column batches with incremental
 CSV/TSV writers and exact-ID text, completing the serial input-format extension
 to alpha.28. See [FITS_BATCHES.md](FITS_BATCHES.md). This does not implement FITS

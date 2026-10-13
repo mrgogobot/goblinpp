@@ -1,3 +1,4 @@
+pub mod array_math;
 pub mod ast;
 pub mod audit;
 pub mod batches;
@@ -9,6 +10,7 @@ pub mod constants;
 pub mod custody;
 pub mod delimited;
 pub mod electrical;
+mod elementwise_runtime;
 pub mod error;
 pub mod evaluator;
 pub mod fits;

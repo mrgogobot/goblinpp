@@ -27,6 +27,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub array_math_policy_same: bool,
     pub fits_batch_policy_same: bool,
     pub plot_policy_same: bool,
     pub clock_policy_same: bool,
@@ -70,6 +71,15 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    if receipt.get("array_math_policy").is_some() || crate::array_math::requires_policy(&receipt) {
+        checks.push(check(
+            "ARRAY_MATH_POLICY_SUPPORTED",
+            crate::array_math::supports_receipt(&receipt),
+            None,
+            None,
+            None,
+        ));
+    }
     if crate::plots::requires_policy(&receipt) || receipt.get("plot_policy").is_some() {
         checks.push(check(
             "PLOT_POLICY_SUPPORTED",
@@ -838,6 +848,12 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 if fits_batch_needed && m["fits_batch_policy"] != receipt["fits_batch_policy"] {
                     return false;
                 }
+                if (crate::array_math::requires_policy(&receipt)
+                    || receipt.get("array_math_policy").is_some())
+                    && m["array_math_policy"] != receipt["array_math_policy"]
+                {
+                    return false;
+                }
                 let mut expected = receipt["data_imports"].clone();
                 if let Some(entries) = expected.as_array_mut() {
                     for entry in entries {
@@ -923,6 +939,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         at(&left, &["language_semantics"]) == at(&right, &["language_semantics"]);
     let parser_policy_same = at(&left, &["parser_policy"]) == at(&right, &["parser_policy"]);
     let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
+    let array_math_policy_same =
+        at(&left, &["array_math_policy"]) == at(&right, &["array_math_policy"]);
     let rng_policy_same = at(&left, &["rng_policy"]) == at(&right, &["rng_policy"]);
     let inference_policy_same =
         at(&left, &["inference_policy"]) == at(&right, &["inference_policy"]);
@@ -984,6 +1002,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "PARSER_POLICY_CHANGE"
     } else if !math_policy_same {
         "MATH_POLICY_CHANGE"
+    } else if !array_math_policy_same {
+        "ARRAY_MATH_POLICY_CHANGE"
     } else if !statistics_policy_same {
         "STATISTICS_POLICY_CHANGE"
     } else if !rng_policy_same {
@@ -1016,6 +1036,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        array_math_policy_same,
         plot_policy_same,
         clock_policy_same,
         clock_readings_same,

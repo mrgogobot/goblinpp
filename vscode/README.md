@@ -1,4 +1,10 @@
-# Goblin++ for Visual Studio Code 0.1.26 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.27 (local, unreleased)
+
+Version 0.1.27 adds alpha.33 array maths help for existing mathematical
+functions, including strict lengths, scalar repetition, independent results and
+zero-based error indices. Try the `arraymath` snippet. Scalar comparisons and
+explicit dot/matrix products are not described as element-wise operations.
+See [Array maths](../docs/ARRAY_MATH.md); the engine remains authoritative.
 
 Version 0.1.26 adds alpha.32 `fits_batch_open` completion, hover help and
 highlighting. Help explains exact catalogue IDs, explicit null markers, unit
@@ -26,7 +32,7 @@ Alpha.26 adds completion, hover help and a `seeded` snippet for
 Explicit scientific PCG32 streams are reproducible, not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Editor support 0.1.26 for the Goblin++ Rust engine **0.1.0-alpha.32**. Unit help
+Editor support 0.1.27 for the Goblin++ Rust engine **0.1.0-alpha.33**. Unit help
 explains compound suffixes, coefficient-versus-quantity powers and grouped
 denominators; see `docs/COMPOUND_UNITS.md` for migration rules. Completion,
 snippets, highlighting and help include `sort`, `median`, `quantile`,
@@ -52,7 +58,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.26.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.27.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

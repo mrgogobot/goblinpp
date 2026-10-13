@@ -1,4 +1,18 @@
-# Goblin++ Rust Engine 0.1.0-alpha.32 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.33 (local, unreleased)
+
+Alpha.33 adds element-wise numeric array operators and mathematical functions:
+`sqrt(values)`, `a * b`, and explicit scalar repetition, with equal array lengths,
+strict dimensions, independent copies and zero-based failing-element diagnostics.
+No truncation, automatic reductions, matrix products, masks or hidden row drops.
+New runs/freezes pin the array policy; historical receipts still verify, while
+older whole-program freezes require an explicit revision before execution.
+Start with `examples/elementwise_arrays.gbl` and [Array maths](docs/ARRAY_MATH.md).
+VS Code 0.1.27 and JetBrains 0.3.17 explain the same rules. Rust remains 1.92.0;
+dependencies and Chinese/community-review snapshots are unchanged. Exact-ID
+joins, richer plotting and real WB/entropic regression fixtures remain next stages.
+
+Alpha.32 is [published on GitHub](https://github.com/mrgogobot/goblinpp/releases/tag/v0.1.0-alpha.32)
+and [preserved on Zenodo](https://doi.org/10.5281/zenodo.23326933).
 
 Alpha.32 adds bounded serial `fits_batch_open` for fixed-width BINTABLE columns,
 sharing the CSV/TSV incremental writers and EOF/close lifecycle. Exact catalogue

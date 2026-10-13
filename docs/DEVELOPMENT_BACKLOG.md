@@ -1,5 +1,12 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-13: alpha.33 locally implements GBL-010 for
+numeric operators and core mathematical functions. Equal lengths, scalar
+repetition, dimensions, independent result copies, first failing zero-based
+indices and versioned evidence are enforced in both engines. See
+[ARRAY_MATH.md](ARRAY_MATH.md). No masks, automatic reductions, whole-process
+RAM sandbox, joins or end-to-end WB certification is implied.
+
 Implementation update, 2026-10-12: alpha.32 adds bounded serial FITS BINTABLE
 column batches and shared incremental CSV/TSV output, with exact-ID text, null
 markers, preserved schemas/snapshots, explicit budgets and partial failure outputs.
@@ -76,7 +83,7 @@ Evidence labels:
 | GBL-007 | 2 | Median, quantile, sort, standard deviation, bootstrap | Distributions/ECDF alpha.24; IID mean/median bootstrap alpha.27 locally; weights and other resampling schemes pending |
 | GBL-008 | 2 | Seeded, named, cross-platform RNG | PCG32 v1 alpha.26; explicit-stream Box-Muller alpha.27 locally; primitive replay is not cross-platform derived-normal bit equality |
 | GBL-009 | 2 | Declarable audited loop budget | Alpha.27 local GO_LOOP_BUDGET, default1M, hard50M, shared used counter/native parity |
-| GBL-010 | 2 | Dimension-aware element-wise array maths | Requested extension to current vector/array support |
+| GBL-010 | 2 | Dimension-aware element-wise array maths | Core operators/math implemented locally in alpha.33; ARRAY_MATH.md specifies bounded scope and migration |
 | GBL-011 | 2 | CSV/TSV table output from arrays | Scalar-cell API and text limits source-confirmed |
 | GBL-012 | 2 | Larger or streaming input and array capacity | Alpha.27 bounded CSV/TSV numeric column scans <=1GiB; ordinary array/table caps unchanged; general out-of-core operations pending |
 | GBL-013 | 3 | Compound unit literals matching rendered units | Implemented locally in alpha.25; versioned parser and explicit freeze migration |

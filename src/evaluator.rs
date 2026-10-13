@@ -530,14 +530,13 @@ impl Evaluation {
                 }
             }
             Expr::Unary { op, expr } => {
-                let value = self.eval_expr(expr)?.quantity("Unary arithmetic")?;
-                match op {
-                    '+' => Ok(Value::Quantity(value)),
-                    '-' => Ok(Value::Quantity(Quantity::new(
-                        -value.value_si,
-                        value.dimension,
-                    )?)),
-                    _ => Err(GoblinError::parse(format!("Unknown unary operator {op}."))),
+                let value = self.eval_expr(expr)?;
+                if matches!(value, Value::Array(_)) {
+                    crate::array_math::apply(&format!("unary {op}"), &[value], |args| {
+                        numeric_unary(*op, &args[0])
+                    })
+                } else {
+                    numeric_unary(*op, &value)
                 }
             }
             Expr::Binary { op, left, right } => {
@@ -550,36 +549,13 @@ impl Evaluation {
                         .map(Value::Text)
                         .map_err(|message| GoblinError::new("G203", message));
                 }
-                let left = left.quantity("Arithmetic")?;
-                let right = right.quantity("Arithmetic")?;
-                let value = match op {
-                    '+' => left.checked_add(right)?,
-                    '-' => left.checked_sub(right)?,
-                    '*' => left.checked_mul(right)?,
-                    '/' => left.checked_div(right)?,
-                    '%' => {
-                        let left = checked_integer(&left, "remainder left operand")?;
-                        let right = checked_integer(&right, "remainder right operand")?;
-                        if right == 0 {
-                            return Err(GoblinError::numeric("Remainder by zero."));
-                        }
-                        Quantity::scalar((left % right) as f64)?
-                    }
-                    '^' => {
-                        if right.dimension != DIMENSIONLESS
-                            || right.value_si.fract() != 0.0
-                            || right.value_si < i32::MIN as f64
-                            || right.value_si > i32::MAX as f64
-                        {
-                            return Err(GoblinError::dimension(
-                                "Goblin++ requires an integer dimensionless exponent.",
-                            ));
-                        }
-                        left.powi(right.value_si as i32)?
-                    }
-                    _ => return Err(GoblinError::parse(format!("Unknown operator {op}."))),
-                };
-                Ok(Value::Quantity(value))
+                if matches!(left, Value::Array(_)) || matches!(right, Value::Array(_)) {
+                    crate::array_math::apply(&op.to_string(), &[left, right], |args| {
+                        numeric_binary(*op, &args[0], &args[1])
+                    })
+                } else {
+                    numeric_binary(*op, &left, &right)
+                }
             }
             Expr::Compare { op, left, right } => {
                 let left = self.eval_expr(left)?;
@@ -1342,6 +1318,17 @@ impl Evaluation {
     }
 
     fn eval_math_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        // Arity is checked before mapping, including for an empty array.
+        math_arity(name, args.len())?;
+        if crate::elementwise_runtime::is_function(name)
+            && args.iter().any(|v| matches!(v, Value::Array(_)))
+        {
+            return crate::array_math::apply(name, args, |lane| self.eval_math_call(name, &lane));
+        }
+        self.eval_scalar_math_call(name, args)
+    }
+
+    fn eval_scalar_math_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
         let minimum = if matches!(name, "min" | "max") { 2 } else { 0 };
         if minimum != 0 && args.len() < minimum {
             return Err(GoblinError::parse(format!(
@@ -2264,6 +2251,68 @@ fn require_same_array_type(first: &Value, value: &Value) -> Result<()> {
     }
 }
 
+fn numeric_unary(op: char, value: &Value) -> Result<Value> {
+    let value = value.quantity("Unary arithmetic")?;
+    match op {
+        '+' => Ok(Value::Quantity(value)),
+        '-' => Quantity::new(-value.value_si, value.dimension).map(Value::Quantity),
+        _ => Err(GoblinError::parse(format!("Unknown unary operator {op}."))),
+    }
+}
+
+fn numeric_binary(op: char, left: &Value, right: &Value) -> Result<Value> {
+    let left = left.quantity("Arithmetic")?;
+    let right = right.quantity("Arithmetic")?;
+    let result = match op {
+        '+' => left.checked_add(right)?,
+        '-' => left.checked_sub(right)?,
+        '*' => left.checked_mul(right)?,
+        '/' => left.checked_div(right)?,
+        '%' => {
+            let left = checked_integer(&left, "remainder left operand")?;
+            let right = checked_integer(&right, "remainder right operand")?;
+            if right == 0 {
+                return Err(GoblinError::numeric("Remainder by zero."));
+            }
+            Quantity::scalar((left % right) as f64)?
+        }
+        '^' => {
+            if right.dimension != DIMENSIONLESS
+                || right.value_si.fract() != 0.0
+                || right.value_si < i32::MIN as f64
+                || right.value_si > i32::MAX as f64
+            {
+                return Err(GoblinError::dimension(
+                    "Goblin++ requires an integer dimensionless exponent.",
+                ));
+            }
+            left.powi(right.value_si as i32)?
+        }
+        _ => return Err(GoblinError::parse(format!("Unknown operator {op}."))),
+    };
+    Ok(Value::Quantity(result))
+}
+
+fn math_arity(name: &str, count: usize) -> Result<()> {
+    let expected = match name {
+        "min" | "max" if count >= 2 => count,
+        "min" | "max" => {
+            return Err(GoblinError::parse(format!(
+                "{name}() expects at least 2 arguments, got {count}."
+            )));
+        }
+        "is_close" => 4,
+        "atan2" | "atan2d" | "atan2r" | "hypot" | "same_bits" => 2,
+        _ => 1,
+    };
+    if count != expected {
+        return Err(GoblinError::parse(format!(
+            "{name}() expects {expected} argument(s), got {count}."
+        )));
+    }
+    Ok(())
+}
+
 fn validate_array(items: &[Value]) -> Result<()> {
     if let Some(first) = items.first() {
         if matches!(first, Value::Array(_)) {
@@ -2272,8 +2321,14 @@ fn validate_array(items: &[Value]) -> Result<()> {
                 "Nested arrays are not supported in this stage.",
             ));
         }
-        for value in &items[1..] {
-            require_same_array_type(first, value)?;
+        for (index, value) in items.iter().enumerate().skip(1) {
+            require_same_array_type(first, value).map_err(|mut error| {
+                error.message = format!(
+                    "Array literal element index {index} (zero-based): {}",
+                    error.message
+                );
+                error
+            })?;
         }
     }
     Ok(())

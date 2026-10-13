@@ -194,6 +194,11 @@ fn build_data_program(
         ("delimited", include_str!("delimited.rs")),
         ("error", include_str!("error.rs")),
         ("evaluator", include_str!("evaluator.rs")),
+        ("array_math", include_str!("array_math.rs")),
+        (
+            "elementwise_runtime",
+            include_str!("elementwise_runtime.rs"),
+        ),
         ("fits", include_str!("fits.rs")),
         ("fits_selection", include_str!("fits_selection.rs")),
         ("fits_batch", include_str!("fits_batch.rs")),
@@ -337,6 +342,8 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
+    let elementwise_runtime = include_str!("elementwise_runtime.rs");
+    let compiled_array_runtime = include_str!("compiled_array_runtime.rs");
     let numeric_comparison = include_str!("numeric_comparison.rs");
     let compiled_science_runtime = include_str!("compiled_science_runtime.rs");
     let statistics_runtime = include_str!("statistics_runtime.rs");
@@ -400,6 +407,10 @@ mod goblin_text {{
 {text_runtime}
 }}
 {compiled_text_runtime}
+mod goblin_elementwise {{
+{elementwise_runtime}
+}}
+{compiled_array_runtime}
 mod goblin_numeric_comparison {{
 {numeric_comparison}
 }}
@@ -414,6 +425,9 @@ mod goblin_statistics {{
 
 fn as_q(value: Value) -> Result<(f64, Dim), String> {{ match value {{ Value::Q(v, d) => Ok((v, d)), _ => Err("Arithmetic requires numeric quantities.".into()) }} }}
 fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
+    if matches!(left, Value::Array(_)) || matches!(right, Value::Array(_)) {{
+        return goblin_array_apply(&op.to_string(), &[left, right], |args| binary(op, args[0].clone(), args[1].clone()));
+    }}
     if op == '+' {{
         if let (Value::Text(a), Value::Text(b)) = (&left, &right) {{
             return goblin_text::concat(a, b).map(Value::Text);
@@ -423,9 +437,9 @@ fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
     match op {{
         '+' | '-' if ad != bd => Err(format!("INCOMPATIBLE DIMENSIONS: {{}} and {{}}", format_dim(ad), format_dim(bd))),
         '+' => Value::q(a + b, ad), '-' => Value::q(a - b, ad),
-        '*' => Value::q(a * b, std::array::from_fn(|i| ad[i] + bd[i])),
+        '*' => Value::q(a * b, checked_dim(ad, bd, i32::checked_add)?),
         '/' if b == 0.0 => Err("DIVISION BY ZERO".into()),
-        '/' => Value::q(a / b, std::array::from_fn(|i| ad[i] - bd[i])),
+        '/' => Value::q(a / b, checked_dim(ad, bd, i32::checked_sub)?),
         '%' => {{
             let left = checked_integer(a, ad, "remainder left operand")?;
             let right = checked_integer(b, bd, "remainder right operand")?;
@@ -433,7 +447,7 @@ fn binary(op: char, left: Value, right: Value) -> Result<Value, String> {{
             Value::scalar((left % right) as f64)
         }},
         '^' if bd != ZERO || b.fract() != 0.0 || b < i32::MIN as f64 || b > i32::MAX as f64 => Err("Exponent must be an integer scalar.".into()),
-        '^' => Value::q(a.powi(b as i32), ad.map(|item| item * b as i32)),
+        '^' => Value::q(a.powi(b as i32), checked_dim(ad, [b as i32; 6], i32::checked_mul)?),
         _ => Err(format!("Unknown operator {{op}}")),
     }}
 }}
@@ -478,7 +492,15 @@ fn loop_tick(steps: &mut u64) -> Result<(), String> {{
     *steps += 1;
     Ok(())
 }}
-fn unary(op: char, value: Value) -> Result<Value, String> {{ let (v, d) = as_q(value)?; Value::q(if op == '-' {{ -v }} else {{ v }}, d) }}
+fn checked_dim(a: Dim, b: Dim, op: fn(i32, i32) -> Option<i32>) -> Result<Dim, String> {{
+    let mut result = ZERO;
+    for i in 0..6 {{ result[i] = op(a[i], b[i]).filter(|power| power.checked_abs().is_some()).ok_or("Unit exponent overflow; refusing wrapped dimensions.")?; }}
+    Ok(result)
+}}
+fn unary(op: char, value: Value) -> Result<Value, String> {{
+    if matches!(value, Value::Array(_)) {{ return goblin_array_apply(&format!("unary {{op}}"), &[value], |args| unary(op, args[0].clone())); }}
+    let (v, d) = as_q(value)?; Value::q(if op == '-' {{ -v }} else {{ v }}, d)
+}}
 fn get(env: &HashMap<String, Value>, name: &str) -> Result<Value, String> {{ env.get(name).cloned().ok_or_else(|| unknown(name)) }}
 fn unknown(name: &str) -> String {{ format!("UNKNOWN SYMBOL: {{name}}") }}
 const MAX_ARRAY_ITEMS: usize = 100_000;
@@ -491,8 +513,11 @@ fn array_literal(items: Vec<Result<Value, String>>) -> Result<Value, String> {{
     let items = items.into_iter().collect::<Result<Vec<_>, _>>()?;
     if items.len() > MAX_ARRAY_ITEMS {{ return Err("Array item limit exceeded.".into()); }}
     if let Some(first) = items.first() {{
-        if matches!(first, Value::Array(_)) || items[1..].iter().any(|v| !same_array_type(first, v)) {{
+        if matches!(first, Value::Array(_)) {{
             return Err("Array elements must share a type and, for quantities, a dimension; nested arrays are unsupported.".into());
+        }}
+        for (index, value) in items.iter().enumerate().skip(1) {{
+            if !same_array_type(first, value) {{ return Err(format!("Array literal element index {{index}} (zero-based): Array elements must share a type and, for quantities, a dimension.")); }}
         }}
     }}
     Ok(Value::Array(items))

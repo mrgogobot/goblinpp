@@ -36,7 +36,7 @@ java {
 def generatedResources = layout.buildDirectory.dir('generated-resources')
 
 tasks.register('generateGoblinVocabulary') {
-    def editorSpec = file('../vscode/spec/rust-alpha32-editor.json')
+    def editorSpec = file('../vscode/spec/rust-alpha33-editor.json')
     def lexiconSpec = file('../vscode/spec/lexicon.v0.json')
     inputs.files(editorSpec, lexiconSpec)
     outputs.dir(generatedResources)
@@ -55,7 +55,8 @@ tasks.register('generateGoblinVocabulary') {
             entries << [item.spelling, item.kind, item.detail, item.snippet ?: '']
         }
         editor.functions.each { item ->
-            entries << [item.spelling, item.kind, item.detail, item.snippet ?: '']
+            def arrayHelp = (editor.array_math_functions ?: []).contains(item.spelling) ? (editor.array_math_help ?: '') : ''
+            entries << [item.spelling, item.kind, (item.detail ?: '') + (arrayHelp ? ' ' + arrayHelp : ''), item.snippet ?: '']
         }
         (editor.constants ?: []).each { item ->
             item.aliases.each { alias ->

@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.32 CLI check, run, and verify contracts", {
+test("actual alpha.33 CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,22 @@ test("actual alpha.32 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.32/);
+  assert.match(version.stdout, /0\.1\.0-alpha\.33/);
+
+  const arrays = path.join(root, "arrays.gbl");
+  fs.writeFileSync(arrays, 'GO_PARANOID\nvalues = sqrt([9 m^2, 16 m^2])\nprint("{values}")\nseal values\n');
+  const arrayPreview = invoke(core.goblinArgs("check", arrays, ["--json"]));
+  assert.equal(arrayPreview.status, 0, arrayPreview.stderr);
+  assert.equal(JSON.parse(arrayPreview.stdout).array_math_policy.id, "goblin.elementwise-numeric-arrays.v1");
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", arrays, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    assert.match(executed.stdout, /\[3 m, 4 m\]/);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    const verified = invoke(core.goblinArgs("verify", directory));
+    assert.equal(verified.status, 0, verified.stderr);
+    assert.match(verified.stdout, /ARRAY_MATH_POLICY_SUPPORTED.*PASS/);
+  }
 
   const clock = path.join(root, "clock.gbl");
   const plots = path.join(root, "plots.gbl");

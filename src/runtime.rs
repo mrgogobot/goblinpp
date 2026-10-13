@@ -64,6 +64,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
+        "array_math_policy": crate::array_math::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
@@ -740,6 +741,14 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
                 "Create an explicit revision and freeze the child to adopt a different batch processing contract.",
             ));
         }
+        if frozen["array_math_policy"] != crate::array_math::policy() {
+            receipt["freeze"]["status"] = json!("FAIL");
+            receipt["freeze"]["classification"] = json!("ARRAY_MATH_POLICY_NOT_FROZEN");
+            return Err(protocol(
+                "ARRAY_MATH_POLICY_NOT_FROZEN",
+                "This freeze did not pin the current array arithmetic semantics. Historical evidence remains verifiable. Create an explicit revision and freeze the child to adopt element-wise array maths.",
+            ));
+        }
         if !crate::fits::batch::frozen_policy_matches(frozen) {
             receipt["freeze"]["status"] = json!("FAIL");
             receipt["freeze"]["classification"] = json!("FITS_BATCH_POLICY_CHANGED_AFTER_FREEZE");
@@ -1000,6 +1009,7 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         || manifest["resources"] != expected.resource_evidence()
         || manifest["batch_policy"] != crate::batches::policy()
         || manifest["fits_batch_policy"] != crate::fits::batch::policy()
+        || manifest["array_math_policy"] != crate::array_math::policy()
         || manifest["batches"] != expected.batches.evidence()
         || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
         || manifest["inference"] != expected.inference.evidence()

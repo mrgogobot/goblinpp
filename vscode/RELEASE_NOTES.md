@@ -1,4 +1,12 @@
-# VS Code extension 0.1.26 — FITS batches (local, unreleased)
+# VS Code extension 0.1.27 — Element-wise array maths (local, unreleased)
+
+- Shared function help states equal lengths, numeric scalar repetition, copies,
+  dimensional checks and zero-based error indices; no truncation or reductions.
+- `arraymath` snippet provides a dimension-checked worked example.
+- Existing extension identity, commands and scientific vocabulary retained.
+- Requires engine alpha.33+ for array arithmetic; see `docs/ARRAY_MATH.md`.
+
+## Previous stage: 0.1.26 — FITS batches
 
 - Completion, hover help and highlighting for `fits_batch_open`.
 - Explicit six-argument limits, exact IDs, null markers and reported unit metadata.

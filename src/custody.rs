@@ -139,6 +139,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
+        "array_math_policy": crate::array_math::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
@@ -251,6 +252,16 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     let mode = crate::parser::evidence_mode(&receipt);
     let parser_supported = mode.is_ok();
     let inference_supported = crate::inference_policy::frozen_policy_matches(&receipt);
+    let array_math_supported = crate::array_math::supports_receipt(&receipt);
+    if receipt.get("array_math_policy").is_some() || crate::array_math::requires_policy(&receipt) {
+        checks.push(custody_check(
+            "ARRAY_MATH_POLICY_SUPPORTED",
+            array_math_supported,
+            None,
+            None,
+            None,
+        ));
+    }
     if receipt.get("inference_policy").is_some()
         || crate::inference_policy::requires_policy(&receipt)
     {
@@ -450,6 +461,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "FREEZE_RECEIPT_TAMPERED"
     } else if !parser_supported {
         "FREEZE_PARSER_POLICY_UNSUPPORTED"
+    } else if !array_math_supported {
+        "FREEZE_ARRAY_MATH_POLICY_UNSUPPORTED"
     } else if !inference_supported {
         "FREEZE_INFERENCE_POLICY_UNSUPPORTED"
     } else if !resource_supported {

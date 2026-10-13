@@ -1,4 +1,24 @@
-# 0.1.0-alpha.32 (local, unreleased, bounded FITS batches)
+# 0.1.0-alpha.33 (local, unreleased, element-wise numeric arrays)
+
+- Array/scalar and equal-length array/array `+ - * / % ^`, unary signs, and
+  existing root/log/rounding/trigonometric/extrema/hypot functions in both engines.
+- Finite homogeneous numeric quantities, dimensional checks, independent copies,
+  ascending zero-based failing-element diagnostics, no partial assignment.
+- Explicit scalar repetition only; no length-one array broadcast, concatenation,
+  truncation, masks, hidden reductions or automatic vectorization of all helpers.
+- Existing 100,000-item limit; bounded serial mapping, not a RAM sandbox or threads.
+- Versioned policy in run/freeze/check/compile/native data evidence; policy-aware
+  verification/diff. Historical receipts remain verifiable; older freezes need
+  explicit revision/child freeze before running with new arithmetic semantics.
+- Checked unit exponent overflow refuses rather than wrapping/panicking.
+- VS Code 0.1.27 / JetBrains 0.3.17 help; Rust 1.92.0 and dependencies unchanged.
+  Chinese/community-review unchanged. Joins/richer plots/real workflow fixtures
+  remain separate stages. Encryption and COMPLETELY_MAD remain roadmap proposals.
+
+See [ARRAY_MATH.md](docs/ARRAY_MATH.md) and `examples/elementwise_arrays.gbl`.
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.32 (published, bounded FITS batches)
 
 - `fits_batch_open(path, hdu, columns, rows, batch_bytes, file_bytes)` projects
   supported scalar/fixed-ASCII BINTABLE fields into bounded row-major text batches.

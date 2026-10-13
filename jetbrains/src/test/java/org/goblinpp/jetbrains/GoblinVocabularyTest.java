@@ -3,10 +3,23 @@ package org.goblinpp.jetbrains;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
+    @Test
+    void arrayMathHelpStatesShapeCopyAndDiagnostics() {
+        for (String name : new String[]{"sqrt", "min", "hypot", "sind", "atan2r"}) {
+            var detail = GoblinVocabulary.find(name).detail();
+            assertTrue(detail.contains("element-wise"));
+            assertTrue(detail.contains("zero-based"));
+            assertTrue(detail.contains("No reduction"));
+        }
+        for (String name : new String[]{"dot", "matrix_multiply", "is_close", "same_bits"}) {
+            assertFalse(GoblinVocabulary.find(name).detail().contains("Also element-wise"));
+        }
+    }
     @Test
     void arrayPlotCompletionDocumentsScientificEvidence() {
         for (String name : new String[]{"plot_line", "plot_scatter", "plot_histogram"}) {

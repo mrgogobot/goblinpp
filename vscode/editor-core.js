@@ -222,7 +222,9 @@ function vocabularyEntries(lexicon, runtimeVocabulary = {}) {
     if (entries.some((entry) => entry.spelling === item.spelling)) {
       throw new Error(`Duplicate editor vocabulary: ${item.spelling}`);
     }
-    entries.push({ ...item });
+    const arrayHelp = (runtimeVocabulary.array_math_functions || []).includes(item.spelling)
+      ? runtimeVocabulary.array_math_help || "" : "";
+    entries.push({ ...item, detail: `${item.detail || ""}${arrayHelp ? " " + arrayHelp : ""}` });
   }
   return entries;
 }
