@@ -1,5 +1,13 @@
 # Goblin++ development backlog
 
+Implementation update, 2026-10-13: alpha.34 adds an offline evidence-reporting
+CLI for forensic analysis of supplied copies and authorised-security findings.
+Case/evidence hashes, readable reports and independent reconstruction are
+checked, with explicit analyst-declaration/checksum-only boundaries. This is
+not acquisition, scanning, exploitation, signing, permission certification or
+forensic validation. See [EVIDENCE_REPORTING.md](EVIDENCE_REPORTING.md). It does
+not replace the queued science joins, plotting and real-workflow fixture work.
+
 Implementation update, 2026-10-13: alpha.33 locally implements GBL-010 for
 numeric operators and core mathematical functions. Equal lengths, scalar
 repetition, dimensions, independent result copies, first failing zero-based

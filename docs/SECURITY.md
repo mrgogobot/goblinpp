@@ -1,5 +1,24 @@
 # Security and trust boundaries
 
+## Offline evidence reports
+
+Alpha.34 `evidence-report` reads declared local evidence copies with expected
+hashes and writes a new plaintext report directory. `verify-report` independently
+reconstructs its Markdown/HTML, verifies the preserved copies and optionally
+compares a trusted external receipt hash. It makes no network requests, performs
+no scanning or exploitation and does not execute attachments. Reports contain
+escaped inert content, not automatic links to external resources.
+
+Authorisation, scope, timestamps and findings are analyst declarations; hashes
+do not authenticate authorship, certify truth/permission/time, validate collection
+or establish legal admissibility. It is not a certified forensic suite. Source
+paths refuse symlink components and traversal; destinations refuse overwrite.
+Unix outputs use private modes, but plaintext snapshots still require your own
+access-control/confidentiality review. Inputs/copies have explicit size limits,
+and partial I/O failures preserve files rather than claiming success. These are
+not hostile-filesystem sandbox, crash-recovery or whole-process RAM guarantees.
+See [Evidence reporting](EVIDENCE_REPORTING.md) before using real case data.
+
 ## Confidentiality of run evidence
 
 Goblin++ preserves source and run logs. Depending on what a program does, its

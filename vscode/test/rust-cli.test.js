@@ -8,7 +8,7 @@ const path = require("node:path");
 const test = require("node:test");
 const core = require("../editor-core");
 
-test("actual alpha.33 CLI check, run, and verify contracts", {
+test("actual current CLI check, run, and verify contracts", {
   skip: !process.env.GOBLINPP_BIN,
 }, (context) => {
   const binary = process.env.GOBLINPP_BIN;
@@ -22,7 +22,10 @@ test("actual alpha.33 CLI check, run, and verify contracts", {
 
   const version = invoke(["--version"]);
   assert.equal(version.status, 0);
-  assert.match(version.stdout, /0\.1\.0-alpha\.33/);
+  const manifest = fs.readFileSync(path.join(__dirname, "../../Cargo.toml"), "utf8");
+  const expectedVersion = /^version = "([^"]+)"$/m.exec(manifest)?.[1];
+  assert(expectedVersion, "The tested engine version must come from Cargo.toml");
+  assert.equal(version.stdout.trim(), `goblin++ ${expectedVersion}`);
 
   const arrays = path.join(root, "arrays.gbl");
   fs.writeFileSync(arrays, 'GO_PARANOID\nvalues = sqrt([9 m^2, 16 m^2])\nprint("{values}")\nseal values\n');

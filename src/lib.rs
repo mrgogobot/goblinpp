@@ -13,6 +13,7 @@ pub mod electrical;
 mod elementwise_runtime;
 pub mod error;
 pub mod evaluator;
+pub mod evidence_report;
 pub mod fits;
 pub mod hashing;
 pub mod inference_policy;

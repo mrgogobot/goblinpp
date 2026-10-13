@@ -1,0 +1,32 @@
+{
+  "schema": "goblin.evidence-case.v1",
+  "case_id": "TRAINING-001",
+  "purpose": "security_assessment",
+  "title": "Synthetic offline security assessment",
+  "author": "Training analyst",
+  "authorization": "Training exercise on the supplied synthetic log only. No real host, network or person is being assessed.",
+  "scope": ["Supplied lab-log.txt; offline analysis only"],
+  "summary": "One demonstration observation. This is not a completed assessment of a real system.",
+  "evidence": [
+    {
+      "id": "E1",
+      "path": "lab-log.txt",
+      "sha256": "730e4a2f5a91cd9deeeff053160cab622b24e59dab2d8691ce4dbf3b51bd95aa",
+      "description": "Explicitly synthetic training log; no personal information or credentials.",
+      "collected_utc": "2026-10-13T14:00:00Z"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "title": "Failed-login count warrants review in the exercise",
+      "severity": "informational",
+      "confidence": "suspected",
+      "observed_utc": "2026-10-13T14:00:00Z",
+      "observation": "The synthetic log states that seven logins failed. It contains no evidence of a successful unauthorised login.",
+      "impact": "No actual compromise is established. In an authorised real assessment, repeated failures may warrant further investigation.",
+      "recommendation": "In the disposable lab, inspect the authentication configuration and additional evidence before drawing conclusions.",
+      "evidence": ["E1"]
+    }
+  ]
+}

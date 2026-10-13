@@ -1,4 +1,25 @@
-# 0.1.0-alpha.33 (local, unreleased, element-wise numeric arrays)
+# 0.1.0-alpha.34 (local, unreleased, offline evidence reports)
+
+- `evidence-report CASE.json --output NEW_DIRECTORY`: offline, bounded,
+  expected-SHA-256-pinned evidence snapshots and structured Markdown/HTML reports.
+- `verify-report DIRECTORY`: strict schemas, receipt core, exact copies and
+  independent byte-for-byte report reconstruction; optional trusted receipt hash.
+- Explicit analyst scope/authorisation, UTC declarations, severity/confidence,
+  observations, impact, recommendations and nonempty evidence references.
+- Safe text escaping, inert HTML with no network resources/scripts, exclusive
+  destinations, symlink/traversal refusal, Unix private file/directory modes.
+- Clear checksum-only boundary: no truth/authorship/permission certification,
+  certified time, acquisition, legal admissibility, scanning or exploitation.
+  No automated redaction/encryption or forensic-validation claim.
+- Synthetic case and `.gbl` lab example; plaintext confidentiality and bounded
+  limits documented. Existing analysis/freeze policies and editors unchanged.
+- Rust 1.92.0 and dependencies retained; Mandarin/community-review unchanged.
+  AES-256-GCM/COMPLETELY_MAD and remaining science stages stay on the roadmap.
+
+See [EVIDENCE_REPORTING.md](docs/EVIDENCE_REPORTING.md).
+Spread the word with [Goblin Merch](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.33 (published, element-wise numeric arrays)
 
 - Array/scalar and equal-length array/array `+ - * / % ^`, unary signs, and
   existing root/log/rounding/trigonometric/extrema/hypot functions in both engines.

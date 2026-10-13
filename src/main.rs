@@ -27,6 +27,23 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum CommandSet {
+    /// Offline reports from declared findings and hash-pinned evidence copies.
+    EvidenceReport {
+        case_file: PathBuf,
+        /// New directory; its parent must already exist. Never overwritten.
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Verify report copies, exact renderings, and optional trusted receipt hash.
+    VerifyReport {
+        directory: PathBuf,
+        #[arg(long)]
+        expected_receipt_sha256: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
     Run(RunArgs),
     Check {
         file: PathBuf,
@@ -168,6 +185,8 @@ fn normalized_args() -> Vec<String> {
         "doctor",
         "capabilities",
         "fits-info",
+        "evidence-report",
+        "verify-report",
         "help",
     ];
     if args
@@ -181,6 +200,49 @@ fn normalized_args() -> Vec<String> {
 
 fn dispatch(command: CommandSet) -> Result<i32> {
     match command {
+        CommandSet::EvidenceReport {
+            case_file,
+            output,
+            json,
+        } => {
+            let receipt = goblinpp::evidence_report::create_report(&case_file, &output)?;
+            if json {
+                emit_json(&serde_json::to_value(&receipt)?);
+            } else {
+                println!(
+                    "GOBLIN OFFLINE EVIDENCE REPORT\n\nREPORT_DIRECTORY={}\nREPORT_STATUS=PASS\nRECEIPT_CORE_SHA256={}\nAUTHENTICATION=CHECKSUM_ONLY\n\nEvidence copies and report bytes verified; findings and permission are analyst declarations. Review plaintext evidence before sharing.",
+                    output.display(),
+                    receipt.receipt_core_sha256
+                );
+            }
+            Ok(0)
+        }
+        CommandSet::VerifyReport {
+            directory,
+            expected_receipt_sha256,
+            json,
+        } => {
+            let receipt = goblinpp::evidence_report::verify_report(
+                &directory,
+                expected_receipt_sha256.as_deref(),
+            )?;
+            if json {
+                emit_json(
+                    &serde_json::json!({"status":"PASS", "verified":true, "authentication":"CHECKSUM_ONLY", "trusted_receipt_matched":expected_receipt_sha256.is_some(), "receipt_core_sha256":receipt.receipt_core_sha256}),
+                );
+            } else {
+                println!(
+                    "GOBLIN REPORT VERIFICATION\n\nVERIFICATION_STATUS=PASS\nRECEIPT_CORE_SHA256={}\nTRUSTED_RECEIPT_MATCH={}\nAUTHENTICATION=CHECKSUM_ONLY\n\nEvidence copies and independently reconstructed report bytes match. Findings are not certified.",
+                    receipt.receipt_core_sha256,
+                    if expected_receipt_sha256.is_some() {
+                        "PASS"
+                    } else {
+                        "NOT_REQUESTED"
+                    }
+                );
+            }
+            Ok(0)
+        }
         CommandSet::Run(args) => command_run(args),
         CommandSet::Check { file, json } => command_check(file, json),
         CommandSet::Compile(args) => command_compile(args),
@@ -877,6 +939,7 @@ fn command_doctor(project: PathBuf, json_output: bool) -> Result<i32> {
 fn command_capabilities(json_output: bool) -> Result<i32> {
     let report = json!({
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
+        "evidence_report": {"policy":goblinpp::evidence_report::POLICY,"commands":["evidence-report", "verify-report"],"case_max_bytes":goblinpp::evidence_report::CASE_BYTES,"evidence_file_max_bytes":goblinpp::evidence_report::FILE_BYTES,"evidence_total_max_bytes":goblinpp::evidence_report::TOTAL_BYTES,"authentication":"CHECKSUM_ONLY","network_requests":false,"findings":"ANALYST_DECLARATIONS_NOT_CERTIFIED"},
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "string_functions": ["to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
         "clock_functions": ["time_date"],

@@ -1,0 +1,3 @@
+SYNTHETIC TRAINING DATA - not a real system or incident.
+2026-10-13T14:00:00Z lab-host authentication: 7 failed logins in the exercise.
+This observation alone does not establish unauthorised access or compromise.

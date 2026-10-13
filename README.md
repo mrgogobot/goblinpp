@@ -1,4 +1,19 @@
-# Goblin++ Rust Engine 0.1.0-alpha.33 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.34 (local, unreleased)
+
+Alpha.34 adds **offline forensic/authorised-security reporting**, not scanners
+or exploitation. `goblin++ evidence-report CASE.json --output NEW_DIRECTORY`
+preserves expected-hash-pinned evidence copies and renders Markdown/HTML.
+`goblin++ verify-report DIRECTORY` checks copies and independently reconstructs
+report bytes; optionally match a separately retained receipt core hash.
+Findings, confidence, severity, authorisation and collection times remain analyst
+declarations. SHA-256 is byte integrity, not truth, signing or legal admissibility.
+Start with [Evidence reporting](docs/EVIDENCE_REPORTING.md) and the synthetic
+`examples/evidence-report/case.json`. Existing editor plugins remain compatible;
+no new language semantics, dependencies, compiler upgrade or Chinese edits.
+Exact-ID joins/richer plots/real science fixtures remain separate next stages.
+
+Alpha.33 is [published on GitHub](https://github.com/mrgogobot/goblinpp/releases/tag/v0.1.0-alpha.33)
+and [preserved on Zenodo](https://doi.org/10.5281/zenodo.23343997).
 
 Alpha.33 adds element-wise numeric array operators and mathematical functions:
 `sqrt(values)`, `a * b`, and explicit scalar repetition, with equal array lengths,

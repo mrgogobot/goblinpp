@@ -1,0 +1,11 @@
+GO_PARANOID
+
+# Entirely synthetic, offline training example. No real target is contacted.
+failed_logins = 7
+threshold = 5
+requires_review = failed_logins > threshold
+
+print("Synthetic failed logins = {failed_logins}; requires review = {requires_review}")
+write_text("lab-observation.txt", "SYNTHETIC LAB ONLY. Failed logins = {failed_logins}; requires review = {requires_review}. This does not establish compromise.")
+seal failed_logins
+seal requires_review
