@@ -37,6 +37,14 @@ jobs:
           retention-days: 30
       - name: Lint
         run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Cube study regression gates
+        run: |
+          cargo fmt --manifest-path studies/jwst-cube/extractor/Cargo.toml -- --check
+          cargo fmt --manifest-path studies/jwst-cube/regional/Cargo.toml -- --check
+          cargo test --locked --manifest-path studies/jwst-cube/extractor/Cargo.toml --target-dir target
+          cargo test --locked --manifest-path studies/jwst-cube/regional/Cargo.toml --target-dir target
+          cargo clippy --locked --manifest-path studies/jwst-cube/extractor/Cargo.toml --target-dir target --all-targets -- -D warnings
+          cargo clippy --locked --manifest-path studies/jwst-cube/regional/Cargo.toml --target-dir target --all-targets -- -D warnings
       - name: Build release executable
         run: cargo build --locked --release
 
