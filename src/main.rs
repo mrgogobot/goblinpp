@@ -27,6 +27,18 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum CommandSet {
+    /// Explicit bounded public HTTPS acquisition; never decode or execute the payload.
+    #[cfg(unix)]
+    Fetch(goblinpp::acquisition_cli::FetchArgs),
+    /// Verify an acquisition receipt and its payload offline, including preserved failures.
+    #[cfg(unix)]
+    VerifyFetch {
+        directory: PathBuf,
+        #[arg(long)]
+        expected_receipt_sha256: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
     /// Read-only, explicitly scoped integrity checking against a pinned baseline.
     Orbit(goblinpp::orbit_cli::OrbitArgs),
     /// Offline reports from declared findings and hash-pinned evidence copies.
@@ -154,6 +166,8 @@ struct CompileArgs {
 
 fn main() {
     let args = normalized_args();
+    // Clap can echo unexpected argument values. Fetch errors must not repeat a URL/query.
+    let redact_fetch_arguments = args.get(1).is_some_and(|arg| arg == "fetch");
     let exit = match Cli::try_parse_from(args) {
         Ok(cli) => match dispatch(cli.command) {
             Ok(code) => code,
@@ -163,7 +177,13 @@ fn main() {
             }
         },
         Err(error) => {
-            let _ = error.print();
+            if redact_fetch_arguments && error.exit_code() != 0 {
+                eprintln!(
+                    "GOBLIN ERROR G901\n\nInvalid fetch arguments. Use 'goblin++ fetch --help'; provide --allow-host, --output, and exactly one of --sha256/--record-only. Supplied values are omitted."
+                );
+            } else {
+                let _ = error.print();
+            }
             error.exit_code()
         }
     };
@@ -173,6 +193,8 @@ fn main() {
 fn normalized_args() -> Vec<String> {
     let mut args = std::env::args().collect::<Vec<_>>();
     let commands = [
+        "fetch",
+        "verify-fetch",
         "run",
         "check",
         "compile",
@@ -203,6 +225,16 @@ fn normalized_args() -> Vec<String> {
 
 fn dispatch(command: CommandSet) -> Result<i32> {
     match command {
+        #[cfg(unix)]
+        CommandSet::Fetch(args) => goblinpp::acquisition_cli::dispatch(args),
+        #[cfg(unix)]
+        CommandSet::VerifyFetch {
+            directory,
+            expected_receipt_sha256,
+            json,
+        } => {
+            goblinpp::acquisition_cli::verify(&directory, expected_receipt_sha256.as_deref(), json)
+        }
         CommandSet::Orbit(args) => goblinpp::orbit_cli::dispatch(args),
         CommandSet::EvidenceReport {
             case_file,
@@ -941,8 +973,22 @@ fn command_doctor(project: PathBuf, json_output: bool) -> Result<i32> {
 }
 
 fn command_capabilities(json_output: bool) -> Result<i32> {
+    #[cfg(unix)]
+    let network_acquisition = json!({"policy":goblinpp::acquisition::POLICY,
+        "commands":["fetch", "verify-fetch"], "platforms":"Unix; local validation macOS arm64, cross-platform CI required",
+        "https_only":true, "port":443, "explicit_host_permission":true, "public_dns_addresses_only":true,
+        "redirects":0, "proxies":false, "http_content_decoding":false, "automatic_gbl_network":false,
+        "default_max_payload_bytes":goblinpp::acquisition::DEFAULT_MAX_BYTES,
+        "hard_max_payload_bytes":goblinpp::acquisition::MAX_BYTES,
+        "expected_hash_or_explicit_record_only":true, "offline_verification":true,
+        "server_authentication":"RUSTLS_PLATFORM_TRUST", "content_authentication":"CHECKSUM_ONLY",
+        "uploads":false, "servers":false, "auth_headers":false, "cube_loading":false});
+    #[cfg(not(unix))]
+    let network_acquisition =
+        json!({"available":false,"reason":"Initial acquisition storage backend requires Unix"});
     let report = json!({
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
+        "network_acquisition": network_acquisition,
         "orbit": {"policy":goblinpp::orbit::POLICY,"commands":["orbit baseline", "orbit verify-baseline", "orbit check", "orbit verify"], "standalone":"goblin-orbit", "authentication":"CHECKSUM_ONLY", "scope":"EXPLICIT_LOCAL_DIRECTORY", "comparison":"FILE_BYTES_AND_ENTRY_KIND_ONLY", "symlinks":"NEVER_FOLLOWED", "platforms":"Unix descriptor traversal; locally tested macOS arm64", "repairs":false, "media_detection":false},
         "evidence_report": {"policy":goblinpp::evidence_report::POLICY,"commands":["evidence-report", "verify-report"],"case_max_bytes":goblinpp::evidence_report::CASE_BYTES,"evidence_file_max_bytes":goblinpp::evidence_report::FILE_BYTES,"evidence_total_max_bytes":goblinpp::evidence_report::TOTAL_BYTES,"authentication":"CHECKSUM_ONLY","network_requests":false,"findings":"ANALYST_DECLARATIONS_NOT_CERTIFIED"},
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],

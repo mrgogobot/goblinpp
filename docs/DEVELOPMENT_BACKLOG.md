@@ -1,5 +1,22 @@
 # Goblin++ development backlog
 
+Local implementation update, 2026-10-15: alpha.36 adds the GBL-026 CLI acquisition
+foundation: explicit bounded public HTTPS GET, named-host/public-address gates,
+mandatory TLS verification, new private snapshots and distinct expected-hash,
+observed-only and failed receipts with offline verification. See
+[NETWORK_ACQUISITION.md](NETWORK_ACQUISITION.md). No download builtin, automatic
+network imports, credential API, cube handles or 3-D compression is implemented;
+GBL-027/028 remain queued. Publication and cross-platform release gates remain
+separate; this local update does not claim a released tag or security audit.
+
+Planning update, 2026-10-15: Malin requests first-class scientific-file
+downloads, lossless three-dimensional encoding/compression and decoding, and
+a download-to-cube loading workflow. GBL-026 through GBL-028 below record the
+scope and acceptance gates. These are **queued requirements**, not shipped
+builtins, a selected codec, a new release or permission to perform downloads.
+The native [JWST cube study tools](../studies/jwst-cube/README.md) are tested
+research tools, not an already integrated language-level cube API.
+
 Implementation update, 2026-10-13: alpha.35 adds the first Orbit module: explicit
 local read-only baseline checking, bounded Unix descriptor-relative traversal,
 external hash anchors, conservative incomplete coverage, exclusive destinations,
@@ -116,6 +133,9 @@ Evidence labels:
 | GBL-023 | WB-3 | GO_MAD strict research policy profile | Proposed name and contract only; not syntax or implemented isolation |
 | GBL-024 | WB-3 P1 | Explicit constants namespace | Silent h collision fixed alpha.20; namespace design remains queued |
 | GBL-025 | WB-3 P2 | Exact-source-ID table joins | Requires table and ID semantics; queued |
+| GBL-026 | Science I/O | Explicit audited downloads of FITS and other scientific files | Local alpha.36 CLI foundation; language builtin and broader protocol/auth stages not implemented |
+| GBL-027 | Scientific storage | Lossless 3-D-aware encoding/compression and decoding | Requested 2026-10-15; codec/container choice and benchmarks queued |
+| GBL-028 | Cube workflow | Download and directly open/process FITS cubes with bounded memory | Requested 2026-10-15; native study extraction exists, language integration queued |
 
 WB-3 promotes GBL-006/007/008/009/012 to P0; adds ECDF to GBL-007;
 promotes GBL-013 to P1; and retains bootstrap as P1 dependent on GBL-008.
@@ -517,6 +537,120 @@ independently justified tolerances before a new candidate is tested. Existing
 run bytes still verify exactly; reference agreement is a separate gate. Do
 not round authoritative seals, infer a constants namespace from alpha.20's
 protection, or infer physical blinding from an access log.
+
+## Scientific downloads, compression and cube loading (logged 2026-10-15)
+
+User request: network functions to retrieve files such as FITS; three-dimensional
+spatial encoding/compression and decoding; and the ability to download cubes
+and load them directly. No new public function names or syntax are fixed by
+these notes. Preserve the existing language and engine contracts until the
+implementation and compatibility review chooses an API.
+
+### GBL-026 — Explicit, bounded scientific-file downloads
+
+- Provide an explicit effectful download operation, with HTTPS and certificate
+  verification by default. Do not turn ordinary local-file reads into surprise
+  network requests. Specify allowed destinations, redirect handling and
+  protection against unintended local/private-network access; do not forward
+  credentials to another origin on a redirect.
+- Set explicit connection/read/overall timeouts, retry/redirect ceilings and
+  cumulative transfer/disk-byte limits. Count actual received bytes, not just
+  a server's Content-Length. Check-only and compilation-preview operations
+  must not download files.
+- Download to a new bounded staging location, hash the actual received payload,
+  and expose a completed immutable local snapshot only after transfer and
+  integrity checks pass. No overwrites, silent partial success, or mixing
+  bytes from changing remote objects when resuming. Server metadata such as
+  ETag is a validator, not a substitute for an expected SHA-256.
+- Accept a separately supplied expected hash when available. Distinguish
+  `expected hash verified` from `observed hash recorded`; hashing alone does
+  not establish authenticity, completeness against an external reference,
+  instrument calibration or scientific suitability.
+- Receipts should retain redacted origin/final endpoint information, acquisition
+  UTC time, relevant response metadata, actual byte count, observed/expected
+  hashes and downloader/policy identity. Never log passwords, bearer tokens,
+  authentication headers or signed-URL secrets. Define which original bytes
+  are hashed; HTTP content decoding and scientific-file decompression must
+  not silently change the identity being recorded.
+- Preserve clearly labelled failure/partial-transfer evidence without treating
+  a partial hash as the complete input hash. Verification/replay of a preserved
+  run must work offline from its snapshot, without silently re-downloading a
+  potentially changed URL. Network access must respect any future enforced
+  blinding/isolation boundary; a logged URL is not enforcement.
+- Acceptance: controlled local test servers, redirects, TLS failures, wrong
+  hashes, missing/misleading size headers, changing/resumed objects, truncated
+  transfers, timeout/retry/byte limits, secret redaction, offline verification
+  and interpreter/native parity. Tests must not depend on a live MAST service.
+
+### GBL-027 — Lossless 3-D-aware encoding/compression and decoding
+
+- Exploit actual multidimensional relationships, not merely reshape arbitrary
+  bytes and promise a better compression ratio. Astronomical cubes may have
+  axes x/y/wavelength; other volumes may use x/y/z. Preserve axis labels,
+  order, shape, units and WCS rather than assuming the third axis is spatial.
+- Start with strictly lossless modes: reconstruct original floating-point
+  bits, NaN payloads, signed zero, exact integers, DQ flags and missingness.
+  No implicit quantization, smoothing, truncation or loss of error arrays.
+  Keep scientific masks separate from compression decisions.
+- Compare established lossless codecs and reversible multidimensional
+  transforms before deciding whether custom encoding is justified. No codec,
+  custom file extension, compression ratio or performance claim is selected
+  by logging this item. Distinguish compression coding from container/chunk
+  layout and from encryption; checksums do not authenticate authorship.
+- Use independently addressable bounded chunks, an explicit index and
+  versioned codec/settings metadata. Record compressed-byte hashes and
+  decoded-byte/array hashes separately. If claiming exact reconstruction of
+  a whole FITS file, preserve headers, padding and other HDUs too, and require
+  the reconstructed file hash to equal the original file hash. Array-value
+  equality alone is not whole-file byte equality.
+- Enforce decoded-size, chunk-count, dimension/product, expansion-ratio and
+  memory/disk-work limits before allocation. Refuse unsupported codecs,
+  corrupt/truncated streams, invalid indexes and unsafe output paths without
+  labelling partial decoded data complete. Never overwrite the source.
+- Acceptance: bitwise round trips, genuine high-bit flags and unsigned extrema,
+  nonfinite/signed-zero fixtures, odd shapes/chunk edges, cross-platform
+  decoding, tampering and decompression-bomb refusals. Benchmark size, speed,
+  peak memory and regional-read costs against ordinary lossless compression
+  on representative noisy as well as smooth cubes. Incompressible inputs
+  must remain valid even if storage grows; no guaranteed savings claim.
+
+### GBL-028 — Download, open and process scientific cubes directly
+
+- Offer one coherent user workflow: explicit download -> verified local
+  snapshot -> bounded optional decoding -> read-only cube handle -> spatial
+  or spectral chunks/selections. Users should not need an external Python
+  extraction step. Direct loading does not mean allocating the entire cube
+  in an array or claiming arbitrary remote random access before it is tested.
+- Reuse GBL-026 provenance and GBL-027 bounds. Coordinate ordinary `.fits.gz`
+  support with GBL-017 rather than confuse gzip with 3-D-aware compression.
+  The original acquired file remains the custody anchor even when an indexed
+  decoded working representation is needed for FITS access.
+- Integrate the independently tested native JWST study path only after API,
+  runtime-resource and receipt contracts are specified. Decode physical DQ
+  using the declared storage/scaling convention; retain original storage
+  metadata and test the R2 signed-storage/BZERO failure explicitly. Do not
+  silently clear bit 31 or equate raw unsigned storage words with flags.
+- Preserve SCI/ERR/DQ/WMAP association, axis indexing, units, WCS and explicit
+  mask choices. Refuse unsupported/ambiguous WCS or layouts rather than guess.
+  Retain all wavelength channels, explicit missing values and per-channel
+  usable-pixel counts. A convenience mask is processing policy, not evidence
+  that retained measurements are scientifically reliable.
+- Link acquisition, compressed input, decoded snapshot, extraction settings,
+  parent-run evidence and generated artifacts in verifiable receipts. Pin
+  data/codec/policy identities for freeze and revision semantics; compiled
+  execution must not become an unrecorded fallback or bypass.
+- Acceptance: fully offline fixtures for download-to-extraction, hand-known
+  non-cubic indexing/scaling cases, the verified real-cube study where data
+  access is authorised, complete wavelength coverage, exact custody checks,
+  interrupted/corrupt inputs, measured bounded memory, and supported-engine
+  parity. Any Python comparison must use identical apertures, backgrounds and
+  masks with tolerances declared in advance, not replace native extraction
+  with Python output or infer independent calibration/localization.
+
+Suggested implementation order: GBL-026 acquisition/custody foundation, then
+GBL-028 local cube handles/integration, then GBL-027 benchmarked compression
+and indexed decoding. These can be separate milestones; no release number or
+promise to implement all three at once is assigned here.
 
 ## Documentation and outreach notes
 

@@ -1,3 +1,28 @@
+# 0.1.0-alpha.36 (local, unreleased, explicit HTTPS acquisition)
+
+- Adds Unix `goblin++ fetch` and fully offline `goblin++ verify-fetch`.
+- HTTPS GET only, port 443, an explicit exact hostname and vetted public DNS
+  candidates handed directly to the connector; rustls/platform certificate and
+  hostname validation remain mandatory.
+- No redirects, proxies, cookies, credential headers, uploads, listeners,
+  automatic HTTP content decoding, retries of application requests or insecure
+  override. Downloaded content is never automatically executed or interpreted.
+- Bounds payloads (default 256 MiB; hard 1 GiB), headers (16 KiB), transfer time
+  and receipt reads; private no-overwrite Unix bundles preserve partial failures.
+- Separates expected-SHA256 matches from explicit `--record-only`. Acquisitions
+  have a versioned receipt, client-lock hash, redacted source identity, payload
+  hash and optional external receipt anchor. Integrity is not authorship or
+  scientific validation; no implicit custody-ledger or `.gbl` parent linkage.
+- Existing language/runtime semantics and editor vocabularies are unchanged.
+  There is no download builtin, cube-handle integration or 3-D compression yet.
+  Rust remains 1.92.0; maintained HTTP/TLS dependencies are newly locked.
+- See [NETWORK_ACQUISITION.md](docs/NETWORK_ACQUISITION.md) for use, threat model,
+  acceptance coverage and remaining publication gates. No public release or
+  Zenodo submission is implied by these local source changes.
+
+Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk): no purchase
+is required to use the language.
+
 # 0.1.0-alpha.35 (local, unreleased, Orbit scoped baseline checks)
 
 - Shared Rust module plus `goblin++ orbit` / standalone `goblin-orbit`, both

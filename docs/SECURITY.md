@@ -1,5 +1,36 @@
 # Security and trust boundaries
 
+## Explicit public HTTPS acquisition (local alpha.36 candidate)
+
+`fetch` is a deliberate separate command, not implicit networking during `run`,
+`check`, `compile`, local imports or FITS reads. It permits public HTTPS GET on
+port 443 to one explicitly named DNS hostname. Returned candidate addresses are
+checked before being handed to the connector; private/local/special-use and
+transition addresses are refused. Redirects and proxy environment settings are
+not followed. Rustls verifies the server certificate/name using platform trust;
+there is no insecure switch, credential-header API, cookie jar or client-cert API.
+
+Transfer, header and payload limits are enforced; files go to a new private Unix
+directory. Content coding is refused, not automatically decompressed. Successful
+payloads are made read-only, but this is not immutable storage against their owner.
+Raw paths/queries and response secrets are omitted from receipts and errors;
+command lines, shell history and external diagnostic tooling can still expose
+what a user supplies. Do not use passwords, tokens or signed-URL secrets here.
+
+Expected-hash matches, explicitly observed-only downloads and failed acquisitions
+remain distinct. Offline verification proves receipt/payload consistency, not
+authenticated content authorship, honest server metadata, permission to retrieve,
+certified time, scientific reliability or absence of malware. Files are never
+automatically opened as executable content. Caller-supplied expected hashes need
+their own trusted provenance.
+
+This is not an OS egress sandbox, hostile-filesystem atomic acquisition, process-wide
+memory/disk cap, cancellation of an OS DNS worker, or protection from compromised
+OS trust/routing. DNS and platform trust/revocation services are outside the HTTP
+host allowlist. Authorized inline Rust retains its existing full user authority.
+Use trusted output parents. Future blinding/encryption profiles are not implied.
+See [the exact policy and release gates](NETWORK_ACQUISITION.md).
+
 ## Orbit scoped observations
 
 Alpha.35 Orbit reads only an explicitly selected local directory and compares

@@ -1,0 +1,8 @@
+GO_PARANOID
+
+# First acquire explicitly with `goblin++ fetch`; pass its absolute local PAYLOAD path.
+# This program performs no download and does not infer calibration or scientific reliability.
+file = argv(1)
+hdus = fits_hdu_count(file)
+print("HDU count = {hdus}")
+seal hdus

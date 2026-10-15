@@ -1,3 +1,7 @@
+#[cfg(unix)]
+pub mod acquisition;
+#[cfg(unix)]
+pub mod acquisition_cli;
 pub mod array_math;
 pub mod ast;
 pub mod audit;

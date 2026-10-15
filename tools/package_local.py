@@ -19,7 +19,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DIRS = ("src", "tests", "examples", "docs", "assets", "tools", "vscode", "jetbrains", "community-review", ".github")
+SOURCE_DIRS = ("src", "tests", "examples", "docs", "assets", "tools", "vscode", "jetbrains", "community-review", "studies", ".github")
 SOURCE_FILES = (
     "Cargo.toml", "Cargo.lock", "build.rs", "CITATION.cff", "README.md", "RELEASE_NOTES.md",
     "RELEASE_CHECKLIST.md", "LICENSE", "LICENSE-DOCS.md", "BRANDING.md", "install.sh", ".gitignore",

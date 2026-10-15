@@ -1,6 +1,16 @@
-# Goblin++ Rust Engine 0.1.0-alpha.35 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.36 (local, unreleased)
 
-Alpha.35 adds **Orbit read-only scoped baseline checks**, shared by
+Alpha.36 adds an **explicit public HTTPS acquisition command**, `goblin++ fetch`,
+with a named permitted host, checked public DNS destinations, verified TLS,
+bounded streaming to a new private directory and offline `verify-fetch` receipts.
+Use an independently obtained expected SHA-256 or explicitly select observed-only
+recording. Redirects, proxies, cookies, credential headers and automatic content
+decoding are disabled. No automatic `.gbl` networking, uploads, servers, 3-D
+compression or integrated cube loading is added. See [secure downloads](docs/NETWORK_ACQUISITION.md).
+This is a local, unreleased candidate; Rust remains 1.92.0. New locked HTTP/TLS
+dependencies are used, and existing editor plugins remain compatible.
+
+Alpha.35 added **Orbit read-only scoped baseline checks**, shared by
 `goblin++ orbit` and standalone `goblin-orbit`. Explicit local scope, bounded
 streaming hashes, no-follow traversal, independently pinned baselines and
 preserved observation reports distinguish matches, review-required changes and
