@@ -35,6 +35,12 @@ final class GoblinLexerTest {
         assertTrue(tokens.stream().anyMatch(token -> token.type == GoblinTokenTypes.INLINE_RUST));
         assertTrue(tokens.contains(new Token(GoblinTokenTypes.FUNCTION, "sqrt")));
     }
+    @Test
+    void classifiesNumericAuditDirective() {
+        List<Token> tokens = lex("GO_NUMERIC_AUDIT \"numeric_audit.json\"\n");
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.DIRECTIVE, "GO_NUMERIC_AUDIT")));
+        assertFalse(tokens.stream().anyMatch(token -> token.type == TokenType.BAD_CHARACTER));
+    }
 
     @Test
     void classifiesChemistryFunctionsConstantsAndUnicodeUnits() {

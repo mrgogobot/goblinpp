@@ -1,5 +1,10 @@
 # Numerical reproducibility — alpha.22
 
+Alpha.37 adds a separate explicit named-scalar consistency directive:
+[`GO_NUMERIC_AUDIT`](NUMERIC_AUDIT.md). It requires `run --compile`, pins its
+configuration and reconstructs exact interpreter/native comparisons offline.
+It does not change the tolerance functions or introduce higher precision.
+
 Goblin++ now distinguishes **unchanged evidence**, **identical floating-point
 bits**, and **agreement within a tolerance you explicitly choose**. They are
 different claims. None establishes scientific truth or authenticates authorship.

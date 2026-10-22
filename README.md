@@ -1,4 +1,24 @@
-# Goblin++ Rust Engine 0.1.0-alpha.36 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.37 (local, unreleased)
+
+Alpha.37 adds **explicit named scalar consistency audits** with
+`GO_NUMERIC_AUDIT "numeric_audit.json"` and `run --compile`. The interpreter
+reference and native execution must agree exactly on selected finite scalar
+values and dimensions. Configuration snapshots, frozen policy and offline
+report reconstruction preserve failures and incomplete comparisons. This is
+same-machine agreement, **not extra precision, independent algorithms or proof
+of scientific correctness**. Rust remains 1.92.0; no dependencies are added.
+VS Code 0.1.28 and JetBrains 0.3.18 add completion/help and highlighting.
+Start with [the numerical audit guide](docs/NUMERIC_AUDIT.md) and:
+
+```sh
+goblin++ run examples/numeric_audit.gbl --compile
+goblin++ verify <RUN_DIR printed above>
+```
+
+`COMPLETELY_MAD` remains a future strict policy profile, not a shipped directive.
+No higher precision, interval arithmetic or encryption is implied.
+
+## Previous stage: alpha.36 — explicit HTTPS acquisition
 
 Alpha.36 adds an **explicit public HTTPS acquisition command**, `goblin++ fetch`,
 with a named permitted host, checked public DNS destinations, verified TLS,

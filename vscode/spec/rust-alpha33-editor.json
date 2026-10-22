@@ -1,12 +1,13 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.33",
+  "runtime": "goblin++ 0.1.0-alpha.37",
   "array_math": "Numeric operators and abs/sqrt/min/max/rounding/exp/log/trigonometry/hypot accept homogeneous numeric arrays. Equal array lengths only; scalars repeat explicitly; no length-one array broadcasting. Independent results, dimension checks and zero-based failing indices. is_close/same_bits remain scalar; dot and matrix_multiply are explicit reductions/products.",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
   "array_math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
   "array_math_help": "Also element-wise over numeric arrays: equal array lengths, explicit scalar repetition, independent copies, dimensional checks and zero-based failing indices. No reduction, truncation or length-one array broadcasting.",
   "statements": [
+    {"spelling":"GO_NUMERIC_AUDIT","kind":"statement","detail":"Main-source directive naming an explicit JSON configuration; requires run --compile. Compare named scalar seals with exact bits and dimensions on this machine; not an accuracy certificate or cross-platform guarantee. No comparison during check preview.","snippet":"GO_NUMERIC_AUDIT \"${1:numeric_audit.json}\""},
     {"spelling":"GO_LOOP_BUDGET","kind":"statement","detail":"One main-source declaration, 1 to 50,000,000 shared loop-body entries; default 1,000,000. Requested/effective/used budget is audited; not a sandbox.","snippet":"GO_LOOP_BUDGET ${1:50000000}"},
     {
       "spelling": "import",

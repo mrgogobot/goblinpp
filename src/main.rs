@@ -379,6 +379,14 @@ fn command_run(args: RunArgs) -> Result<i32> {
             "RUN_STATUS={}",
             receipt["status"].as_str().unwrap_or("MACHINERY_FAIL")
         );
+        if receipt["numeric_audit"]["requested"] == true {
+            println!(
+                "NUMERIC_AUDIT_STATUS={}",
+                receipt["numeric_audit"]["status"]
+                    .as_str()
+                    .unwrap_or("ERROR")
+            );
+        }
         if let Some(status) = receipt
             .pointer("/paranoid_postflight/status")
             .and_then(Value::as_str)
@@ -455,6 +463,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         std::str::from_utf8(&bytes).map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
     let parsed = goblinpp::modules::resolve(&file, text)?.parsed;
     parsed.require_executable_program()?;
+    let numeric_audit_preview = goblinpp::numeric_audit::snapshot(&file, &parsed.program)?;
     let mut evaluation = Evaluation::new(
         file.parent()
             .filter(|parent| !parent.as_os_str().is_empty())
@@ -505,6 +514,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "batches_preview": evaluation.batches.evidence(),
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
+        "numeric_audit_preview": {"configuration":numeric_audit_preview,"status":"NOT_PERFORMED_PREVIEW_ONLY"},
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
         "paranoid_mode": parsed.paranoid(), "inline_rust": parsed.inline_rust.iter().map(|block| json!({"sha256": block.sha256, "requires_compile": true})).collect::<Vec<_>>(),
         "stdout_preview": evaluation.stdout, "sealed_preview": evaluation.sealed.iter().map(|(name, value)| (name.clone(), value.to_json())).collect::<serde_json::Map<_,_>>(),
@@ -527,6 +537,9 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         for block in &parsed.inline_rust {
             println!("INLINE_RUST_{}_SHA256={}", block.index + 1, block.sha256);
         }
+        if goblinpp::numeric_audit::requested(&parsed.program).is_some() {
+            println!("NUMERIC_AUDIT_STATUS=NOT_PERFORMED_PREVIEW_ONLY");
+        }
         for warning in &evaluation.warnings {
             eprintln!("{warning}");
         }
@@ -544,6 +557,12 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         std::str::from_utf8(&bytes).map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
     let parsed = goblinpp::modules::resolve(&args.file, text)?.parsed;
     parsed.require_executable_program()?;
+    if goblinpp::numeric_audit::requested(&parsed.program).is_some() {
+        return Err(GoblinError::new(
+            "G702",
+            "GO_NUMERIC_AUDIT cannot be fulfilled by standalone compile. Use goblin++ run FILE --compile for preserved audit evidence.",
+        ));
+    }
     if freeze_path(&args.file).exists() {
         let freeze = verify_freeze(&args.file);
         if !freeze.verified {
@@ -830,6 +849,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
             "PLOT_POLICY_SAME ............. {}",
             yn(report.plot_policy_same)
         );
+        println!(
+            "NUMERIC_AUDIT_SAME ........... {}",
+            yn(report.numeric_audit_same)
+        );
     }
     Ok(0)
 }
@@ -999,6 +1022,11 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "clock_policy": goblinpp::clock::policy(),
         "math_functions": ["abs", "sqrt", "min", "max", "floor", "ceil", "round", "exp", "ln", "log10", "sind", "cosd", "tand", "sinr", "cosr", "tanr", "asind", "acosd", "atand", "asinr", "acosr", "atanr", "atan2d", "atan2r", "deg2rad", "rad2deg", "hypot"],
         "numeric_comparison_functions": ["is_close", "same_bits"],
+        "numeric_audit": {"directive":"GO_NUMERIC_AUDIT", "policy":goblinpp::numeric_audit::POLICY,
+            "requires":"run --compile with explicit JSON configuration", "quantities":"1..16 named finite numeric scalar seals",
+            "comparison":"exact f64 bits and six dimensions; same machine only", "preview":"NOT_PERFORMED_PREVIEW_ONLY",
+            "higher_precision":false, "scientific_accuracy_certificate":false, "cross_platform_guarantee":false,
+            "completely_mad_profile":"PROPOSED_NOT_IMPLEMENTED"},
         "array_math_policy": goblinpp::array_math::policy(),
         "math_policy": goblinpp::math_policy::policy(),
         "science_functions": goblinpp::science::FUNCTIONS,

@@ -22,6 +22,15 @@ const manifest = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
 );
 
+test("alpha.37 audit completion distinguishes consistency from accuracy", () => {
+  const entry = core.vocabularyEntries(lexicon, runtimeVocabulary).find((v) => v.spelling === "GO_NUMERIC_AUDIT");
+  assert.ok(entry.snippet.includes("numeric_audit.json"));
+  assert.match(entry.detail, /run --compile/);
+  assert.match(entry.detail, /not an accuracy certificate/);
+  assert.match(entry.detail, /No comparison during check/);
+  assert.ok(new RegExp(grammar.repository.directives.patterns[0].match).test("GO_NUMERIC_AUDIT"));
+});
+
 test("alpha.30 array plots expose no-sampling and evidence contracts", () => {
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
   for (const name of ["plot_line", "plot_scatter", "plot_histogram"]) {
@@ -195,8 +204,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 276);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 276);
+  assert.equal(entries.length, 277);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 277);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -373,7 +382,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.27");
+  assert.equal(manifest.version, "0.1.28");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);

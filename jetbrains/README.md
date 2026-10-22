@@ -1,5 +1,10 @@
 # Goblin++ for JetBrains IDEs
 
+Plugin 0.3.18 adds alpha.37 `GO_NUMERIC_AUDIT` completion, quick help and
+highlighting. It explains explicit configuration, `run --compile`, same-machine
+scalar comparison and the distinction from scientific accuracy. Check preview
+does not perform the audit. See [NUMERIC_AUDIT.md](../docs/NUMERIC_AUDIT.md).
+
 Plugin 0.3.17 adds alpha.33 element-wise mathematical function help, with strict
 lengths, numeric scalar repetition, copy results, units and zero-based failure
 indices. Dot/matrix products and scalar comparisons remain explicit and separate.
@@ -30,7 +35,7 @@ It retains completions/quick help for alpha.26's four seeded scientific PCG32
 functions. Explicit seeds/streams and half-open bounds; not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Plugin 0.3.17 accompanies engine alpha.33. Unit completion and quick documentation
+Plugin 0.3.18 accompanies engine alpha.37. Unit completion and quick documentation
 explain compound suffixes, whole-quantity powers and grouped denominators.
 See `docs/COMPOUND_UNITS.md` in the engine package. Completion and quick documentation
 include stable copy sorting, type-7 quantiles/median, explicit sample/population

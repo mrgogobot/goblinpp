@@ -27,6 +27,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub numeric_audit_same: bool,
     pub array_math_policy_same: bool,
     pub fits_batch_policy_same: bool,
     pub plot_policy_same: bool,
@@ -71,6 +72,7 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    checks.push(check("NUMERIC_AUDIT_EVIDENCE", crate::numeric_audit::verify(run_dir, &receipt).is_ok(), None, None, Some("Offline reconstruction of declared same-machine scalar consistency, not scientific accuracy.".into())));
     if receipt.get("array_math_policy").is_some() || crate::array_math::requires_policy(&receipt) {
         checks.push(check(
             "ARRAY_MATH_POLICY_SUPPORTED",
@@ -975,7 +977,10 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let paranoid_mode_same = at(&left, &["paranoid_mode"]) == at(&right, &["paranoid_mode"]);
     let execution_engine_same =
         at(&left, &["execution", "engine"]) == at(&right, &["execution", "engine"]);
+    let numeric_audit_same = crate::numeric_audit::comparison_evidence(&left)
+        == crate::numeric_audit::comparison_evidence(&right);
     let equivalent_result = canonical_program_same
+        && numeric_audit_same
         && clock_readings_same
         && batch_evidence_same
         && inference_evidence_same
@@ -1020,6 +1025,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "PLOT_POLICY_CHANGE"
     } else if !clock_policy_same {
         "CLOCK_POLICY_CHANGE"
+    } else if !numeric_audit_same {
+        "NUMERIC_AUDIT_CHANGE"
     } else if canonical_program_same && status_same && !clock_readings_same {
         "CLOCK_INPUT_CHANGE"
     } else if source_bytes_same && equivalent_result {
@@ -1036,6 +1043,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        numeric_audit_same,
         array_math_policy_same,
         plot_policy_same,
         clock_policy_same,

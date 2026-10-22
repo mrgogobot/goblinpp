@@ -248,6 +248,7 @@ impl Evaluation {
             )),
             Stmt::Function { .. } => Ok(ExecFlow::Normal),
             Stmt::LoopBudget(_) => Ok(ExecFlow::Normal),
+            Stmt::NumericAudit(_) => Ok(ExecFlow::Normal),
             Stmt::Return(expr) => {
                 self.return_value = Some(self.eval_expr(expr)?);
                 Ok(ExecFlow::Return)

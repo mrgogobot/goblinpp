@@ -1,4 +1,26 @@
-# 0.1.0-alpha.36 (local, unreleased, explicit HTTPS acquisition)
+# 0.1.0-alpha.37 (local, unreleased, named numerical consistency audit)
+
+- Adds `GO_NUMERIC_AUDIT "config.json"` with explicit same-machine
+  interpreter/native exact-bit and dimension comparison for named scalar seals.
+- Requires `run --compile`, explicit schema/mode/names; no hidden compilation,
+  tolerance defaults, array reduction or inline Rust. Standalone compilation
+  refuses this launcher-owned audit; check preview is explicitly unaudited.
+- Preserves PASS/FAIL/INCONCLUSIVE/ERROR evidence; no requested incomplete audit
+  may pass a run. Configurations are snapshotted/hashed, pinned by freeze and
+  independently reconstructed offline during `verify`.
+- Historical non-audit receipts/freezes remain usable; differences in named
+  audit evidence are explicit in `diff`. No change to binary64 math semantics,
+  authoritative seals, existing parity gates, compiler version or dependencies.
+- VS Code 0.1.28 and JetBrains 0.3.18 add directive completion/help/highlighting.
+  Chinese/community-review documents are not modified.
+- No scientific accuracy, independent algorithms, cross-platform guarantee,
+  arbitrary precision or interval claim. `COMPLETELY_MAD` remains a proposed
+  strict policy profile; AES/key management remains separate future work.
+
+See [NUMERIC_AUDIT.md](docs/NUMERIC_AUDIT.md).
+Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.36 (explicit HTTPS acquisition)
 
 - Adds Unix `goblin++ fetch` and fully offline `goblin++ verify-fetch`.
 - HTTPS GET only, port 443, an explicit exact hostname and vetted public DNS

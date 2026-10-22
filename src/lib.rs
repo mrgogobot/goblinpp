@@ -28,6 +28,7 @@ pub mod lexer;
 pub mod math_policy;
 pub mod matrix;
 pub mod modules;
+pub mod numeric_audit;
 pub mod numeric_comparison;
 pub mod orbit;
 pub mod orbit_cli;

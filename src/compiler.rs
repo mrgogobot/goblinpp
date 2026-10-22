@@ -735,6 +735,11 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
             Stmt::LoopBudget(_) => {
                 body.push_str("    // GO_LOOP_BUDGET is pinned in the generated loop counter.\n")
             }
+            Stmt::NumericAudit(_) => {
+                body.push_str(
+                    "    // Numerical audit is performed only by the audited run launcher.\n",
+                );
+            }
             Stmt::Return(expr) => body.push_str(&format!("    return {};\n", generate_expr(expr)?)),
             Stmt::Break => body.push_str("    break;\n"),
             Stmt::Continue => body.push_str("    continue;\n"),

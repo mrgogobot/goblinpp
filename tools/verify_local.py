@@ -198,6 +198,18 @@ def main() -> None:
                                           cwd=root, text=True, capture_output=True, check=True)
                 assert json.loads(verified.stdout)["verified"] is True
                 print(example, "compiled" if extra else "interpreted", "+ independent verification: PASS")
+        # This directive requires explicit dual execution; do not silently compile a plain run.
+        audited = subprocess.run([str(binary), "run", "examples/numeric_audit.gbl", "--compile", "--json"],
+                                 cwd=root, text=True, capture_output=True, check=True)
+        payload = json.loads(audited.stdout)
+        evidence = payload["receipt"]["numeric_audit"]
+        assert evidence["status"] == "PASS" and evidence["comparison_completed"]
+        assert [row["name"] for row in evidence["comparisons"]] == ["area", "diagonal"]
+        assert all(row["interpreter"] == row["native"] for row in evidence["comparisons"])
+        checked = subprocess.run([str(binary), "verify", payload["run_dir"], "--json"],
+                                 cwd=root, text=True, capture_output=True, check=True)
+        assert json.loads(checked.stdout)["verified"] is True
+        print("numeric_audit compiled + reconstructed named scalar comparison: PASS")
         print(f"Artifact hashes, ZIP integrity, {len(inventory['files'])} inventory files and isolated installation: PASS")
 
 

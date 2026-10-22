@@ -1,0 +1,5 @@
+{
+  "schema": "goblin.numeric-audit-config.v1",
+  "comparison": "interpreter-native-same-bits",
+  "quantities": ["area", "diagonal"]
+}

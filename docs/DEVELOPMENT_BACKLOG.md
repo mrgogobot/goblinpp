@@ -1,5 +1,18 @@
 # Goblin++ development backlog
 
+Local implementation update, 2026-10-22: alpha.37 introduces a deliberately
+limited consistency-audit directive, `GO_NUMERIC_AUDIT "config.json"`.
+Explicit compiled runs compare named scalar seals against the interpreter on
+the same machine, with exact bits/dimensions, frozen configuration and offline
+evidence reconstruction. This is not a new precision backend, an independent
+algorithm or a scientific-accuracy certificate. See [NUMERIC_AUDIT.md](NUMERIC_AUDIT.md).
+Higher precision, rigorous intervals, cancellation diagnostics and cross-machine
+numerical protocols remain future work requiring separately specified gates.
+`COMPLETELY_MAD` is still a proposed strict policy profile, to compose only tested
+requirements without weakening GO_PARANOID or disguising mismatches through
+rounding. It is separate from proposed AES-256-GCM/key management. No custom IDE
+is planned; both existing editor plugins are retained and updated.
+
 Local implementation update, 2026-10-15: alpha.36 adds the GBL-026 CLI acquisition
 foundation: explicit bounded public HTTPS GET, named-host/public-address gates,
 mandatory TLS verification, new private snapshots and distinct expected-hash,

@@ -1,0 +1,12 @@
+GO_PARANOID
+GO_NUMERIC_AUDIT "numeric_audit.json"
+
+# Explicitly audited execution: goblin++ run examples/numeric_audit.gbl --compile
+# This checks agreement, not scientific accuracy or extra precision.
+side = 3 m
+area = side * side
+diagonal = hypot(side, 4 m)
+
+print("area = {area}; diagonal = {diagonal}")
+seal area
+seal diagonal

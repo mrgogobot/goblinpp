@@ -59,11 +59,15 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     let preserved_source = run_dir.join(source.file_name().unwrap());
     fs::write(&preserved_source, &source_bytes)?;
     let started = timestamp();
+    let audit_declaration = std::str::from_utf8(&source_bytes)
+        .ok()
+        .and_then(|s| parse_source(s).ok());
     let mut receipt = json!({
         "schema": "goblin.run-receipt.v2", "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
+        "numeric_audit": crate::numeric_audit::initial(audit_declaration.as_ref().map(|p|&p.program)),
         "array_math_policy": crate::array_math::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
@@ -152,6 +156,29 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 .collect::<Vec<_>>()
         );
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
+        let audit_config = crate::numeric_audit::prepare(
+            source,
+            &current.program,
+            &run_dir,
+            &mut receipt["numeric_audit"],
+        )?;
+        if audit_config.is_some() {
+            if freeze_path(source).exists() {
+                let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+                if frozen["numeric_audit"]["sha256"] != receipt["numeric_audit"]["config_sha256"] {
+                    return Err(protocol(
+                        "NUMERIC_AUDIT_CONFIG_CHANGED_AFTER_FREEZE",
+                        "The audit configuration differs from the frozen configuration. Create an explicit revision.",
+                    ));
+                }
+            }
+            if !options.compile || !current.inline_rust.is_empty() {
+                return Err(GoblinError::new(
+                    "G702",
+                    "GO_NUMERIC_AUDIT requires explicit run --compile and forbids inline Rust. No audit was completed.",
+                ));
+            }
+        }
         if freeze_path(source).exists() {
             let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
             if frozen.get("fits_batch_policy").is_none()
@@ -278,7 +305,10 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 .map_err(|error| {
                     GoblinError::compile(format!("Compiled stdin replay failed: {error}"))
                 })?;
-            verify_native_results(&native_results, &evaluation.sealed)?;
+            receipt["execution"]["compiler"]["native_result_manifest_path"] =
+                json!("native-results.tsv");
+            receipt["execution"]["compiler"]["native_result_manifest_sha256"] =
+                json!(sha256_file(&native_results)?);
             verify_native_resources(&native_results, &evaluation.resource_evidence())?;
             let native_data = run_dir.join("native-data.json");
             if native_data.exists() {
@@ -295,6 +325,22 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     "Native stdout differs from the interpreter reference.",
                 ));
             }
+            if let Some(config) = &audit_config {
+                let native = crate::numeric_audit::native_values(&run_dir)?;
+                receipt["numeric_audit"] = crate::numeric_audit::assess(
+                    config,
+                    &evaluation.sealed,
+                    &native,
+                    &receipt["numeric_audit"],
+                );
+                if receipt["numeric_audit"]["status"] != "PASS" {
+                    return Err(GoblinError::new(
+                        "G702",
+                        "Named numerical audit did not pass. See numeric_audit in the preserved receipt.",
+                    ));
+                }
+            }
+            verify_native_results(&native_results, &evaluation.sealed)?;
             receipt["execution"]["compiler"]["native_result_manifest_path"] =
                 Value::String("native-results.tsv".into());
             receipt["execution"]["compiler"]["native_result_manifest_sha256"] =
@@ -418,6 +464,10 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
     }
     generated_artifacts.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
     receipt["generated_artifacts"] = Value::Array(generated_artifacts);
+    if outcome.is_err() && receipt["numeric_audit"]["status"] == "PASS" {
+        receipt["numeric_audit"]["status"] = json!("ERROR");
+        receipt["numeric_audit"]["reason"] = json!("RUN_FAILED");
+    }
     match outcome {
         Ok(()) => receipt["status"] = Value::String("PASS".into()),
         Err(error) => {
@@ -494,6 +544,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             current.push_str(&warning);
             fs::write(&stderr_path, current)?;
             receipt["status"] = Value::String("MACHINERY_FAIL".into());
+            crate::numeric_audit::run_failed(&mut receipt);
             crate::batches::mark_incomplete(&run_dir, &mut receipt)?;
             receipt["ledger"]["registration"] = Value::String("FAIL".into());
             receipt["failure"] = json!({
@@ -603,6 +654,7 @@ fn downgrade_self_check(
     ));
     fs::write(stderr_path, stderr)?;
     receipt["status"] = Value::String("MACHINERY_FAIL".into());
+    crate::numeric_audit::run_failed(receipt);
     receipt["failure"] = json!({"code":"G405", "type":"GoblinError", "message":format!("Paranoid self-verification failed: {detail}"), "classification":"PARANOID_SELF_VERIFICATION_FAILED"});
     receipt["finished"] = Value::String(timestamp());
     receipt["stderr_sha256"] = Value::String(sha256_file(stderr_path)?);
@@ -1045,15 +1097,20 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
     Ok(())
 }
 
-fn verify_native_results(
+pub(crate) fn read_native_values(
     path: &Path,
-    expected: &std::collections::BTreeMap<String, EvalValue>,
-) -> Result<()> {
+) -> Result<std::collections::BTreeMap<String, EvalValue>> {
     let text = fs::read_to_string(path).map_err(|error| {
         GoblinError::compile(format!(
             "Native program did not produce its sealed-result manifest: {error}"
         ))
     })?;
+    decode_native_values(&text)
+}
+
+pub(crate) fn decode_native_values(
+    text: &str,
+) -> Result<std::collections::BTreeMap<String, EvalValue>> {
     let mut observed = std::collections::BTreeMap::new();
     for (line_index, line) in text.lines().enumerate() {
         let fields = line.split('\t').collect::<Vec<_>>();
@@ -1108,6 +1165,14 @@ fn verify_native_results(
             )));
         }
     }
+    Ok(observed)
+}
+
+fn verify_native_results(
+    path: &Path,
+    expected: &std::collections::BTreeMap<String, EvalValue>,
+) -> Result<()> {
+    let observed = read_native_values(path)?;
     if observed.len() != expected.len() {
         return Err(GoblinError::compile(format!(
             "NATIVE PARITY FAILURE\n\nInterpreter expected {} sealed value(s); compiled program reported {}.",

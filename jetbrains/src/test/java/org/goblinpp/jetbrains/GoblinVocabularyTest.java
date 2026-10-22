@@ -69,6 +69,13 @@ final class GoblinVocabularyTest {
         assertTrue(GoblinVocabulary.find("GO_LOOP_BUDGET").detail().contains("50,000,000"));
     }
     @Test
+    void auditCompletionExplainsExplicitExecutionAndClaimLimits() {
+        var entry = GoblinVocabulary.find("GO_NUMERIC_AUDIT");
+        assertTrue(entry.detail().contains("run --compile"));
+        assertTrue(entry.detail().contains("not an accuracy certificate"));
+        assertTrue(entry.snippet().contains("numeric_audit.json"));
+    }
+    @Test
     void protectedValuesHaveExplicitCompletionHelp() {
         assertTrue(GoblinVocabulary.find("h").detail().contains("Read-only"));
         assertTrue(GoblinVocabulary.find("append").detail().contains("Discarded"));

@@ -10,6 +10,23 @@ use std::collections::HashSet;
 pub const PARSER_POLICY: &str = "goblin.compound-units-loop-budget.v2";
 pub const LEGACY_COMPOUND_PARSER_POLICY: &str = "goblin.compound-unit-literals.v1";
 
+// Keep syntax validation self-contained: the native support crate also embeds this parser.
+pub(crate) fn validate_numeric_audit_path(path: &str) -> Result<()> {
+    if path.len() > 128
+        || path.starts_with('.')
+        || !path.ends_with(".json")
+        || !path
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+    {
+        return Err(GoblinError::new(
+            "G702",
+            "Audit configuration must be a nonhidden local .json basename, without traversal.",
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SyntaxMode {
     Current,
@@ -426,6 +443,16 @@ impl Parser {
                 "GO_LOOP_BUDGET may be declared only once in the main source.",
             ));
         }
+        if statements
+            .iter()
+            .filter(|s| matches!(s, Stmt::NumericAudit(_)))
+            .count()
+            > 1
+        {
+            return Err(GoblinError::parse(
+                "GO_NUMERIC_AUDIT may be declared only once.",
+            ));
+        }
         Ok(Program { statements })
     }
 
@@ -697,6 +724,24 @@ impl Parser {
                 cases,
                 default,
             });
+        }
+        if self.ident_is("GO_NUMERIC_AUDIT")
+            && matches!(
+                self.tokens.get(self.cursor + 1).map(|t| &t.kind),
+                Some(TokenKind::Text(_))
+            )
+        {
+            if in_block || self.in_function {
+                return Err(GoblinError::parse(
+                    "GO_NUMERIC_AUDIT must be a main-source top-level directive.",
+                ));
+            }
+            self.advance();
+            let TokenKind::Text(path) = self.advance().kind else {
+                unreachable!()
+            };
+            validate_numeric_audit_path(&path)?;
+            return Ok(Stmt::NumericAudit(path));
         }
         if self.ident_is("GO_PARANOID") {
             if in_block {

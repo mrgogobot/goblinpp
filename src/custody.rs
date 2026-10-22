@@ -139,6 +139,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "parser_policy": crate::parser::PARSER_POLICY,
         "math_policy": crate::math_policy::policy(),
+        "numeric_audit": crate::numeric_audit::snapshot(source, &parsed.program)?,
         "array_math_policy": crate::array_math::policy(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
@@ -386,6 +387,18 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         .get("module_imports")
         .cloned()
         .unwrap_or_else(|| json!([]));
+    let numeric_audit_ok = resolved.as_ref().is_some_and(|r| {
+        crate::numeric_audit::snapshot(source, &r.parsed.program).is_ok_and(|current| {
+            current == receipt.get("numeric_audit").cloned().unwrap_or(Value::Null)
+        })
+    });
+    checks.push(custody_check(
+        "NUMERIC_AUDIT_CONFIG",
+        numeric_audit_ok,
+        None,
+        None,
+        None,
+    ));
     let modules_ok = resolved
         .as_ref()
         .is_some_and(|r| r.snapshot() == expected_modules);
@@ -483,6 +496,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "LINEAGE_RECEIPT_TAMPERED"
     } else if !modules_ok {
         "MODULE_CHANGED_AFTER_FREEZE"
+    } else if !numeric_audit_ok {
+        "NUMERIC_AUDIT_CONFIG_CHANGED_AFTER_FREEZE"
     } else if !source_ok && canonical_ok {
         "NOTATION_ONLY_CHANGE_AFTER_FREEZE"
     } else if !source_ok || !canonical_ok {

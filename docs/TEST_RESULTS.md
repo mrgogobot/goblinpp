@@ -1,4 +1,48 @@
-# Alpha.31 embedded plot provenance (local, unreleased)
+# Alpha.37 named numerical consistency audit (local, unreleased)
+
+Verified locally on 2026-10-22, macOS arm64, retained Rust 1.92.0:
+
+- Full `cargo test --locked --offline --all-targets --quiet`: **492 passed**,
+  no failures/ignored tests. The final audit target then passed **25 tests**,
+  including one subsequently added CSV/library audit gate: **493 distinct Rust
+  tests** covered in total (do not sum the overlapping audit reruns).
+- Formatting, warning-denying Clippy and optimized builds pass. Cargo locks
+  change only the Goblin++ package version; no dependency/compiler upgrade.
+- New gates cover exact scalar values/dimensions/signed zero, missing and array
+  seals, malformed/unknown/duplicate/oversized/symlink configurations, directive
+  placement, imports, frozen configuration changes, core-resealed tampering,
+  missing compiler, interpreter-only invocation, inline Rust refusal, incomplete
+  previews, preserved failures, RNG/clock replay, CSV/module evidence and diffs.
+  An injected native-result mismatch is explicitly a **synthetic fixture**,
+  not an observed platform discrepancy or independent accuracy benchmark.
+- VS Code 0.1.28: **23 passed**, including actual CLI workflows. JetBrains
+  0.3.18: **22 passed**, offline build successful. Both use 277 unique editor
+  vocabulary entries. No live IDE interaction or Marketplace publication is
+  claimed by the automated plugin tests.
+- Python evidence-checker tests: **14 passed**. Separate cube extractor/regional
+  study suites: **14 + 5 passed**. Chinese/community-review files unchanged.
+- The actual immutable alpha.36 package executable generated interpreted and
+  compiled receipts, both verified by alpha.37. An alpha.36 freeze also allowed
+  a successful new execution and verification. Original archive SHA-256 remains
+  `4450cdca424deda0398cd1ab3f39ed89325137c2f2ac106b907e548abea58218`.
+- Full regression caught an initial parser dependency missing from generated
+  standalone scientific crates. Path validation was moved into the shared
+  parser, and those plotting/compiled regressions passed on rerun. Two initial
+  test-fixture mistakes (dimension order and random stream selection) were
+  corrected. Local HTTPS tests initially required permission for loopback test
+  servers; all passed once permitted. Editor-count/version expectations were
+  updated for the additional directive and both suites rerun successfully.
+
+`tools/verify_local.py <package-receipt>` checks the final immutable archive,
+inventory, plugin hashes and temporary-prefix installation, then executes the
+existing 32 example runs plus the new explicit compiled audit and independent
+verification. Its post-packaging result is recorded separately at handoff.
+No user-prefix install, commit, push, public release or Zenodo submission is
+performed by this local validation. Linux/cross-platform CI is still a separate
+release gate. Same-machine consistency is not scientific truth, independent
+algorithms, a signature, extra precision or a universal reproducibility promise.
+
+## Previous local stage: Alpha.31 embedded plot provenance
 
 Verified locally on 2026-10-11, macOS arm64, retained Rust 1.92.0:
 
