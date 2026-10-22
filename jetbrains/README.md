@@ -1,5 +1,10 @@
 # Goblin++ for JetBrains IDEs
 
+Plugin 0.3.19 adds alpha.38 `csv_join` and `tsv_join` completion, quick help and
+highlighting. Exact text IDs, one-to-one joins, explicit inner/left behavior,
+refused missing/duplicate keys and preserved evidence are explained in
+[TABLE_JOINS.md](../docs/TABLE_JOINS.md).
+
 Plugin 0.3.18 adds alpha.37 `GO_NUMERIC_AUDIT` completion, quick help and
 highlighting. It explains explicit configuration, `run --compile`, same-machine
 scalar comparison and the distinction from scientific accuracy. Check preview
@@ -35,7 +40,7 @@ It retains completions/quick help for alpha.26's four seeded scientific PCG32
 functions. Explicit seeds/streams and half-open bounds; not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Plugin 0.3.18 accompanies engine alpha.37. Unit completion and quick documentation
+Plugin 0.3.19 accompanies engine alpha.38. Unit completion and quick documentation
 explain compound suffixes, whole-quantity powers and grouped denominators.
 See `docs/COMPOUND_UNITS.md` in the engine package. Completion and quick documentation
 include stable copy sorting, type-7 quantiles/median, explicit sample/population

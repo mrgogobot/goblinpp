@@ -40,6 +40,17 @@ final class GoblinVocabularyTest {
         assertTrue(entry.detail().contains("not certified time"));
     }
     @Test
+    void exactIdJoinsHaveCompletionAndExplicitRules() {
+        for (String name : new String[]{"csv_join", "tsv_join"}) {
+            var entry = GoblinVocabulary.find(name);
+            assertEquals("function", entry.kind());
+            assertTrue(entry.snippet().contains(name));
+            assertTrue(entry.detail().contains("one-to-one"));
+            assertTrue(entry.detail().contains("duplicate"));
+            assertTrue(entry.detail().contains("16 MiB"));
+        }
+    }
+    @Test
     void serialBatchesHaveCompletionAndExplicitLimits() {
         for (String name : new String[]{"csv_batch_open", "tsv_batch_open", "batch_next", "batch_close", "csv_stream_open", "tsv_stream_open", "stream_write", "stream_close"}) {
             assertEquals("function", GoblinVocabulary.find(name).kind());

@@ -145,7 +145,7 @@ Evidence labels:
 | GBL-022 | WB-3 | Versioned science regression suite | Eight entropic runs and WB-1 proposed; fixtures/results not yet inspected |
 | GBL-023 | WB-3 | GO_MAD strict research policy profile | Proposed name and contract only; not syntax or implemented isolation |
 | GBL-024 | WB-3 P1 | Explicit constants namespace | Silent h collision fixed alpha.20; namespace design remains queued |
-| GBL-025 | WB-3 P2 | Exact-source-ID table joins | Requires table and ID semantics; queued |
+| GBL-025 | WB-3 P2 | Exact-source-ID table joins | Alpha.38 bounded one-to-one CSV/TSV inner/left joins, exact text IDs, explicit rules/counts and offline reconstruction; streaming/FITS/many-to-many deferred |
 | GBL-026 | Science I/O | Explicit audited downloads of FITS and other scientific files | Local alpha.36 CLI foundation; language builtin and broader protocol/auth stages not implemented |
 | GBL-027 | Scientific storage | Lossless 3-D-aware encoding/compression and decoding | Requested 2026-10-15; codec/container choice and benchmarks queued |
 | GBL-028 | Cube workflow | Download and directly open/process FITS cubes with bounded memory | Requested 2026-10-15; native study extraction exists, language integration queued |

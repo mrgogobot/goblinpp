@@ -44,6 +44,7 @@ pub mod runtime;
 pub mod science;
 mod statistics_runtime;
 pub mod streaming;
+pub mod table_join;
 pub mod text_runtime;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

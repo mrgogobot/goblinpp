@@ -43,6 +43,20 @@ test("actual current CLI check, run, and verify contracts", {
   }
 
   const clock = path.join(root, "clock.gbl");
+  const joins = path.join(root, "joins.gbl");
+  fs.writeFileSync(path.join(root, "left.csv"), 'id,value\n9007199254740993,left\n');
+  fs.writeFileSync(path.join(root, "right.csv"), 'id,value\n9007199254740993,right\n');
+  fs.writeFileSync(joins, 'GO_PARANOID\nrows=csv_join("joined.csv","left.csv","right.csv","id","id","left","L_","R_")\nseal rows\n');
+  for (const extra of [[], ["--compile"]]) {
+    const executed = invoke(core.goblinArgs("run", joins, extra));
+    assert.equal(executed.status, 0, executed.stderr);
+    const directory = /^RUN_DIR=(.+)$/m.exec(executed.stdout)?.[1];
+    const verified = invoke(core.goblinArgs("verify", directory));
+    assert.equal(verified.status, 0, verified.stderr);
+    assert.match(verified.stdout, /TABLE_JOIN_RECONSTRUCTION.*PASS/);
+    assert.equal(fs.readFileSync(path.join(directory, "outputs/joined.csv"), "utf8"),
+      "__join_matched,L_id,L_value,R_id,R_value\ntrue,9007199254740993,left,9007199254740993,right\n");
+  }
   const plots = path.join(root, "plots.gbl");
   fs.writeFileSync(plots, 'GO_PARANOID\nplot_line("motion.svg", [0 s, 1 s], [0 m, 2 m], "Motion", "time", "distance")\n');
   for (const extra of [[], ["--compile"]]) {

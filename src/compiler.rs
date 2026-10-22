@@ -192,6 +192,7 @@ fn build_data_program(
         ("chemistry", include_str!("chemistry.rs")),
         ("electrical", include_str!("electrical.rs")),
         ("delimited", include_str!("delimited.rs")),
+        ("table_join", include_str!("table_join.rs")),
         ("error", include_str!("error.rs")),
         ("evaluator", include_str!("evaluator.rs")),
         ("array_math", include_str!("array_math.rs")),

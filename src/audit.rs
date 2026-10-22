@@ -27,6 +27,7 @@ pub struct Verification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffReport {
+    pub table_join_policy_same: bool,
     pub numeric_audit_same: bool,
     pub array_math_policy_same: bool,
     pub fits_batch_policy_same: bool,
@@ -72,6 +73,14 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    let join_evidence = crate::table_join::verify(run_dir, &receipt);
+    checks.push(check(
+        "TABLE_JOIN_RECONSTRUCTION",
+        join_evidence.is_ok(),
+        None,
+        None,
+        join_evidence.err().map(|e| e.to_string()),
+    ));
     checks.push(check("NUMERIC_AUDIT_EVIDENCE", crate::numeric_audit::verify(run_dir, &receipt).is_ok(), None, None, Some("Offline reconstruction of declared same-machine scalar consistency, not scientific accuracy.".into())));
     if receipt.get("array_math_policy").is_some() || crate::array_math::requires_policy(&receipt) {
         checks.push(check(
@@ -857,6 +866,11 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                     return false;
                 }
                 let mut expected = receipt["data_imports"].clone();
+                if receipt.get("table_join_policy").is_some()
+                    && m["table_join_policy"] != receipt["table_join_policy"]
+                {
+                    return false;
+                }
                 if let Some(entries) = expected.as_array_mut() {
                     for entry in entries {
                         entry["evidence_path"] = Value::Null;
@@ -943,6 +957,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
     let math_policy_same = at(&left, &["math_policy"]) == at(&right, &["math_policy"]);
     let array_math_policy_same =
         at(&left, &["array_math_policy"]) == at(&right, &["array_math_policy"]);
+    let table_join_policy_same =
+        at(&left, &["table_join_policy"]) == at(&right, &["table_join_policy"]);
     let rng_policy_same = at(&left, &["rng_policy"]) == at(&right, &["rng_policy"]);
     let inference_policy_same =
         at(&left, &["inference_policy"]) == at(&right, &["inference_policy"]);
@@ -1007,6 +1023,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "PARSER_POLICY_CHANGE"
     } else if !math_policy_same {
         "MATH_POLICY_CHANGE"
+    } else if !table_join_policy_same {
+        "TABLE_JOIN_POLICY_CHANGE"
     } else if !array_math_policy_same {
         "ARRAY_MATH_POLICY_CHANGE"
     } else if !statistics_policy_same {
@@ -1043,6 +1061,7 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         "SEMANTIC_OR_RESULT_CHANGE"
     };
     Ok(DiffReport {
+        table_join_policy_same,
         numeric_audit_same,
         array_math_policy_same,
         plot_policy_same,

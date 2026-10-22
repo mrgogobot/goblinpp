@@ -1,5 +1,10 @@
 # WB-3 requirements and proposed strict research profile
 
+Alpha.38 supplies bounded one-to-one CSV/TSV exact-text-ID joins, explicit
+inner/left kinds and prefixes, missing/duplicate refusal, full counts and
+offline reconstruction. See [TABLE_JOINS.md](TABLE_JOINS.md). Streaming, FITS,
+many-to-many joins and end-to-end WB-3 science validation remain separate work.
+
 Alpha.33 supplies serial element-wise numeric array arithmetic and core math
 functions with strict shapes/dimensions and independent results. See
 [ARRAY_MATH.md](ARRAY_MATH.md). Next: exact-ID joins, error bars/multi-series/log
@@ -188,6 +193,14 @@ Do not silently change the meaning of existing `h`, expressions, templates or
 seals. Retain the protected-alias regression suite.
 
 ### Exact-ID joins — GBL-025
+
+First bounded stage implemented in alpha.38: CSV/TSV, exact text identity,
+one-to-one, explicit inner/left, missing/duplicate errors, left order, prefixed
+columns, both input hashes/counts/output hash, offline reconstruction and
+interpreter/native fixtures above 2^53. See [TABLE_JOINS.md](TABLE_JOINS.md).
+Other join kinds, cardinalities, streaming and FITS table joins are deferred.
+
+Original acceptance requirements:
 
 Declare inner/left/other join kinds, duplicate-key cardinality, missing/null
 keys, exact string/integer identity, output row order and column-name conflicts.

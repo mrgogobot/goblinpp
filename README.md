@@ -1,4 +1,24 @@
-# Goblin++ Rust Engine 0.1.0-alpha.37 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.38 (local, unreleased)
+
+Alpha.38 adds **exact-ID CSV/TSV table joins** in both execution engines.
+`csv_join` / `tsv_join` preserve catalogue IDs as text, require explicit inner
+or left joins and column prefixes, refuse missing/duplicate keys and record
+matched/unmatched counts. Offline verification reconstructs joined tables
+from preserved input snapshots. This first stage is bounded, one-to-one and
+serial; it does not silently expand rows or claim scientific validation.
+See [the table join guide](docs/TABLE_JOINS.md).
+
+```sh
+goblin++ run examples/table_joins.gbl
+goblin++ run examples/table_joins.gbl --compile
+goblin++ verify <RUN_DIR printed above>
+```
+
+VS Code 0.1.29 and JetBrains 0.3.19 add join completion/help/highlighting.
+Rust remains 1.92.0, with no new dependencies. Existing numerical audits and
+scientific features are retained. `COMPLETELY_MAD` remains proposed, not shipped.
+
+## Previous stage: alpha.37 — named numerical consistency audits
 
 Alpha.37 adds **explicit named scalar consistency audits** with
 `GO_NUMERIC_AUDIT "numeric_audit.json"` and `run --compile`. The interpreter

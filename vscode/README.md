@@ -1,4 +1,8 @@
-# Goblin++ for Visual Studio Code 0.1.28 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.29 (local, unreleased)
+
+Version 0.1.29 adds alpha.38 `csv_join` and `tsv_join` completion, help and
+highlighting: exact text IDs, explicit inner/left joins, duplicate/missing-key
+refusals and preserved input/output evidence. See [TABLE_JOINS.md](../docs/TABLE_JOINS.md).
 
 Version 0.1.28 adds alpha.37 `GO_NUMERIC_AUDIT` completion, help and highlighting.
 The explicit JSON configuration and `run --compile` compare named scalar seals
@@ -37,7 +41,7 @@ Alpha.26 adds completion, hover help and a `seeded` snippet for
 Explicit scientific PCG32 streams are reproducible, not cryptographic.
 See [RANDOMNESS.md](../docs/RANDOMNESS.md).
 
-Editor support 0.1.28 for the Goblin++ Rust engine **0.1.0-alpha.37**. Unit help
+Editor support 0.1.29 for the Goblin++ Rust engine **0.1.0-alpha.38**. Unit help
 explains compound suffixes, coefficient-versus-quantity powers and grouped
 denominators; see `docs/COMPOUND_UNITS.md` for migration rules. Completion,
 snippets, highlighting and help include `sort`, `median`, `quantile`,
@@ -63,7 +67,7 @@ The extension software and icons are [MIT-licensed](LICENSE); its original
 tutorial/documentation prose and diagrams are
 [CC BY 4.0-licensed](LICENSE-DOCS.md). Code examples remain MIT-licensed.
 
-In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.28.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
+In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select `goblinpp-vscode-0.1.29.vsix`. Reload VS Code if prompted. Install the Goblin++ Rust engine separately; the extension does not bundle or install it.
 
 The extension looks for the executable in this order:
 

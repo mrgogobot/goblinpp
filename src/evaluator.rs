@@ -75,6 +75,9 @@ pub const MAX_ARRAY_ITEMS: usize = 100_000;
 pub const MAX_FUNCTION_DEPTH: usize = 16;
 
 pub fn is_data_function(name: &str) -> bool {
+    if crate::table_join::is_function(name) {
+        return true;
+    }
     crate::plots::is_function(name)
         || crate::clock::is_function(name)
         || crate::random::is_function(name)
@@ -676,6 +679,9 @@ impl Evaluation {
         }
         if crate::random::is_function(name) {
             return self.randomness.call(name, args);
+        }
+        if crate::table_join::is_function(name) {
+            return self.eval_join_call(name, args);
         }
         if crate::delimited::is_function(name) {
             return self.eval_table_call(name, args);
@@ -1618,19 +1624,7 @@ impl Evaluation {
             .collect()
     }
 
-    fn eval_table_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
-        let operation = name.split_once('_').unwrap().1;
-        require_args(
-            name,
-            args,
-            if matches!(operation, "column" | "numbers") {
-                2
-            } else {
-                1
-            },
-        )?;
-        let values = args;
-        let requested = values[0].text(name)?;
+    fn load_table(&mut self, requested: &str, delimiter: u8, access: String) -> Result<PathBuf> {
         let path = if Path::new(requested).is_absolute() {
             PathBuf::from(requested)
         } else {
@@ -1645,11 +1639,6 @@ impl Evaluation {
                 "Batch input cannot also use eager table reads in one run.",
             ));
         }
-        let delimiter = if name.starts_with("csv_") {
-            b','
-        } else {
-            b'\t'
-        };
         if self
             .scans
             .get(&key)
@@ -1678,11 +1667,71 @@ impl Evaluation {
                 "The same input cannot be interpreted with two different delimiters in one run.",
             ));
         }
-        let column = values.get(1).map(|v| v.text(name)).transpose()?;
-        let access = serde_json::json!({"operation":name,"column":column}).to_string();
         if !table.access.contains(&access) {
             table.access.push(access);
         }
+        Ok(key)
+    }
+
+    fn eval_join_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        require_args(name, args, 8)?;
+        // Check the complete request before loading either input or reserving an output.
+        let text = args
+            .iter()
+            .map(|v| v.text(name))
+            .collect::<Result<Vec<_>>>()?;
+        let rules = crate::table_join::Rules {
+            function: name.into(),
+            left_key: text[3].into(),
+            right_key: text[4].into(),
+            kind: text[5].into(),
+            left_prefix: text[6].into(),
+            right_prefix: text[7].into(),
+        };
+        rules.validate(text[0])?;
+        if self.generated.contains_key(text[0]) || self.batches.has_name(text[0]) {
+            return Err(GoblinError::artifact(
+                "Join output already declared; refusing overwrite.",
+            ));
+        }
+        let left = self.load_table(
+            text[1],
+            rules.delimiter(),
+            crate::table_join::access(name, "left", text[0]),
+        )?;
+        let right = self.load_table(
+            text[2],
+            rules.delimiter(),
+            crate::table_join::access(name, "right", text[0]),
+        )?;
+        let output =
+            crate::table_join::join(text[0], &self.tables[&left], &self.tables[&right], &rules)?;
+        let rows = output.metadata["output_rows"].as_u64().unwrap();
+        self.add_output(output)?;
+        Quantity::scalar(rows as f64).map(Value::Quantity)
+    }
+
+    fn eval_table_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        let operation = name.split_once('_').unwrap().1;
+        require_args(
+            name,
+            args,
+            if matches!(operation, "column" | "numbers") {
+                2
+            } else {
+                1
+            },
+        )?;
+        let requested = args[0].text(name)?;
+        let column = args.get(1).map(|v| v.text(name)).transpose()?;
+        let delimiter = if name.starts_with("csv_") {
+            b','
+        } else {
+            b'\t'
+        };
+        let access = serde_json::json!({"operation":name,"column":column}).to_string();
+        let key = self.load_table(requested, delimiter, access)?;
+        let table = &self.tables[&key];
         match operation {
             "rows" => Quantity::scalar(table.rows.len() as f64).map(Value::Quantity),
             "columns" => Quantity::scalar(table.headers.len() as f64).map(Value::Quantity),
@@ -1930,6 +1979,9 @@ fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
     }
     if crate::matrix::is_function(name) {
         return crate::matrix::require_arity(name, args.len());
+    }
+    if crate::table_join::is_function(name) {
+        return require_args(name, args, 8);
     }
     if crate::delimited::is_function(name) {
         let operation = name.split_once('_').unwrap().1;

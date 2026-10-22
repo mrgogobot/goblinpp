@@ -69,6 +69,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "math_policy": crate::math_policy::policy(),
         "numeric_audit": crate::numeric_audit::initial(audit_declaration.as_ref().map(|p|&p.program)),
         "array_math_policy": crate::array_math::policy(),
+        "table_join_policy": crate::table_join::POLICY,
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
@@ -1062,6 +1063,7 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
         || manifest["batch_policy"] != crate::batches::policy()
         || manifest["fits_batch_policy"] != crate::fits::batch::policy()
         || manifest["array_math_policy"] != crate::array_math::policy()
+        || manifest["table_join_policy"] != crate::table_join::POLICY
         || manifest["batches"] != expected.batches.evidence()
         || manifest["rng"] != serde_json::to_value(expected.randomness.evidence())?
         || manifest["inference"] != expected.inference.evidence()

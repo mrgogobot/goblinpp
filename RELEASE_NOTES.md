@@ -1,4 +1,23 @@
-# 0.1.0-alpha.37 (local, unreleased, named numerical consistency audit)
+# 0.1.0-alpha.38 (local, unreleased, exact-ID table joins)
+
+- Adds `csv_join` / `tsv_join` in interpreted and native/standalone data builds.
+- Exact UTF-8 text IDs: no f64 conversion, trimming or Unicode normalization.
+  Explicit inner/left join kind and column prefixes; one-to-one cardinality;
+  missing and duplicate keys refuse with side/row diagnostics, even unmatched.
+- Left order, both key columns, explicit match flag, strict quoted CSV/TSV and
+  bounded inputs/output. No partial join table is published after failure.
+- Input snapshots/hashes, matched/unmatched counts, complete versioned rules,
+  output hashes, frozen policy and offline reconstruction preserve evidence.
+  Checksum-only integrity is not authenticated authorship or physical blinding.
+- VS Code 0.1.29 and JetBrains 0.3.19 completion/help/highlighting. Rust 1.92.0,
+  dependencies and Chinese/community-review documents remain unchanged.
+- Streaming/FITS/many-to-many joins, extra precision, encryption and
+  `COMPLETELY_MAD` are not part of this stage. No end-to-end WB claim.
+
+See [TABLE_JOINS.md](docs/TABLE_JOINS.md).
+Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.37 (named numerical consistency audit)
 
 - Adds `GO_NUMERIC_AUDIT "config.json"` with explicit same-machine
   interpreter/native exact-bit and dimension comparison for named scalar seals.

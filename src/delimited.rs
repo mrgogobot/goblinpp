@@ -47,6 +47,11 @@ impl Table {
         std::fs::File::open(path)?
             .take(MAX_INPUT_BYTES + 1)
             .read_to_end(&mut bytes)?;
+        Self::from_bytes(path, bytes, delimiter)
+    }
+
+    /// Parse a bounded snapshot, also used for offline join reconstruction.
+    pub fn from_bytes(path: &Path, bytes: Vec<u8>, delimiter: u8) -> Result<Self> {
         if bytes.len() as u64 > MAX_INPUT_BYTES {
             return Err(GoblinError::data("CSV/TSV input exceeds 16 MiB."));
         }

@@ -143,7 +143,8 @@ test("extension activates and registers commands and language providers", async 
     assert.equal(context.subscriptions.length, 29);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 277);
+    assert.equal(items.length, 279);
+    for (const name of ["csv_join", "tsv_join"]) assert(items.some((item) => item.label === name && item.kind === 2));
     assert(items.some((item) => item.label === "time_date" && item.kind === 2));
     assert(items.some((item) => item.label === "csv_numbers" && item.kind === 2));
     assert(items.some((item) => item.label === "tsv_column" && item.kind === 2));

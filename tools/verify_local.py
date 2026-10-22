@@ -61,7 +61,7 @@ def main() -> None:
         assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
         subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
                         "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -71,7 +71,7 @@ def main() -> None:
                 directory = next(line.removeprefix("RUN_DIR=") for line in run.stdout.splitlines() if line.startswith("RUN_DIR="))
                 report = json.loads((root / directory / "receipt.json").read_text())
                 exact_evidence = {key: report[key] for key in
-                                  ("rng_policy", "rng", "inference_policy", "inference",
+                                  ("table_join_policy", "rng_policy", "rng", "inference_policy", "inference",
                                    "resource_policy", "resources", "batch_policy", "fits_batch_policy", "batches", "sealed_artifacts")}
                 if example != "clock_time":
                     exact_evidence["generated_artifacts"] = report["generated_artifacts"]
@@ -140,6 +140,17 @@ def main() -> None:
                     assert report["batches"]["readers"][0]["rows"] == 4
                     assert report["generated_artifacts"][0]["metadata"]["complete"] is True
                     assert (root / directory / "outputs/processed.csv").read_text() == "source_id,doubled\n9007199254740993,5\n18446744073709551615,8\n42,3\n7,6\n"
+                if example == "table_joins":
+                    assert "left join rows = 4; inner join rows = 3" in run.stdout
+                    for entry in report["generated_artifacts"]:
+                        metadata = entry["metadata"]
+                        assert entry["producer"] == "table_join"
+                        assert metadata["matched_rows"] == 3
+                        assert metadata["unmatched_left_rows"] == 1
+                        assert metadata["unmatched_right_rows"] == 1
+                    joined = (root / directory / "outputs/joined.csv").read_text()
+                    assert "false,0007,0.25,,\n" in joined
+                    assert "true,9007199254740993,0.75,9007199254740993,30\n" in joined
                 if example == "array_plots":
                     assert report["plot_policy"] == "goblin.array-plots.v2"
                     assert len(report["generated_artifacts"]) == 8

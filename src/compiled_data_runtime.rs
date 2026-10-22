@@ -78,6 +78,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         let mut value = value;
         value["fits_batch_policy"] = goblinpp::fits::batch::policy();
         value["array_math_policy"] = goblinpp::array_math::policy();
+        value["table_join_policy"] = serde_json::json!(goblinpp::table_join::POLICY);
         let mut file = OpenOptions::new().write(true).create_new(true).open(&manifest).map_err(|e| e.to_string())?;
         file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
@@ -104,6 +105,7 @@ fn goblin_data_abort() {
             let mut evidence = evidence;
             evidence["fits_batch_policy"] = goblinpp::fits::batch::policy();
             evidence["array_math_policy"] = goblinpp::array_math::policy();
+            evidence["table_join_policy"] = serde_json::json!(goblinpp::table_join::POLICY);
             let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-failure.json")).map_err(|e|e.to_string())?;
             file.write_all(&serde_json::to_vec_pretty(&evidence).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
             file.sync_all().map_err(|e|e.to_string())?;

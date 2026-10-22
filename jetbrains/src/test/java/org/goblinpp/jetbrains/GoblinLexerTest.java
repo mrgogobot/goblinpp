@@ -41,6 +41,12 @@ final class GoblinLexerTest {
         assertTrue(tokens.contains(new Token(GoblinTokenTypes.DIRECTIVE, "GO_NUMERIC_AUDIT")));
         assertFalse(tokens.stream().anyMatch(token -> token.type == TokenType.BAD_CHARACTER));
     }
+    @Test
+    void classifiesExactIdJoinFunctions() {
+        List<Token> tokens = lex("rows = csv_join(\"j.csv\")\nrows = tsv_join(\"j.tsv\")\n");
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.FUNCTION, "csv_join")));
+        assertTrue(tokens.contains(new Token(GoblinTokenTypes.FUNCTION, "tsv_join")));
+    }
 
     @Test
     void classifiesChemistryFunctionsConstantsAndUnicodeUnits() {

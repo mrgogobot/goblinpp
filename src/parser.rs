@@ -247,6 +247,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::plots::is_function(name)
+                    || crate::table_join::is_function(name)
                     || name == "fits_batch_open"
                     || crate::numeric_comparison::is_function(name)
                     || crate::clock::is_function(name)

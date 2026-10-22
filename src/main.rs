@@ -499,7 +499,7 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "language_semantics": goblinpp::text_runtime::SEMANTICS_POLICY,
         "parser_policy": goblinpp::parser::PARSER_POLICY,
         "math_policy": goblinpp::math_policy::policy(),
-        "array_math_policy": goblinpp::array_math::policy(),
+        "array_math_policy": goblinpp::array_math::policy(), "table_join_policy": goblinpp::table_join::POLICY,
         "rng_policy": goblinpp::random::policy(),
         "rng_preview": evaluation.randomness.evidence(),
         "inference_policy": goblinpp::inference_policy::policy(),
@@ -677,7 +677,7 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
         }
     }
     let compilation = compiler::compile(&parsed, &args.output, &args.allowed_inline_rust)?;
-    let report = json!({ "status": "PASS", "array_math_policy": goblinpp::array_math::policy(), "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "clock_policy":goblinpp::clock::policy(), "plot_policy":goblinpp::plots::POLICY, "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
+    let report = json!({ "status": "PASS", "array_math_policy": goblinpp::array_math::policy(), "table_join_policy": goblinpp::table_join::POLICY, "parser_policy": goblinpp::parser::PARSER_POLICY, "math_policy": goblinpp::math_policy::policy(), "rng_policy": goblinpp::random::policy(), "inference_policy":goblinpp::inference_policy::policy(), "resource_policy":goblinpp::resources::policy(), "clock_policy":goblinpp::clock::policy(), "plot_policy":goblinpp::plots::POLICY, "declared_loop_budget":goblinpp::resources::requested(&parsed.program), "execution_status":"NOT_RUN", "launcher_math_environment": goblinpp::math_policy::environment()?, "source_sha256": sha256_bytes(&bytes), "canonical_source_sha256": parsed.canonical_sha256()?, "binary": compilation.binary, "binary_sha256": compilation.binary_sha256, "generated_source": compilation.generated_source, "generated_source_sha256": compilation.generated_source_sha256, "rustc": compilation.rustc_version, "inline_rust": parsed.inline_rust.iter().map(|block| &block.sha256).collect::<Vec<_>>() });
     if args.json {
         emit_json(&report);
     } else {
@@ -818,6 +818,10 @@ fn command_diff(run_a: PathBuf, run_b: PathBuf, json_output: bool) -> Result<i32
         println!(
             "ARRAY_MATH_POLICY_SAME ....... {}",
             yn(report.array_math_policy_same)
+        );
+        println!(
+            "TABLE_JOIN_POLICY_SAME ....... {}",
+            yn(report.table_join_policy_same)
         );
         println!(
             "RNG_POLICY_SAME .............. {}\nRNG_EVIDENCE_SAME ............ {}",
@@ -1027,7 +1031,7 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
             "comparison":"exact f64 bits and six dimensions; same machine only", "preview":"NOT_PERFORMED_PREVIEW_ONLY",
             "higher_precision":false, "scientific_accuracy_certificate":false, "cross_platform_guarantee":false,
             "completely_mad_profile":"PROPOSED_NOT_IMPLEMENTED"},
-        "array_math_policy": goblinpp::array_math::policy(),
+        "array_math_policy": goblinpp::array_math::policy(), "table_join_policy": goblinpp::table_join::POLICY,
         "math_policy": goblinpp::math_policy::policy(),
         "science_functions": goblinpp::science::FUNCTIONS,
         "parser_policy": goblinpp::parser::PARSER_POLICY,

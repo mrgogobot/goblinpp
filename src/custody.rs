@@ -141,6 +141,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "math_policy": crate::math_policy::policy(),
         "numeric_audit": crate::numeric_audit::snapshot(source, &parsed.program)?,
         "array_math_policy": crate::array_math::policy(),
+        "table_join_policy": crate::table_join::POLICY,
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
@@ -254,6 +255,16 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
     let parser_supported = mode.is_ok();
     let inference_supported = crate::inference_policy::frozen_policy_matches(&receipt);
     let array_math_supported = crate::array_math::supports_receipt(&receipt);
+    let table_join_supported = crate::table_join::supports_receipt(&receipt);
+    if receipt.get("table_join_policy").is_some() || !table_join_supported {
+        checks.push(custody_check(
+            "TABLE_JOIN_POLICY_SUPPORTED",
+            table_join_supported,
+            None,
+            None,
+            None,
+        ));
+    }
     if receipt.get("array_math_policy").is_some() || crate::array_math::requires_policy(&receipt) {
         checks.push(custody_check(
             "ARRAY_MATH_POLICY_SUPPORTED",
@@ -474,6 +485,8 @@ pub fn verify_freeze(source: impl AsRef<Path>) -> FreezeReport {
         "FREEZE_RECEIPT_TAMPERED"
     } else if !parser_supported {
         "FREEZE_PARSER_POLICY_UNSUPPORTED"
+    } else if !table_join_supported {
+        "TABLE_JOIN_POLICY_CHANGED_AFTER_FREEZE"
     } else if !array_math_supported {
         "FREEZE_ARRAY_MATH_POLICY_UNSUPPORTED"
     } else if !inference_supported {

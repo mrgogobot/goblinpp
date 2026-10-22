@@ -1,0 +1,11 @@
+GO_PARANOID
+
+# Exact text IDs: 9007199254740993 is not rounded; 0007 is not the same as 7.
+# All eight arguments are explicit. The first two inputs and output use CSV.
+joined_rows = csv_join("joined.csv", "join_sources.csv", "join_measurements.csv", "source_id", "source_id", "left", "source_", "measurement_")
+matched_rows = csv_join("matched.csv", "join_sources.csv", "join_measurements.csv", "source_id", "source_id", "inner", "source_", "measurement_")
+
+print("left join rows = {joined_rows}; inner join rows = {matched_rows}")
+print("Tables: RUN_DIR/outputs; counts and rules: receipt.json generated_artifacts metadata")
+seal joined_rows
+seal matched_rows

@@ -90,6 +90,15 @@ test("alpha.33 array maths help is explicit and limited to supported functions",
   assert.match(snippets["Dimension-checked array maths"].body.join("\n"), /sqrt/);
 });
 
+test("alpha.38 joins have exact-ID completion and highlighting", () => {
+  for (const name of ["csv_join", "tsv_join"]) {
+    const entry = runtimeVocabulary.functions.find((item) => item.spelling === name);
+    assert.ok(entry.snippet.includes(name));
+    for (const word of ["one-to-one", "duplicate", "16 MiB", "hashes"]) assert.ok(entry.detail.includes(word));
+    assert.ok(JSON.stringify(grammar).includes(name));
+  }
+});
+
 test("alpha.29 clock completion documents capture, UTC, format and authority", () => {
   const entry = runtimeVocabulary.functions.find((item) => item.spelling === "time_date");
   assert.ok(entry.snippet.includes('"utc"'));
@@ -204,8 +213,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 277);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 277);
+  assert.equal(entries.length, 279);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 279);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -382,7 +391,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.28");
+  assert.equal(manifest.version, "0.1.29");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
