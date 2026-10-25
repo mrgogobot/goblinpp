@@ -22,6 +22,15 @@ const manifest = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
 );
 
+test("alpha.39 final-state directive states scope and trust limits", () => {
+  const entry = core.vocabularyEntries(lexicon, runtimeVocabulary).find((v) => v.spelling === "COMPLETELY_MAD");
+  assert.equal(entry.snippet, "COMPLETELY_MAD");
+  assert.match(entry.detail, /256 bindings and 8 MiB/);
+  assert.match(entry.detail, /separately from explicit snapshots/);
+  assert.match(entry.detail, /not encryption or scientific validity/);
+  assert.ok(new RegExp(grammar.repository.directives.patterns[0].match).test("COMPLETELY_MAD"));
+});
+
 test("alpha.37 audit completion distinguishes consistency from accuracy", () => {
   const entry = core.vocabularyEntries(lexicon, runtimeVocabulary).find((v) => v.spelling === "GO_NUMERIC_AUDIT");
   assert.ok(entry.snippet.includes("numeric_audit.json"));
@@ -213,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 279);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 279);
+  assert.equal(entries.length, 280);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 280);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -391,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.29");
+  assert.equal(manifest.version, "0.1.30");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);

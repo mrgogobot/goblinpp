@@ -7,7 +7,8 @@ use crate::lexer::{Token, TokenKind, lex};
 use crate::quantity::is_unit;
 use std::collections::HashSet;
 
-pub const PARSER_POLICY: &str = "goblin.compound-units-loop-budget.v2";
+pub const PARSER_POLICY: &str = "goblin.final-state-directive.v1";
+pub const PRE_MAD_PARSER_POLICY: &str = "goblin.compound-units-loop-budget.v2";
 pub const LEGACY_COMPOUND_PARSER_POLICY: &str = "goblin.compound-unit-literals.v1";
 
 // Keep syntax validation self-contained: the native support crate also embeds this parser.
@@ -30,6 +31,7 @@ pub(crate) fn validate_numeric_audit_path(path: &str) -> Result<()> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SyntaxMode {
     Current,
+    PreMad,
     CompoundUnitsNoLoopBudget,
     LegacyQuantity,
 }
@@ -43,6 +45,11 @@ pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
         .and_then(|v| v.parse::<u32>().ok());
     match receipt.get("parser_policy") {
         Some(value) if value.as_str() == Some(PARSER_POLICY) => Ok(SyntaxMode::Current),
+        Some(value)
+            if value.as_str() == Some(PRE_MAD_PARSER_POLICY) && alpha.is_some_and(|v| v <= 38) =>
+        {
+            Ok(SyntaxMode::PreMad)
+        }
         Some(value)
             if value.as_str() == Some(LEGACY_COMPOUND_PARSER_POLICY)
                 && alpha.is_some_and(|v| v <= 26) =>
@@ -74,6 +81,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "import"
             | "return"
             | "GO_PARANOID"
+            | "COMPLETELY_MAD"
             | "GO_LOOP_BUDGET"
             | "seal"
             | "for"
@@ -175,7 +183,37 @@ pub fn reserved_function_name(name: &str) -> bool {
 /// historical receipts must remain verifiable without executing their programs.
 pub fn validate_execution(program: &Program) -> Result<()> {
     crate::resources::validate_program(program)?;
+    if completely_mad(program) {
+        let directives = program
+            .statements
+            .iter()
+            .filter(|s| matches!(s, Stmt::Directive(n) if n == "COMPLETELY_MAD"))
+            .count();
+        if directives != 1
+            || !matches!(program.statements.first(), Some(Stmt::Directive(n)) if n == "COMPLETELY_MAD")
+        {
+            return Err(GoblinError::parse(
+                "COMPLETELY_MAD must occur once, before executable statements and imports.",
+            ));
+        }
+        if program
+            .statements
+            .iter()
+            .any(|s| matches!(s, Stmt::InlineRust { .. }))
+        {
+            return Err(GoblinError::parse(
+                "COMPLETELY_MAD forbids inline Rust; automatic final-state evidence cannot account for arbitrary native effects.",
+            ));
+        }
+    }
     validate_statements(&program.statements)
+}
+
+pub fn completely_mad(program: &Program) -> bool {
+    program
+        .statements
+        .iter()
+        .any(|s| matches!(s, Stmt::Directive(n) if n == "COMPLETELY_MAD"))
 }
 
 pub fn validate_statement(statement: &Stmt) -> Result<()> {
@@ -337,11 +375,23 @@ impl ParsedSource {
     pub fn canonical_sha256(&self) -> Result<String> {
         Ok(sha256_bytes(&self.canonical_bytes()?))
     }
-    pub fn paranoid(&self) -> bool {
-        self.program
+    pub fn execution_profile(&self) -> &'static str {
+        if completely_mad(&self.program) {
+            "COMPLETELY_MAD"
+        } else if self
+            .program
             .statements
             .iter()
             .any(|stmt| matches!(stmt, Stmt::Directive(name) if name == "GO_PARANOID"))
+        {
+            "GO_PARANOID"
+        } else {
+            "EVERYDAY"
+        }
+    }
+    /// Compatibility predicate for the postflight checks inherited by both profiles.
+    pub fn paranoid(&self) -> bool {
+        self.execution_profile() != "EVERYDAY"
     }
     pub fn require_executable_program(&self) -> Result<()> {
         if self.program.statements.is_empty() {
@@ -413,6 +463,8 @@ impl Parser {
     }
     fn name_reserved(&self, name: &str) -> bool {
         if name == "GO_LOOP_BUDGET" {
+            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreMad)
+        } else if name == "COMPLETELY_MAD" {
             self.mode == SyntaxMode::Current
         } else {
             reserved_function_name(name)
@@ -495,7 +547,9 @@ impl Parser {
     }
 
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
-        if self.mode == SyntaxMode::Current && self.ident_is("GO_LOOP_BUDGET") {
+        if matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreMad)
+            && self.ident_is("GO_LOOP_BUDGET")
+        {
             if in_block {
                 return Err(GoblinError::parse(
                     "GO_LOOP_BUDGET must be top-level in the main source, not inside a block or function.",
@@ -743,6 +797,15 @@ impl Parser {
             };
             validate_numeric_audit_path(&path)?;
             return Ok(Stmt::NumericAudit(path));
+        }
+        if self.mode == SyntaxMode::Current && self.ident_is("COMPLETELY_MAD") {
+            if in_block || self.in_function {
+                return Err(GoblinError::parse(
+                    "COMPLETELY_MAD must be a main-source top-level directive.",
+                ));
+            }
+            self.advance();
+            return Ok(Stmt::Directive("COMPLETELY_MAD".into()));
         }
         if self.ident_is("GO_PARANOID") {
             if in_block {

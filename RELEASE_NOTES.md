@@ -1,4 +1,37 @@
-# 0.1.0-alpha.38 (local, unreleased, exact-ID table joins)
+# 0.1.0-alpha.39 (local, unreleased, bounded automatic final-state evidence)
+
+- Adds `COMPLETELY_MAD` stage 1: a first top-level directive implying
+  `GO_PARANOID`, with final user-global values sealed in `final-state.json`.
+- Corrected local build identifies `COMPLETELY_MAD` in its banner, postflight
+  labels, verification labels and explicit `execution_profile` receipt/preview
+  field. Inherited checks and ordinary `GO_PARANOID` output remain unchanged;
+  historical receipts without the new field still verify.
+- Explicit `seal` snapshots are unchanged and separate. Reached global
+  assignments are captured once; function locals and induction-only counters
+  are not traced. Flat arrays, dimensional numbers, text and Booleans are supported.
+- Capture admits at most 256 globals and 8 MiB of JSON; refusal is explicit,
+  never silent truncation. Failed attempts label captured state partial and,
+  for compiled attempts, interpreter-reference origin rather than native success.
+- Both engines compare exact final values/dimensions/inventory. Offline
+  verification checks evidence binding and compiled final-state parity; diff
+  includes final captures. Preview remains preview-only.
+- Inline Rust and unaudited standalone native execution are refused in this
+  profile. This is not encryption, authenticated authorship, a sandbox,
+  scientific validation, higher precision or an implicit numerical audit.
+- Parser policy versions the new keyword; historical evidence remains
+  verifiable. Older freezes require explicit revision/review before execution.
+- VS Code 0.1.30 / JetBrains 0.3.20 help, completion and highlighting. Rust
+  remains 1.92.0, with no new dependencies. Original research evidence and
+  historical Chinese/community-review documents remain unchanged.
+- Also documents automatic quantity units and adds the interpreted/native
+  formatting regression from the prior R3 label review. No global stripping of
+  literal text; the research script's extra unit is not an engine-formatting bug.
+
+See [COMPLETELY_MAD.md](docs/COMPLETELY_MAD.md) and
+[the example](examples/completely_mad.gbl).
+Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: 0.1.0-alpha.38 (exact-ID table joins)
 
 - Adds `csv_join` / `tsv_join` in interpreted and native/standalone data builds.
 - Exact UTF-8 text IDs: no f64 conversion, trimming or Unicode normalization.

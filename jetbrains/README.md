@@ -1,5 +1,9 @@
 # Goblin++ for JetBrains IDEs
 
+Plugin 0.3.20 adds alpha.39 `COMPLETELY_MAD` directive completion, quick help and
+highlighting. Automatic final-state evidence is distinct from explicit snapshots,
+encryption and scientific validity. See [COMPLETELY_MAD.md](../docs/COMPLETELY_MAD.md).
+
 Plugin 0.3.19 adds alpha.38 `csv_join` and `tsv_join` completion, quick help and
 highlighting. Exact text IDs, one-to-one joins, explicit inner/left behavior,
 refused missing/duplicate keys and preserved evidence are explained in

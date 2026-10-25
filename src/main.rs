@@ -350,7 +350,13 @@ fn command_run(args: RunArgs) -> Result<i32> {
     if args.json {
         emit_json(&json!({"run_dir": run_dir, "receipt": receipt}));
     } else {
-        if receipt.get("paranoid_mode").and_then(Value::as_bool) == Some(true) {
+        let completely_mad = receipt["execution_profile"] == "COMPLETELY_MAD";
+        if completely_mad {
+            println!(
+                "GOBLIN++ COMPLETELY_MAD MODE\nTRUST NOTHING. HASH EVERYTHING. OVERWRITE NOTHING.\n"
+            );
+            println!("EXECUTION_PROFILE=COMPLETELY_MAD");
+        } else if receipt.get("paranoid_mode").and_then(Value::as_bool) == Some(true) {
             println!(
                 "GOBLIN++ PARANOID MODE\nTRUST NOTHING. HASH EVERYTHING. OVERWRITE NOTHING.\n"
             );
@@ -387,11 +393,26 @@ fn command_run(args: RunArgs) -> Result<i32> {
                     .unwrap_or("ERROR")
             );
         }
+        if receipt["final_state"]["requested"] == true {
+            println!(
+                "FINAL_STATE_CAPTURE={}",
+                receipt["final_state"]["capture_status"]
+                    .as_str()
+                    .unwrap_or("ERROR")
+            );
+            if let Some(completeness) = receipt["final_state"]["completeness"].as_str() {
+                println!("FINAL_STATE_COMPLETENESS={completeness}");
+            }
+        }
         if let Some(status) = receipt
             .pointer("/paranoid_postflight/status")
             .and_then(Value::as_str)
         {
-            println!("PARANOID_POSTFLIGHT={status}");
+            if completely_mad {
+                println!("COMPLETELY_MAD_POSTFLIGHT={status}");
+            } else {
+                println!("PARANOID_POSTFLIGHT={status}");
+            }
         }
         println!(
             "EXECUTION_ENGINE={}",
@@ -489,6 +510,19 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
     if error.is_none() {
         error = evaluation.batches.finish().err();
     }
+    let final_state_preview = if evaluation.completely_mad {
+        match goblinpp::mad::values(&evaluation) {
+            Ok(values) => {
+                json!({"policy": goblinpp::mad::POLICY, "authority":"PREVIEW_ONLY_NOT_EVIDENCE", "completeness":if error.is_none() {"COMPLETE"} else {"PARTIAL"}, "values":values.iter().map(|(n,v)| (n.clone(),v.to_json())).collect::<serde_json::Map<_,_>>()})
+            }
+            Err(found) => {
+                error = Some(found);
+                json!({"capture_status":"REFUSED"})
+            }
+        }
+    } else {
+        Value::Null
+    };
     let mut output_preview=evaluation.generated.values().map(|artifact| json!({"name":artifact.name,"media_type":artifact.media_type,"byte_count":artifact.bytes.len(),"producer":artifact.producer,"metadata":artifact.metadata})).collect::<Vec<_>>();
     match evaluation.batches.descriptors(error.is_none()) {
         Ok(outputs) => output_preview.extend(outputs),
@@ -515,7 +549,9 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
         "status": if error.is_none() { "PASS" } else { "FAIL" }, "authority": "PREVIEW_ONLY_NOT_EVIDENCE",
         "evidence_created": false, "custody_checked": false,
         "numeric_audit_preview": {"configuration":numeric_audit_preview,"status":"NOT_PERFORMED_PREVIEW_ONLY"},
+        "final_state_preview": final_state_preview,
         "source": {"path": file, "sha256": source_sha}, "canonical_source_sha256": parsed.canonical_sha256()?,
+        "execution_profile": parsed.execution_profile(),
         "paranoid_mode": parsed.paranoid(), "inline_rust": parsed.inline_rust.iter().map(|block| json!({"sha256": block.sha256, "requires_compile": true})).collect::<Vec<_>>(),
         "stdout_preview": evaluation.stdout, "sealed_preview": evaluation.sealed.iter().map(|(name, value)| (name.clone(), value.to_json())).collect::<serde_json::Map<_,_>>(),
         "generated_output_preview": output_preview,
@@ -525,6 +561,9 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
     if json_output {
         emit_json(&report);
     } else {
+        if parsed.execution_profile() == "COMPLETELY_MAD" {
+            println!("EXECUTION_PROFILE=COMPLETELY_MAD");
+        }
         println!(
             "GOBLIN CHECK\n\nSOURCE={}\nSOURCE_SHA256={}\nCANONICAL_SOURCE_SHA256={}\nINLINE_RUST_BLOCKS={}\nGENERATED_OUTPUTS={}\nAUTHORITY=PREVIEW_ONLY_NOT_EVIDENCE\nEVIDENCE_CREATED=NO\nCUSTODY_CHECKED=NO\nCHECK_STATUS={}",
             file.display(),
@@ -1016,6 +1055,7 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
     let report = json!({
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
         "network_acquisition": network_acquisition,
+        "completely_mad": {"policy":goblinpp::mad::POLICY, "stage":"BOUNDED_FINAL_STATE_EVIDENCE", "implies_go_paranoid":true, "max_variables":goblinpp::mad::MAX_VARIABLES, "max_bytes":goblinpp::mad::MAX_BYTES, "inline_rust":false, "standalone_native":false, "encryption":false, "scientific_validity_claim":false},
         "orbit": {"policy":goblinpp::orbit::POLICY,"commands":["orbit baseline", "orbit verify-baseline", "orbit check", "orbit verify"], "standalone":"goblin-orbit", "authentication":"CHECKSUM_ONLY", "scope":"EXPLICIT_LOCAL_DIRECTORY", "comparison":"FILE_BYTES_AND_ENTRY_KIND_ONLY", "symlinks":"NEVER_FOLLOWED", "platforms":"Unix descriptor traversal; locally tested macOS arm64", "repairs":false, "media_detection":false},
         "evidence_report": {"policy":goblinpp::evidence_report::POLICY,"commands":["evidence-report", "verify-report"],"case_max_bytes":goblinpp::evidence_report::CASE_BYTES,"evidence_file_max_bytes":goblinpp::evidence_report::FILE_BYTES,"evidence_total_max_bytes":goblinpp::evidence_report::TOTAL_BYTES,"authentication":"CHECKSUM_ONLY","network_requests":false,"findings":"ANALYST_DECLARATIONS_NOT_CERTIFIED"},
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],

@@ -8,6 +8,7 @@ records a SHA-256 inventory. It never includes live runs or custody files.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import shutil
@@ -44,16 +45,21 @@ def copy_tree(source: Path, destination: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "dist/releases",
+                        help="Fresh destination for a corrected bundle; never replace existing packages.")
+    args = parser.parse_args()
     version = tomllib.loads((ROOT / "Cargo.toml").read_text())["package"]["version"]
     extension_version = json.loads((ROOT / "vscode/package.json").read_text())["version"]
     plugin_version = next(line.split("=", 1)[1] for line in
                           (ROOT / "jetbrains/gradle.properties").read_text().splitlines()
                           if line.startswith("pluginVersion="))
-    releases = ROOT / "dist/releases"
+    editor_inputs = ROOT / "dist/releases"
+    releases = args.output_dir.resolve()
     binary = ROOT / "target/release/goblinpp"
     orbit_binary = ROOT / "target/release/goblin-orbit"
-    vsix = releases / f"goblinpp-vscode-{extension_version}.vsix"
-    plugin = releases / f"goblinpp-jetbrains-{plugin_version}.zip"
+    vsix = editor_inputs / f"goblinpp-vscode-{extension_version}.vsix"
+    plugin = editor_inputs / f"goblinpp-jetbrains-{plugin_version}.zip"
     for artifact in (binary, orbit_binary, vsix, plugin):
         if not artifact.is_file():
             raise SystemExit(f"Build the required artifact first: {artifact}")
@@ -76,6 +82,18 @@ def main() -> None:
     for output in (archive, receipt_path, sums_path):
         if output.exists():
             raise SystemExit(f"Refusing to replace an existing package: {output}")
+    releases.mkdir(parents=True, exist_ok=True)
+    for installer in (vsix, plugin):
+        output = releases / installer.name
+        if output == installer:
+            continue
+        if output.exists():
+            if not output.is_file() or sha256(output) != sha256(installer):
+                raise SystemExit(f"Refusing to replace a different editor installer: {output}")
+        else:
+            with output.open("xb") as stream:
+                with installer.open("rb") as source:
+                    shutil.copyfileobj(source, stream)
 
     with tempfile.TemporaryDirectory(prefix="goblinpp-package-") as temporary:
         staged = Path(temporary) / bundle_name
@@ -114,7 +132,7 @@ def main() -> None:
                     output.writestr(info, path.read_bytes())
 
     artifacts = [{"file": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
-                 for path in (archive, vsix, plugin)]
+                 for path in (archive, releases / vsix.name, releases / plugin.name)]
     receipt = {"schema": "goblin.package-receipt.v1", "version": version,
                "target": "aarch64-apple-darwin", "artifacts": artifacts}
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")

@@ -51,7 +51,7 @@
     },
     "directives": {
       "patterns": [
-        {"name": "keyword.control.directive.goblinpp", "match": "\\b(?:GO_PARANOID|GO_LOOP_BUDGET|GO_NUMERIC_AUDIT)\\b"}
+        {"name": "keyword.control.directive.goblinpp", "match": "\\b(?:GO_PARANOID|GO_LOOP_BUDGET|GO_NUMERIC_AUDIT|COMPLETELY_MAD)\\b"}
       ]
     },
     "statements": {

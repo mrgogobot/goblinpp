@@ -70,6 +70,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "numeric_audit": crate::numeric_audit::initial(audit_declaration.as_ref().map(|p|&p.program)),
         "array_math_policy": crate::array_math::policy(),
         "table_join_policy": crate::table_join::POLICY,
+        "final_state": crate::mad::initial(),
         "statistics_policy": crate::science::statistics_policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
@@ -81,6 +82,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "math_environment": crate::math_policy::environment()?,
         "status": "MACHINERY_FAIL", "started": started, "finished": Value::Null,
         "execution": { "engine": if options.compile { "rust-native-compiled" } else { "rust-interpreter" }, "compiler": Value::Null },
+        "execution_profile": "EVERYDAY",
         "paranoid_mode": false, "paranoid_postflight": Value::Null,
         "source": { "path": source.file_name().unwrap().to_string_lossy(), "sha256": source_sha },
         "canonical_source": Value::Null, "constants_used": [], "data_imports": [], "inline_rust": [],
@@ -131,7 +133,9 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             }
         };
         evaluation.configure_resources(&root_source.program);
+        receipt["execution_profile"] = json!(root_source.execution_profile());
         receipt["paranoid_mode"] = Value::Bool(root_source.paranoid());
+        receipt["final_state"] = crate::mad::prepare(&root_source.program);
         let resolved = match crate::modules::resolve(source, text) {
             Ok(value) => value,
             Err(error) => {
@@ -145,7 +149,9 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         resolved_modules = Some(resolved);
         current.require_executable_program()?;
         receipt["canonical_source"] = json!({ "sha256": current.canonical_sha256()? });
+        receipt["execution_profile"] = json!(current.execution_profile());
         receipt["paranoid_mode"] = Value::Bool(current.paranoid());
+        receipt["final_state"] = crate::mad::prepare(&current.program);
         receipt["inline_rust"] = json!(
             current
                 .inline_rust
@@ -157,6 +163,16 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 .collect::<Vec<_>>()
         );
         enforce_freeze(source, &root, &run_dir, &mut receipt)?;
+        crate::parser::validate_execution(&current.program)?;
+        if crate::parser::completely_mad(&current.program) && freeze_path(source).exists() {
+            let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            if frozen["final_state_policy"] != crate::mad::POLICY {
+                return Err(protocol(
+                    "FINAL_STATE_POLICY_CHANGED_AFTER_FREEZE",
+                    "The freeze did not pin this final-state evidence policy. Create an explicit revision and freeze the child.",
+                ));
+            }
+        }
         let audit_config = crate::numeric_audit::prepare(
             source,
             &current.program,
@@ -241,6 +257,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                 evaluation.eval_stmt(statement)?;
             }
             evaluation.batches.finish()?;
+            let expected_native = crate::mad::native_expected(&evaluation)?;
             let binary = run_dir.join("program-native");
             let compilation = compile(&current, &binary, &options.allowed_inline_rust)?;
             receipt["execution"]["compiler"] = compilation_json(&compilation);
@@ -341,7 +358,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
                     ));
                 }
             }
-            verify_native_results(&native_results, &evaluation.sealed)?;
+            verify_native_results(&native_results, &expected_native)?;
             receipt["execution"]["compiler"]["native_result_manifest_path"] =
                 Value::String("native-results.tsv".into());
             receipt["execution"]["compiler"]["native_result_manifest_sha256"] =
@@ -484,6 +501,13 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             }
         }
     }
+    if let Err(error) = crate::mad::preserve(&run_dir, &evaluation, &mut receipt) {
+        receipt["status"] = json!("MACHINERY_FAIL");
+        receipt["failure"] = json!({"code": error.code, "type": "GoblinError", "message": error.message, "classification": error.classification});
+        stderr.push_str(&format!("\n{}\n", error.pretty()));
+        crate::numeric_audit::run_failed(&mut receipt);
+        crate::batches::mark_incomplete(&run_dir, &mut receipt)?;
+    }
     fs::write(&stdout_path, stdout.as_bytes())?;
     fs::write(&stderr_path, stderr.as_bytes())?;
     receipt["finished"] = Value::String(timestamp());
@@ -545,6 +569,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
             current.push_str(&warning);
             fs::write(&stderr_path, current)?;
             receipt["status"] = Value::String("MACHINERY_FAIL".into());
+            crate::mad::mark_partial(&mut receipt);
             crate::numeric_audit::run_failed(&mut receipt);
             crate::batches::mark_incomplete(&run_dir, &mut receipt)?;
             receipt["ledger"]["registration"] = Value::String("FAIL".into());
@@ -655,6 +680,7 @@ fn downgrade_self_check(
     ));
     fs::write(stderr_path, stderr)?;
     receipt["status"] = Value::String("MACHINERY_FAIL".into());
+    crate::mad::mark_partial(receipt);
     crate::numeric_audit::run_failed(receipt);
     receipt["failure"] = json!({"code":"G405", "type":"GoblinError", "message":format!("Paranoid self-verification failed: {detail}"), "classification":"PARANOID_SELF_VERIFICATION_FAILED"});
     receipt["finished"] = Value::String(timestamp());
@@ -709,7 +735,7 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
             receipt["freeze"]["classification"] = json!("PARSER_POLICY_CHANGED_AFTER_FREEZE");
             return Err(protocol(
                 "PARSER_POLICY_CHANGED_AFTER_FREEZE",
-                "The source was frozen before compound-unit literal semantics. Historical evidence remains verifiable. Create an explicit revision and freeze the child to adopt alpha.25 semantics; review quantity powers before executing.",
+                "The source was frozen under an older parser policy. Historical evidence remains verifiable. Create an explicit revision and freeze the child after reviewing the current compound-unit, loop-budget and COMPLETELY_MAD directive semantics.",
             ));
         }
         if report

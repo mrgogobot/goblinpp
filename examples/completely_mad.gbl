@@ -1,0 +1,17 @@
+COMPLETELY_MAD
+
+# The explicit snapshot remains 2 kg, even after mass changes.
+mass = 2 kg
+seal mass
+mass = 3 kg
+energy = mass * c^2
+
+measurements = [1 m, 2 m, 3 m]
+total = 0 m
+for index in range(len(measurements)) {
+    total = total + measurements[index]
+}
+
+print("final mass = {mass}; energy = {energy}; total = {total}")
+print("Explicit snapshot: RUN_DIR/mass.json")
+print("Automatic final values: RUN_DIR/final-state.json")

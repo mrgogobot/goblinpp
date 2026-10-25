@@ -1,4 +1,23 @@
-# Goblin++ Rust Engine 0.1.0-alpha.38 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.39 (local, unreleased)
+
+Alpha.39 introduces the first `COMPLETELY_MAD` evidence-profile stage:
+automatic bounded final-state seals, separate explicit snapshots, partial-failure
+labels, native/reference parity and offline verification. It implies
+`GO_PARANOID`, refuses inline Rust, and does not claim encryption or scientific
+validity. See [the profile guide](docs/COMPLETELY_MAD.md) and
+[the worked example](examples/completely_mad.gbl).
+
+```sh
+goblin++ run examples/completely_mad.gbl
+goblin++ run examples/completely_mad.gbl --compile
+goblin++ verify <RUN_DIR printed by the chosen run>
+```
+
+VS Code 0.1.30 and JetBrains 0.3.20 add directive completion/help/highlighting.
+Rust remains pinned at 1.92.0 with no new dependencies. Older receipts remain
+verifiable; old freezes require an explicit parser-policy migration revision.
+
+## Historical stage: alpha.38
 
 Alpha.38 adds **exact-ID CSV/TSV table joins** in both execution engines.
 `csv_join` / `tsv_join` preserve catalogue IDs as text, require explicit inner
@@ -16,7 +35,7 @@ goblin++ verify <RUN_DIR printed above>
 
 VS Code 0.1.29 and JetBrains 0.3.19 add join completion/help/highlighting.
 Rust remains 1.92.0, with no new dependencies. Existing numerical audits and
-scientific features are retained. `COMPLETELY_MAD` remains proposed, not shipped.
+scientific features are retained. At alpha.38, `COMPLETELY_MAD` was still proposed.
 
 ## Previous stage: alpha.37 — named numerical consistency audits
 
@@ -35,7 +54,7 @@ goblin++ run examples/numeric_audit.gbl --compile
 goblin++ verify <RUN_DIR printed above>
 ```
 
-`COMPLETELY_MAD` remains a future strict policy profile, not a shipped directive.
+At alpha.37, `COMPLETELY_MAD` was a future profile, not a shipped directive.
 No higher precision, interval arithmetic or encryption is implied.
 
 ## Previous stage: alpha.36 — explicit HTTPS acquisition
@@ -156,8 +175,8 @@ normal transforms can differ in their last bits across platforms; mixed-unit
 covariance requires explicit standardization; streaming currently supplies
 numeric column reductions plus alpha.28 serial batches, not automatic joins or
 streaming bootstrap.
-Rust stays pinned at 1.92.0; no new dependencies. Encryption and
-`COMPLETELY_MAD` remain separate proposals. Historical Chinese documents and
+Rust stays pinned at 1.92.0; no new dependencies. At that stage, encryption and
+`COMPLETELY_MAD` were separate proposals. Historical Chinese documents and
 community-review material remain unchanged.
 
 Alpha.27 versions the loop-budget grammar separately. Historical receipts remain

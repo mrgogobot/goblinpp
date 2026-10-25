@@ -1,4 +1,9 @@
-# Goblin++ for Visual Studio Code 0.1.29 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.30 (local, unreleased)
+
+Version 0.1.30 adds alpha.39 `COMPLETELY_MAD` directive completion, help,
+highlighting and a `mad` snippet. Automatic final-state evidence is distinct from
+explicit snapshots, encryption and scientific validity. See
+[COMPLETELY_MAD.md](../docs/COMPLETELY_MAD.md).
 
 Version 0.1.29 adds alpha.38 `csv_join` and `tsv_join` completion, help and
 highlighting: exact text IDs, explicit inner/left joins, duplicate/missing-key

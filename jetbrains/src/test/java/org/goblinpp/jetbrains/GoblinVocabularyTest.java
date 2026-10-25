@@ -86,6 +86,15 @@ final class GoblinVocabularyTest {
         assertTrue(entry.detail().contains("not an accuracy certificate"));
         assertTrue(entry.snippet().contains("numeric_audit.json"));
     }
+
+    @Test
+    void finalStateCompletionExplainsScopeAndTrustLimits() {
+        var entry = GoblinVocabulary.find("COMPLETELY_MAD");
+        assertTrue(entry.detail().contains("256 bindings and 8 MiB"));
+        assertTrue(entry.detail().contains("separately from explicit snapshots"));
+        assertTrue(entry.detail().contains("not encryption or scientific validity"));
+        assertTrue(entry.snippet().equals("COMPLETELY_MAD"));
+    }
     @Test
     void protectedValuesHaveExplicitCompletionHelp() {
         assertTrue(GoblinVocabulary.find("h").detail().contains("Read-only"));

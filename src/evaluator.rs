@@ -9,7 +9,7 @@ use crate::output::{
 use crate::quantity::{DIMENSIONLESS, Quantity, format_dimension};
 use crate::text_runtime;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -145,6 +145,8 @@ pub struct Evaluation {
     pub stdout: Vec<String>,
     pub warnings: Vec<String>,
     pub sealed: BTreeMap<String, Value>,
+    pub final_state_names: BTreeSet<String>,
+    pub completely_mad: bool,
     pub generated: BTreeMap<String, GeneratedOutput>,
     pub batches: crate::batches::Batches,
     pub constants_used: BTreeMap<String, ConstantUse>,
@@ -179,6 +181,8 @@ impl Evaluation {
             stdout: Vec::new(),
             warnings: Vec::new(),
             sealed: BTreeMap::new(),
+            final_state_names: BTreeSet::new(),
+            completely_mad: false,
             generated: BTreeMap::new(),
             batches: crate::batches::Batches::default(),
             constants_used: BTreeMap::new(),
@@ -215,6 +219,7 @@ impl Evaluation {
 
     pub fn register_functions(&mut self, program: &Program) -> Result<()> {
         crate::parser::validate_execution(program)?;
+        self.completely_mad = crate::parser::completely_mad(program);
         self.requested_loop_budget = crate::resources::requested(program);
         for statement in &program.statements {
             if let Stmt::Function { name, params, body } = statement
@@ -258,7 +263,7 @@ impl Evaluation {
             }
             Stmt::Break => Ok(ExecFlow::Break),
             Stmt::Continue => Ok(ExecFlow::Continue),
-            Stmt::Directive(name) if name == "GO_PARANOID" => {
+            Stmt::Directive(name) if name == "GO_PARANOID" || name == "COMPLETELY_MAD" => {
                 self.paranoid = true;
                 Ok(ExecFlow::Normal)
             }
@@ -267,6 +272,9 @@ impl Evaluation {
                 crate::parser::require_writable_name(name)?;
                 let value = self.eval_expr(expr)?;
                 self.env.insert(name.clone(), value);
+                if self.completely_mad && self.function_depth == 0 {
+                    self.final_state_names.insert(name.clone());
+                }
                 Ok(ExecFlow::Normal)
             }
             Stmt::IndexAssign { name, index, expr } => {

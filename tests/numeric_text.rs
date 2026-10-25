@@ -38,6 +38,60 @@ fn corpus(count: usize) -> Vec<f64> {
 }
 
 #[test]
+fn quantity_interpolation_adds_one_unit_and_literal_suffixes_remain_literal() {
+    let directory = tempdir().unwrap();
+    let source = directory.path().join("unit_labels.gbl");
+    fs::write(
+        &source,
+        r#"GO_PARANOID
+length = 5.382196358289262e-35 m
+metres = length / (1 m)
+print("automatic = {length}")
+print("literal suffix = {length} m")
+print("explicit scalar label = {metres} m")
+print("rounded = {length:.2e}")
+write_text("labels.txt", "automatic = {length}", "literal suffix = {length} m")
+seal length
+"#,
+    )
+    .unwrap();
+    let expected = "automatic = 5.382196358289262e-35 m\nliteral suffix = 5.382196358289262e-35 m m\nexplicit scalar label = 5.382196358289262e-35 m\nrounded = 5.38e-35 m\n";
+    for compile in [false, true] {
+        let run = run_file(
+            &source,
+            &RunOptions {
+                compile,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let receipt = read_receipt(&run).unwrap();
+        assert_eq!(
+            receipt["status"],
+            "PASS",
+            "{}",
+            fs::read_to_string(run.join("stderr.log")).unwrap()
+        );
+        assert_eq!(
+            fs::read_to_string(run.join("stdout.log")).unwrap(),
+            expected
+        );
+        assert_eq!(
+            fs::read_to_string(run.join("outputs/labels.txt")).unwrap(),
+            "automatic = 5.382196358289262e-35 m\nliteral suffix = 5.382196358289262e-35 m m\n"
+        );
+        let sealed: serde_json::Value =
+            serde_json::from_slice(&fs::read(run.join("length.json")).unwrap()).unwrap();
+        assert_eq!(
+            sealed["value"]["value_si"].as_f64().unwrap().to_bits(),
+            5.382196358289262e-35_f64.to_bits()
+        );
+        assert_eq!(sealed["value"]["unit_si"], "m");
+        assert!(verify_run(&run).unwrap().verified);
+    }
+}
+
+#[test]
 fn finite_default_text_round_trips_bits_including_zero_subnormals_and_extremes() {
     for value in corpus(100_000) {
         let text = format_number(value);

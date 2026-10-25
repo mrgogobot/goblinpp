@@ -25,6 +25,7 @@ pub mod inline_rust;
 pub mod interaction;
 pub mod ledger;
 pub mod lexer;
+pub mod mad;
 pub mod math_policy;
 pub mod matrix;
 pub mod modules;

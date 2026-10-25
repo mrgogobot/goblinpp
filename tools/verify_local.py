@@ -61,7 +61,7 @@ def main() -> None:
         assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
         subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
                         "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -75,6 +75,17 @@ def main() -> None:
                                    "resource_policy", "resources", "batch_policy", "fits_batch_policy", "batches", "sealed_artifacts")}
                 if example != "clock_time":
                     exact_evidence["generated_artifacts"] = report["generated_artifacts"]
+                if example == "completely_mad":
+                    assert report["execution_profile"] == "COMPLETELY_MAD"
+                    assert run.stdout.startswith("GOBLIN++ COMPLETELY_MAD MODE\n")
+                    assert "COMPLETELY_MAD_POSTFLIGHT=PASS\n" in run.stdout
+                    assert "GOBLIN++ PARANOID MODE" not in run.stdout
+                    assert "PARANOID_POSTFLIGHT=" not in run.stdout
+                    assert report["final_state"]["completeness"] == "COMPLETE"
+                    capture = report["final_state"]
+                    assert hashlib.sha256((root / directory / capture["path"]).read_bytes()).hexdigest() == capture["sha256"]
+                    # Compare captured values, not engine-specific origin labels.
+                    exact_evidence["final_state_sha256"] = capture["sha256"]
                 if example == "clock_time":
                     # Separate executions read different clocks; compare no rounded seals.
                     exact_evidence.pop("sealed_artifacts")
@@ -115,7 +126,7 @@ def main() -> None:
                     assert "pressure = 7 kg/(m*s^2)" in run.stdout
                     assert "matches old workaround = true" in run.stdout
                     report = json.loads((root / directory / "receipt.json").read_text())
-                    assert report["parser_policy"] == "goblin.compound-units-loop-budget.v2"
+                    assert report["parser_policy"] == "goblin.final-state-directive.v1"
                     assert report["math_environment"]["launcher_build"]["rustc"].startswith("rustc 1.92.0 ")
                 if example == "seeded_random":
                     report = json.loads((root / directory / "receipt.json").read_text())

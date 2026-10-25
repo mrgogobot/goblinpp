@@ -1,5 +1,10 @@
 # Audited files and plots
 
+Alpha.39's opt-in [COMPLETELY_MAD](COMPLETELY_MAD.md) profile also captures
+bounded final global values in `RUN_DIR/final-state.json`, separately from
+explicit `seal` snapshots and generated outputs. Failed runs label captures
+partial; sealing does not encrypt their contents.
+
 Alpha.31 embeds manifest links in general array-plot PNG/SVG; see
 [PLOT_PROVENANCE.md](PLOT_PROVENANCE.md). Legacy FITS plots stay unchanged.
 Alpha.30 adds general array plotting in both engines. Start with
@@ -18,6 +23,31 @@ The run receipt records each output's relative path, media type, byte count, pro
 Generated-output calls do not require `GO_PARANOID` or `seal`. They receive the same path restrictions, create-new behavior, receipt hashing, and independent verification in everyday and paranoid programs. `GO_PARANOID` adds postflight source observation and a receipt self-verification gate; `seal` separately snapshots a named value as a typed artifact.
 
 ## Text
+
+### Quantity labels already include units
+
+Interpolating a dimensioned quantity prints its SI unit automatically, including
+when an explicit numeric precision is used:
+
+```goblin
+length = 5.382196358289262e-35 m
+print("length = {length}")
+print("rounded length = {length:.2e}")
+```
+
+These produce `length = 5.382196358289262e-35 m` and
+`rounded length = 5.38e-35 m`. Do not append another literal `m` after the
+placeholder: `"{length} m"` deliberately prints `m m`. Literal text is never
+silently stripped or deduplicated. If a custom unit label is needed, first divide
+by the explicit reference quantity to obtain a dimensionless number:
+
+```goblin
+metres = length / (1 m)
+print("length = {metres} m")
+```
+
+This applies to stored strings and `write_text` too. Correct labels in a fresh
+source revision; do not edit or reseal an existing run's stdout or receipt.
 
 `write_text` accepts a filename followed by one or more values. Each value becomes one line. Since alpha.20, source string templates capture values immediately; stored text is never interpolated again at write time.
 

@@ -1,4 +1,11 @@
-# VS Code extension 0.1.27 — Element-wise array maths (local, unreleased)
+# VS Code extension 0.1.30 — Bounded final-state evidence (local, unreleased)
+
+- `COMPLETELY_MAD` completion/help/highlighting and a `mad` example snippet.
+- Help explains first-statement placement, separate snapshots, bounds, inline
+  Rust refusal and evidence-versus-encryption/scientific-validity boundaries.
+- Requires engine alpha.39+; existing commands and plugin identity retained.
+
+## Historical stage: 0.1.27 — Element-wise array maths
 
 - Shared function help states equal lengths, numeric scalar repetition, copies,
   dimensional checks and zero-based error indices; no truncation or reductions.

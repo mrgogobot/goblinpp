@@ -1,4 +1,9 @@
 {
+  "Bounded automatic final-state evidence": {
+    "prefix": "mad",
+    "body": ["COMPLETELY_MAD", "", "${1:mass} = 2 kg", "seal ${1:mass}", "${1:mass} = 3 kg", "${2:energy} = ${1:mass} * c^2", "print(\"energy = {${2:energy}}\")"],
+    "description": "Place first in an alpha.39+ program. Explicit snapshot and automatic final state remain separate; not encryption or scientific certification."
+  },
   "Dimension-checked array maths": {
     "prefix": "arraymath",
     "body": [

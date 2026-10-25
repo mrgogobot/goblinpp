@@ -27,6 +27,11 @@ final class GoblinLexerTest {
     }
 
     @Test
+    void classifiesCompletelyMadDirective() {
+        assertTrue(lex("COMPLETELY_MAD\n").contains(new Token(GoblinTokenTypes.DIRECTIVE, "COMPLETELY_MAD")));
+    }
+
+    @Test
     void preservesInlineRustAsASeparateRegion() {
         String source = "RUST_INLINE_BEGIN\nprintln!(\"hello\");\nRUST_INLINE_END\nvalue = sqrt(9)\n";
         List<Token> tokens = lex(source);

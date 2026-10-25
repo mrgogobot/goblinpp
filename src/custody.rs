@@ -138,6 +138,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "goblin_version": crate::VERSION,
         "language_semantics": crate::text_runtime::SEMANTICS_POLICY,
         "parser_policy": crate::parser::PARSER_POLICY,
+        "final_state_policy": crate::mad::POLICY,
         "math_policy": crate::math_policy::policy(),
         "numeric_audit": crate::numeric_audit::snapshot(source, &parsed.program)?,
         "array_math_policy": crate::array_math::policy(),

@@ -73,6 +73,14 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     let receipt = read_receipt(run_dir)?;
     let mut checks = Vec::new();
+    let final_state = crate::mad::verify(run_dir, &receipt);
+    checks.push(check(
+        "FINAL_STATE_EVIDENCE",
+        final_state.is_ok(),
+        None,
+        None,
+        final_state.err().map(|e| e.to_string()),
+    ));
     let join_evidence = crate::table_join::verify(run_dir, &receipt);
     checks.push(check(
         "TABLE_JOIN_RECONSTRUCTION",
@@ -340,7 +348,7 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
     }
     if schema_v2 {
         let declared_paranoid = receipt.get("paranoid_mode").and_then(Value::as_bool);
-        let source_paranoid = string_at(&receipt, &["source", "path"])
+        let source_profile = string_at(&receipt, &["source", "path"])
             .and_then(|path| fs::read_to_string(run_dir.join(path)).ok())
             .and_then(|text| {
                 parser_mode
@@ -348,7 +356,22 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                     .ok()
                     .and_then(|mode| crate::parser::parse_source_with_mode(&text, *mode).ok())
             })
-            .map(|parsed| parsed.paranoid());
+            .map(|parsed| parsed.execution_profile());
+        let source_paranoid = source_profile.map(|profile| profile != "EVERYDAY");
+        // Earlier receipts have only the inherited-check flag. Do not rewrite them.
+        if let Some(declared_profile) = receipt.get("execution_profile") {
+            let expected_profile = source_profile.or_else(|| {
+                (receipt["status"] != "PASS" && declared_paranoid == Some(false))
+                    .then_some("EVERYDAY")
+            });
+            checks.push(check(
+                "EXECUTION_PROFILE_MATCHES_SOURCE",
+                expected_profile.is_some() && declared_profile.as_str() == expected_profile,
+                expected_profile.map(str::to_owned),
+                Some(declared_profile.to_string()),
+                None,
+            ));
+        }
         checks.push(check(
             "PARANOID_MODE_MATCHES_SOURCE",
             declared_paranoid.is_some()
@@ -921,6 +944,13 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
             ));
         }
     }
+    if receipt["final_state"]["requested"] == true {
+        for item in &mut checks {
+            if let Some(suffix) = item.check.strip_prefix("PARANOID_") {
+                item.check = format!("COMPLETELY_MAD_{suffix}");
+            }
+        }
+    }
     let verified = checks.iter().all(|item| item.pass);
     Ok(Verification {
         verified,
@@ -979,7 +1009,8 @@ pub fn diff_runs(left_dir: impl AsRef<Path>, right_dir: impl AsRef<Path>) -> Res
         at(&left, &["math_environment"]) == at(&right, &["math_environment"]);
     let canonical_program_same =
         at(&left, &["canonical_source", "sha256"]) == at(&right, &["canonical_source", "sha256"]);
-    let sealed_artifacts_same = normalized_artifacts(&left) == normalized_artifacts(&right);
+    let sealed_artifacts_same = normalized_artifacts(&left) == normalized_artifacts(&right)
+        && normalized_final_state(&left) == normalized_final_state(&right);
     let generated_artifacts_same =
         normalized_generated_artifacts(&left) == normalized_generated_artifacts(&right);
     let constants_same = at(&left, &["constants_used"]) == at(&right, &["constants_used"]);
@@ -1167,6 +1198,17 @@ fn normalized_artifacts(receipt: &Value) -> Vec<(String, String)> {
                 .collect()
         })
         .unwrap_or_default()
+}
+fn normalized_final_state(receipt: &Value) -> Value {
+    if receipt["final_state"]["requested"] != true {
+        return Value::Null;
+    }
+    let mut state = receipt["final_state"].clone();
+    if let Some(fields) = state.as_object_mut() {
+        fields.remove("origin");
+        fields.remove("native_parity");
+    }
+    state
 }
 fn normalized_generated_artifacts(receipt: &Value) -> Vec<(String, String, Value)> {
     receipt

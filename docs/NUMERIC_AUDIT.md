@@ -121,9 +121,10 @@ reliability certificate. Machine differences are preserved, not disguised.
 An internally rewritten bundle still needs an independently trusted original
 digest or future signature to distinguish it from the authentic evidence.
 
-`COMPLETELY_MAD` remains a proposed strict policy profile. It should combine
-specified, tested numerical/data/provenance requirements only after those gates
-exist; a dramatic name cannot substitute for implementation. Encryption and
-key management are separate roadmap items and are not enabled by this directive.
+Alpha.39 implements the first [COMPLETELY_MAD](COMPLETELY_MAD.md) stage: bounded
+automatic final-state evidence. This does not automatically request a numerical
+audit, higher precision or every proposed strict-policy requirement. Broader
+gates require separate specified, tested implementations; a dramatic name cannot
+substitute for them. Encryption/key management remain separate roadmap items.
 
 Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).

@@ -350,7 +350,18 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     } else {
         ""
     };
-    let body = generate_statements(&program.statements, blocks)?;
+    let mad = crate::parser::completely_mad(program);
+    let body = generate_statements(&program.statements, blocks, mad)?;
+    let final_capture = if mad {
+        "    for name in &goblin_final_names {\n        let value = goblin_env.get(name).ok_or(\"Missing final-state variable\")?.clone();\n        goblin_sealed_values.insert(format!(\"final:{name}\"), value);\n    }\n"
+    } else {
+        ""
+    };
+    let mad_launcher_gate = if mad {
+        "    if std::env::var_os(\"GOBLIN_NATIVE_RESULT_PATH\").is_none() { return Err(\"COMPLETELY_MAD requires the audited run --compile launcher; standalone execution has no custody receipt.\".into()); }\n"
+    } else {
+        ""
+    };
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
@@ -376,7 +387,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
                     "            goblin_env.insert({param:?}.into(), args.next().unwrap());\n"
                 ));
             }
-            functions.push_str(&generate_statements(body, blocks)?);
+            functions.push_str(&generate_statements(body, blocks, false)?);
             functions.push_str(&format!("            Err(\"g_func {name} reached the end without return.\".into())\n        }}\n"));
         }
     }
@@ -700,6 +711,7 @@ fn write_native_results(sealed: &BTreeMap<String, Value>, loop_steps: u64) -> Re
 
 {functions}
 fn goblin_main() -> Result<(), String> {{
+{mad_launcher_gate}    let mut goblin_final_names: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     let mut goblin_env: HashMap<String, Value> = HashMap::new();
     let mut goblin_args = vec![std::env::var("GOBLIN_SOURCE_ARGV0").unwrap_or_else(|_| std::env::args().next().unwrap_or_default())];
     goblin_args.extend(std::env::args().skip(1));
@@ -708,6 +720,7 @@ fn goblin_main() -> Result<(), String> {{
     let goblin_call_depth: usize = 0;
     let mut goblin_sealed_values: BTreeMap<String, Value> = BTreeMap::new();
 {body}    {data_finish}
+{final_capture}
     write_native_results(&goblin_sealed_values, goblin_loop_steps)?;
     Ok(())
 }}
@@ -725,7 +738,11 @@ fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN
     ))
 }
 
-fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Result<String> {
+fn generate_statements(
+    statements: &[Stmt],
+    blocks: &[InlineRustBlock],
+    track_final: bool,
+) -> Result<String> {
     let mut body = String::new();
     for statement in statements {
         match statement {
@@ -753,6 +770,9 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                     "    goblin_env.insert({:?}.into(), value);\n",
                     name
                 ));
+                if track_final {
+                    body.push_str(&format!("    goblin_final_names.insert({name:?}.into());\n    if goblin_final_names.len() > 256 {{ return Err(\"COMPLETELY_MAD final state exceeds 256 variables.\".into()); }}\n"));
+                }
             }
             Stmt::IndexAssign { name, index, expr } => {
                 body.push_str(&format!(
@@ -820,7 +840,7 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                     "    goblin_env.insert({variable:?}.into(), Value::scalar(index as f64)?);\n"
                 ));
                 body.push_str("    index += step;\n");
-                body.push_str(&generate_statements(loop_body, blocks)?);
+                body.push_str(&generate_statements(loop_body, blocks, track_final)?);
                 body.push_str("    }\n    }\n");
             }
             Stmt::ForEach {
@@ -838,7 +858,7 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                 body.push_str(&format!(
                     "    goblin_env.insert({variable:?}.into(), item);\n"
                 ));
-                body.push_str(&generate_statements(loop_body, blocks)?);
+                body.push_str(&generate_statements(loop_body, blocks, track_final)?);
                 body.push_str("    }\n    }\n");
             }
             Stmt::While {
@@ -851,7 +871,7 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                     generate_expr(condition)?
                 ));
                 body.push_str("    loop_tick(&mut goblin_loop_steps)?;\n");
-                body.push_str(&generate_statements(loop_body, blocks)?);
+                body.push_str(&generate_statements(loop_body, blocks, track_final)?);
                 body.push_str("    }\n");
             }
             Stmt::If {
@@ -868,12 +888,12 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                         "as_bool(({})?, \"if\")? {{\n",
                         generate_expr(condition)?
                     ));
-                    body.push_str(&generate_statements(branch_body, blocks)?);
+                    body.push_str(&generate_statements(branch_body, blocks, track_final)?);
                     body.push_str("    }");
                 }
                 if let Some(branch_body) = else_body {
                     body.push_str(" else {\n");
-                    body.push_str(&generate_statements(branch_body, blocks)?);
+                    body.push_str(&generate_statements(branch_body, blocks, track_final)?);
                     body.push_str("    }");
                 }
                 body.push('\n');
@@ -896,12 +916,12 @@ fn generate_statements(statements: &[Stmt], blocks: &[InlineRustBlock]) -> Resul
                         generate_expr(label)?
                     ));
                     body.push_str("    if switch_equal(&switch_value, &case_value)? {\n    switch_matched = true;\n");
-                    body.push_str(&generate_statements(case_body, blocks)?);
+                    body.push_str(&generate_statements(case_body, blocks, track_final)?);
                     body.push_str("    }\n    }\n");
                 }
                 if let Some(case_body) = default {
                     body.push_str("    if !switch_matched {\n");
-                    body.push_str(&generate_statements(case_body, blocks)?);
+                    body.push_str(&generate_statements(case_body, blocks, track_final)?);
                     body.push_str("    }\n");
                 }
                 body.push_str("    }\n");
