@@ -694,6 +694,12 @@ impl Evaluation {
         if crate::delimited::is_function(name) {
             return self.eval_table_call(name, args);
         }
+        if text_runtime::toolkit_arity(name).is_some() {
+            return self.eval_text_toolkit(name, args);
+        }
+        if crate::fluids::is_function(name) {
+            return crate::fluids::call(name, args);
+        }
         match name {
             "len" => {
                 require_args(name, args, 1)?;
@@ -1277,6 +1283,42 @@ impl Evaluation {
                 Ok(Value::Text(output_name))
             }
             _ => Err(unknown(name)),
+        }
+    }
+
+    fn eval_text_toolkit(&self, name: &str, args: &[Value]) -> Result<Value> {
+        require_args(name, args, text_runtime::toolkit_arity(name).unwrap())?;
+        let error = |message| GoblinError::new("G203", message);
+        let scalar = |v: &Value| -> Result<f64> {
+            match v {
+                Value::Quantity(q) if q.dimension == [0; 6] => Ok(q.value_si),
+                _ => Err(error(format!("{name}() requires unitless scalar numbers."))),
+            }
+        };
+        match name {
+            "str_upper" | "str_lower" => {
+                text_runtime::change_case(args[0].text(name)?, name == "str_upper")
+                    .map(Value::Text)
+                    .map_err(error)
+            }
+            "str_bytes_len" | "sizeof" => {
+                Quantity::scalar(args[0].text(name)?.len() as f64).map(Value::Quantity)
+            }
+            "str_compare" => Quantity::scalar(text_runtime::compare(
+                args[0].text(name)?,
+                args[1].text(name)?,
+            ))
+            .map(Value::Quantity),
+            "to_base" => text_runtime::to_base(scalar(&args[0])?, scalar(&args[1])?)
+                .map(Value::Text)
+                .map_err(error),
+            "from_base" => Quantity::scalar(
+                text_runtime::from_base(args[0].text(name)?, scalar(&args[1])?).map_err(error)?,
+            )
+            .map(Value::Quantity),
+            _ => text_runtime::byte_encoding(name, args[0].text(name)?)
+                .map(Value::Text)
+                .map_err(error),
         }
     }
 
@@ -2002,6 +2044,12 @@ fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
                 1
             },
         );
+    }
+    if let Some(count) = text_runtime::toolkit_arity(name) {
+        return require_args(name, args, count);
+    }
+    if crate::fluids::is_function(name) {
+        return crate::fluids::require_arity(name, args.len());
     }
     if crate::science::is_function(name) {
         return crate::science::require_arity(name, args.len());

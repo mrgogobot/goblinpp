@@ -78,3 +78,30 @@ fn expect_text(value: Value, context: &str) -> Result<String, String> {
         _ => Err(format!("{context}() requires text.")),
     }
 }
+
+fn goblin_text_toolkit(name: &str, values: Vec<Value>) -> Result<Value, String> {
+    let expected = goblin_text::toolkit_arity(name).ok_or("Unknown text toolkit function.")?;
+    if values.len() != expected {
+        return Err(format!("{name}() expects {expected} arguments, got {}.", values.len()));
+    }
+    let scalar = |v: &Value| -> Result<f64, String> {
+        match v {
+            Value::Q(n, dim) if *dim == ZERO => Ok(*n),
+            _ => Err(format!("{name}() requires unitless scalar numbers.")),
+        }
+    };
+    let text = |i: usize| -> Result<&str, String> {
+        match &values[i] {
+            Value::Text(s) => Ok(s),
+            _ => Err(format!("{name}() requires text.")),
+        }
+    };
+    match name {
+        "str_upper" | "str_lower" => Ok(Value::Text(goblin_text::change_case(text(0)?, name == "str_upper")?)),
+        "str_bytes_len" | "sizeof" => Value::scalar(text(0)?.len() as f64),
+        "str_compare" => Value::scalar(goblin_text::compare(text(0)?, text(1)?)),
+        "to_base" => Ok(Value::Text(goblin_text::to_base(scalar(&values[0])?, scalar(&values[1])?)?)),
+        "from_base" => Value::scalar(goblin_text::from_base(text(0)?, scalar(&values[1])?)?),
+        _ => Ok(Value::Text(goblin_text::byte_encoding(name, text(0)?)?)),
+    }
+}

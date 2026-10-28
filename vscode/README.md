@@ -1,6 +1,9 @@
-# Goblin++ for Visual Studio Code 0.1.30 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.31 (local, unreleased)
 
-Version 0.1.30 adds alpha.39 `COMPLETELY_MAD` directive completion, help,
+Alpha.40: completion, highlighting and help for Unicode case/byte count, text encodings, integer radix conversion and dimension-checked fluid mechanics. See `examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`.
+
+
+Previous stage: Version 0.1.30 adds alpha.39 `COMPLETELY_MAD` directive completion, help,
 highlighting and a `mad` snippet. Automatic final-state evidence is distinct from
 explicit snapshots, encryption and scientific validity. See
 [COMPLETELY_MAD.md](../docs/COMPLETELY_MAD.md).

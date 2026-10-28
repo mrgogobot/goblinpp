@@ -9,6 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void textAndFluidCompletionKeepsCriticalContractsVisible() {
+        for (String name : new String[]{"str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"}) {
+            var entry = GoblinVocabulary.find(name);
+            assertNotNull(entry, name);
+            assertEquals("function", entry.kind());
+            assertTrue(entry.snippet().startsWith(name + "("));
+        }
+        assertTrue(GoblinVocabulary.find("sizeof").detail().contains("Not C object size"));
+        assertTrue(GoblinVocabulary.find("fluid_pipe_pressure_drop").detail().contains("Re < 2000"));
+        assertTrue(GoblinVocabulary.find("fluid_pipe_pressure_drop").detail().contains("Radius, not diameter"));
+    }
+
+    @Test
     void arrayMathHelpStatesShapeCopyAndDiagnostics() {
         for (String name : new String[]{"sqrt", "min", "hypot", "sind", "atan2r"}) {
             var detail = GoblinVocabulary.find(name).detail();

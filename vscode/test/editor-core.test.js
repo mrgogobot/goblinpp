@@ -222,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 280);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 280);
+  assert.equal(entries.length, 302);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 302);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -400,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.30");
+  assert.equal(manifest.version, "0.1.31");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -448,4 +448,20 @@ test("alpha.27 language coloring and extension identity are internally consisten
     assert(loops.test(spelling));
   }
   assert(grammar.repository.inlineRust.patterns[0].contentName === "source.rust");
+});
+
+
+test("alpha.40 text and fluid helpers expose their unit and encoding contracts", () => {
+  const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+  for (const name of ["str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"]) {
+    const entry = runtimeVocabulary.functions.find((item) => item.spelling === name);
+    assert.ok(entry && entry.snippet.startsWith(name + "("), name);
+    assert.ok(builtins.test(name + "("), name);
+  }
+  const detail = (name) => runtimeVocabulary.functions.find((item) => item.spelling === name).detail;
+  assert.match(detail("sizeof"), /Not C object size/);
+  assert.match(detail("str_from_hex"), /invalid UTF-8/);
+  assert.match(detail("fluid_pipe_pressure_drop"), /Re < 2000/);
+  assert.match(detail("fluid_pipe_pressure_drop"), /Radius, not diameter/);
+  assert.match(detail("fluid_bernoulli_total_pressure"), /assumptions are user responsibility/);
 });

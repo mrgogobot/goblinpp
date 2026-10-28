@@ -190,6 +190,8 @@ fn build_data_program(
         ("ast", include_str!("ast.rs")),
         ("constants", include_str!("constants.rs")),
         ("chemistry", include_str!("chemistry.rs")),
+        ("fluid_runtime", include_str!("fluid_runtime.rs")),
+        ("fluids", include_str!("fluids.rs")),
         ("electrical", include_str!("electrical.rs")),
         ("delimited", include_str!("delimited.rs")),
         ("table_join", include_str!("table_join.rs")),
@@ -364,6 +366,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
     };
     let text_runtime = include_str!("text_runtime.rs");
     let compiled_text_runtime = include_str!("compiled_text_runtime.rs");
+    let fluid_runtime = include_str!("fluid_runtime.rs");
     let compiled_math_runtime = include_str!("compiled_math_runtime.rs");
     let elementwise_runtime = include_str!("elementwise_runtime.rs");
     let compiled_array_runtime = include_str!("compiled_array_runtime.rs");
@@ -430,6 +433,14 @@ mod goblin_text {{
 {text_runtime}
 }}
 {compiled_text_runtime}
+mod goblin_fluid {{
+{fluid_runtime}
+}}
+fn goblin_fluid_call(name: &str, values: Vec<Value>) -> Result<Value, String> {{
+    let quantities = values.into_iter().map(as_q).collect::<Result<Vec<_>,_>>()?;
+    let (value, dim) = goblin_fluid::call(name, &quantities).map_err(|e| e.to_string())?;
+    Value::q(value, dim)
+}}
 mod goblin_elementwise {{
 {elementwise_runtime}
 }}
@@ -1109,6 +1120,23 @@ fn generate_expr(expression: &Expr) -> Result<String> {
                 "goblin_string_call({name:?}, vec![{}])",
                 args.iter()
                     .map(|arg| generate_expr(arg).map(|value| format!("({value})?")))
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        }
+        Expr::Call { name, args }
+            if crate::fluids::is_function(name)
+                || crate::text_runtime::toolkit_arity(name).is_some() =>
+        {
+            let function = if crate::fluids::is_function(name) {
+                "goblin_fluid_call"
+            } else {
+                "goblin_text_toolkit"
+            };
+            format!(
+                "{function}({name:?}, vec![{}])",
+                args.iter()
+                    .map(|arg| generate_expr(arg).map(|v| format!("({v})?")))
                     .collect::<Result<Vec<_>>>()?
                     .join(", ")
             )

@@ -1,3 +1,7 @@
+# 0.1.31 (local, unreleased)
+
+Adds alpha.40 string toolkit and fluid mechanics completion, highlighting and parameter help.
+
 # VS Code extension 0.1.30 — Bounded final-state evidence (local, unreleased)
 
 - `COMPLETELY_MAD` completion/help/highlighting and a `mad` example snippet.

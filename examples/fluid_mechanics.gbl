@@ -1,0 +1,33 @@
+GO_PARANOID
+
+# Illustrative properties, supplied explicitly; not a water-property database.
+rho = fluid_density(1 kg, 0.001 m^3)
+mu = 0.001 Pa*s
+nu = fluid_kinematic_viscosity(mu, rho)
+restored_mu = fluid_dynamic_viscosity(nu, rho)
+pipe_radius = 0.01 m
+area = pi * pipe_radius^2
+flow = 1e-6 m^3/s
+speed = fluid_flow_speed(flow, area)
+restored_flow = fluid_volume_flow(area, speed)
+reynolds = fluid_reynolds(rho, speed, 2 * pipe_radius, mu)
+dynamic_pressure = fluid_dynamic_pressure(rho, speed)
+
+# Same-height, steady, incompressible, inviscid Bernoulli model.
+total_pressure = fluid_bernoulli_total_pressure(100000 Pa, rho, speed)
+
+# Separate viscous-pipe model: Newtonian, fully developed, circular, laminar.
+# Reynolds < 2000 is enforced; it does not prove the other assumptions.
+pressure_drop = fluid_pipe_pressure_drop(rho, mu, 1 m, pipe_radius, flow)
+print("density = {rho}; kinematic viscosity = {nu}")
+print("volume flow = {restored_flow}; pipe Reynolds = {reynolds:.6f}")
+print("dynamic pressure = {dynamic_pressure}; total pressure = {total_pressure}")
+print("laminar pipe pressure drop = {pressure_drop}")
+seal rho
+seal nu
+seal restored_mu
+seal restored_flow
+seal reynolds
+seal dynamic_pressure
+seal total_pressure
+seal pressure_drop

@@ -19,6 +19,8 @@ pub mod error;
 pub mod evaluator;
 pub mod evidence_report;
 pub mod fits;
+pub mod fluid_runtime;
+pub mod fluids;
 pub mod hashing;
 pub mod inference_policy;
 pub mod inline_rust;

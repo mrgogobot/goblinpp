@@ -119,6 +119,165 @@ pub fn length(value: &str) -> usize {
     value.chars().count()
 }
 
+/// Additive helpers; existing interpolation and comparison policies are unchanged.
+pub fn toolkit_arity(name: &str) -> Option<usize> {
+    match name {
+        "str_upper" | "str_lower" | "str_bytes_len" | "sizeof" | "str_to_hex" | "str_from_hex"
+        | "str_to_octal" | "str_from_octal" | "str_to_binary" | "str_from_binary" => Some(1),
+        "str_compare" | "to_base" | "from_base" => Some(2),
+        _ => None,
+    }
+}
+
+pub fn change_case(value: &str, upper: bool) -> Result<String, String> {
+    // Preflight expansion before allocation, then retain whole-string contextual
+    // Unicode rules (notably Greek final sigma). No locale-specific tailoring.
+    let mut size = 0usize;
+    for ch in value.chars() {
+        let mapped = if upper {
+            ch.to_uppercase().to_string()
+        } else {
+            ch.to_lowercase().to_string()
+        };
+        size += mapped.len();
+        if size > MAX_TEXT_BYTES {
+            return Err(format!("Text result exceeds {MAX_TEXT_BYTES} UTF-8 bytes."));
+        }
+    }
+    bounded(if upper {
+        value.to_uppercase()
+    } else {
+        value.to_lowercase()
+    })
+}
+
+/// A locale-independent total ordering, with no normalization or case folding.
+pub fn compare(left: &str, right: &str) -> f64 {
+    match left.cmp(right) {
+        std::cmp::Ordering::Less => -1.0,
+        std::cmp::Ordering::Equal => 0.0,
+        std::cmp::Ordering::Greater => 1.0,
+    }
+}
+
+fn byte_codec(name: &str) -> Result<(u32, usize, bool), String> {
+    Ok(match name {
+        "str_to_hex" => (16, 2, true),
+        "str_from_hex" => (16, 2, false),
+        "str_to_octal" => (8, 3, true),
+        "str_from_octal" => (8, 3, false),
+        "str_to_binary" => (2, 8, true),
+        "str_from_binary" => (2, 8, false),
+        _ => return Err(format!("Unknown text encoding: {name}")),
+    })
+}
+
+/// Fixed-width UTF-8 byte groups; not encryption or integer formatting.
+pub fn byte_encoding(name: &str, value: &str) -> Result<String, String> {
+    let (base, width, encode) = byte_codec(name)?;
+    if value.len() > MAX_TEXT_BYTES {
+        return Err(format!(
+            "{name}() input exceeds {MAX_TEXT_BYTES} UTF-8 bytes."
+        ));
+    }
+    if encode {
+        let size = value
+            .len()
+            .checked_mul(width)
+            .filter(|n| *n <= MAX_TEXT_BYTES)
+            .ok_or_else(|| format!("{name}() result exceeds {MAX_TEXT_BYTES} UTF-8 bytes."))?;
+        let mut output = String::with_capacity(size);
+        for b in value.bytes() {
+            // Byte groups are small and always fit the prechecked output size.
+            output.push_str(&match base {
+                16 => format!("{b:02x}"),
+                8 => format!("{b:03o}"),
+                _ => format!("{b:08b}"),
+            });
+        }
+        Ok(output)
+    } else {
+        if !value.is_ascii() || !value.len().is_multiple_of(width) {
+            return Err(format!(
+                "{name}() requires complete {width}-digit ASCII byte groups; no prefixes or separators."
+            ));
+        }
+        let mut bytes = Vec::with_capacity(value.len() / width);
+        for group in value.as_bytes().chunks(width) {
+            let digits = std::str::from_utf8(group).expect("checked ASCII");
+            if !digits.bytes().all(|b| (b as char).is_digit(base)) {
+                return Err(format!(
+                    "{name}() invalid base-{base} byte group: {digits:?}."
+                ));
+            }
+            bytes.push(
+                u8::from_str_radix(digits, base)
+                    .map_err(|_| format!("{name}() byte group is outside 0..255: {digits:?}."))?,
+            );
+        }
+        String::from_utf8(bytes).map_err(|_| format!("{name}() decoded bytes are not valid UTF-8."))
+    }
+}
+
+pub fn checked_base(base: f64) -> Result<u32, String> {
+    match base {
+        2.0 => Ok(2),
+        8.0 => Ok(8),
+        10.0 => Ok(10),
+        16.0 => Ok(16),
+        _ => Err("Base must be exactly 2, 8, 10 or 16.".into()),
+    }
+}
+
+pub fn to_base(value: f64, base: f64) -> Result<String, String> {
+    let radix = checked_base(base)?;
+    if !value.is_finite() || value.fract() != 0.0 || value.abs() > 9_007_199_254_740_991.0 {
+        return Err("to_base() requires an integer in the exact range ±(2^53-1).".into());
+    }
+    let magnitude = value.abs() as u64;
+    let digits = match radix {
+        2 => format!("{magnitude:b}"),
+        8 => format!("{magnitude:o}"),
+        16 => format!("{magnitude:x}"),
+        _ => magnitude.to_string(),
+    };
+    Ok(if value < 0.0 {
+        format!("-{digits}")
+    } else {
+        digits
+    })
+}
+
+pub fn from_base(value: &str, base: f64) -> Result<f64, String> {
+    let radix = checked_base(base)?;
+    let value = value.trim();
+    let (negative, digits) = if let Some(v) = value.strip_prefix('-') {
+        (true, v)
+    } else {
+        (false, value.strip_prefix('+').unwrap_or(value))
+    };
+    if digits.is_empty()
+        || value.len() > 64
+        || !digits
+            .bytes()
+            .all(|b| b.is_ascii() && (b as char).is_digit(radix))
+    {
+        return Err(
+            "from_base() requires signed integer digits; no prefixes, separators or fractions."
+                .into(),
+        );
+    }
+    let magnitude = u64::from_str_radix(digits, radix)
+        .ok()
+        .filter(|v| *v <= 9_007_199_254_740_991)
+        .ok_or("from_base() integer is outside the exact range ±(2^53-1).")?;
+    Ok(if negative {
+        -(magnitude as f64)
+    } else {
+        magnitude as f64
+    })
+}
+
 pub fn replace(value: &str, old: &str, new: &str) -> Result<String, String> {
     if old.is_empty() {
         return Err("str_replace() search text cannot be empty.".into());

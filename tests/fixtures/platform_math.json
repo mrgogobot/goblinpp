@@ -2,6 +2,12 @@
   "schema": "goblin.platform-math-fixtures.v1",
   "description": "Named finite results and deliberately explicit engineering-test tolerances, not universal scientific tolerances. Expected values are analytic identities or rounded mathematical reference values; exact cases use IEEE bits.",
   "cases": [
+    {"name":"fluid_density_exact","expression":"fluid_density(1 kg, 0.001 m^3)","expected":1000.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[1,-3,0,0,0,0]},
+    {"name":"fluid_viscosity","expression":"fluid_kinematic_viscosity(0.001 Pa*s, 1000 kg/m^3)","expected":1e-06,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[0,2,-1,0,0,0]},
+    {"name":"fluid_reynolds","expression":"fluid_reynolds(1000 kg/m^3, 0.1 m/s, 0.01 m, 0.001 Pa*s)","expected":1000.0,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[0,0,0,0,0,0]},
+    {"name":"fluid_pressure_exact","expression":"fluid_dynamic_pressure(1000 kg/m^3, 2 m/s)","expected":2000.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[1,-1,-2,0,0,0]},
+    {"name":"fluid_pipe_pressure","expression":"fluid_pipe_pressure_drop(1000 kg/m^3, 0.001 Pa*s, 1 m, 0.01 m, 1e-6 m^3/s)","expected":0.25464790894703254,"absolute":0.0,"relative":4e-15,"exact":false,"dimension":[1,-1,-2,0,0,0]},
+
     {"name":"compound_acceleration","expression":"1.13e-10 m/s^2","expected":1.13e-10,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,1,-2,0,0,0]},
     {"name":"compound_area","expression":"3 m^2","expected":3.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,2,0,0,0,0]},
     {"name":"compound_whole_power","expression":"(3 m)^2","expected":9.0,"absolute":0.0,"relative":0.0,"exact":true,"dimension":[0,2,0,0,0,0]},

@@ -10,8 +10,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <p>Goblin++ JetBrains 0.3.2:</p>
+      <p>Goblin++ JetBrains 0.3.21 (alpha.40):</p>
       <ul>
+        <li>Unicode case conversion, UTF-8 byte sizes, string ordering and base-encoding completion</li>
+        <li>Dimension-checked fluid mechanics helpers with parameter help and model assumptions</li>
         <li>Electrical and chemistry functions, SI units, completion, and quick documentation</li>
         <li>Native Run configurations for .gbl programs</li>
         <li>Run gutter icon, toolbar execution, program arguments, and interactive console input</li>

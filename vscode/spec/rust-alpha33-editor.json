@@ -1,6 +1,6 @@
 {
   "schema": "goblin.editor-vocabulary.v1",
-  "runtime": "goblin++ 0.1.0-alpha.39",
+  "runtime": "goblin++ 0.1.0-alpha.40",
   "array_math": "Numeric operators and abs/sqrt/min/max/rounding/exp/log/trigonometry/hypot accept homogeneous numeric arrays. Equal array lengths only; scalars repeat explicitly; no length-one array broadcasting. Independent results, dimension checks and zero-based failing indices. is_close/same_bits remain scalar; dot and matrix_multiply are explicit reductions/products.",
   "quantity_literals": "Compound suffixes such as 1.13e-10 m/s^2; 3 m^2 means 3 square metres, (3 m)^2 squares the whole quantity; group multiple denominator factors with parentheses.",
   "authority": "EDITOR_AID_NOT_LANGUAGE_SPEC",
@@ -1009,7 +1009,29 @@
       "kind": "function",
       "detail": "Return a dimensionless reporting number in an explicitly named compatible electrical unit.",
       "snippet": "ee_in_unit(${1:quantity}, \"${2:kΩ}\")"
-    }
+    },
+    {"spelling": "str_upper", "kind": "function", "detail": "Unicode uppercase copy; may expand; no locale tailoring or normalization; bounded to 1 MiB.", "snippet": "str_upper(${1:text})"},
+    {"spelling": "str_lower", "kind": "function", "detail": "Unicode lowercase copy, including contextual final sigma; no locale tailoring or normalization; bounded to 1 MiB.", "snippet": "str_lower(${1:text})"},
+    {"spelling": "str_bytes_len", "kind": "function", "detail": "Count UTF-8 bytes, distinct from len(text) Unicode scalar count. No terminator or capacity.", "snippet": "str_bytes_len(${1:text})"},
+    {"spelling": "sizeof", "kind": "function", "detail": "Text-only UTF-8 payload byte count, alias of str_bytes_len. Not C object size or RAM usage; other types refuse.", "snippet": "sizeof(${1:text})"},
+    {"spelling": "str_compare", "kind": "function", "detail": "Return -1, 0, +1 using case-sensitive, locale-independent UTF-8 lexicographic order; no normalization.", "snippet": "str_compare(${1:left}, ${2:right})"},
+    {"spelling": "to_base", "kind": "function", "detail": "Format a unitless integer within ±(2^53-1), base 2/8/10/16; sign-magnitude text, no prefixes or two's complement.", "snippet": "to_base(${1:integer}, ${2:base})"},
+    {"spelling": "from_base", "kind": "function", "detail": "Parse signed integer text, base 2/8/10/16, exact range ±(2^53-1); trims edges; refuses prefixes, fractions and separators.", "snippet": "from_base(${1:text}, ${2:base})"},
+    {"spelling": "fluid_density", "kind": "function", "detail": "mass/volume, kg/m^3. Nonnegative mass; positive volume; checked SI dimensions.", "snippet": "fluid_density(${1:mass}, ${2:volume})"},
+    {"spelling": "fluid_kinematic_viscosity", "kind": "function", "detail": "mu/rho, m^2/s. Both arguments positive with SI dimensions.", "snippet": "fluid_kinematic_viscosity(${1:dynamic_viscosity}, ${2:density})"},
+    {"spelling": "fluid_dynamic_viscosity", "kind": "function", "detail": "nu*rho, Pa*s. Both arguments positive with SI dimensions.", "snippet": "fluid_dynamic_viscosity(${1:kinematic_viscosity}, ${2:density})"},
+    {"spelling": "fluid_volume_flow", "kind": "function", "detail": "Signed volume flow = positive area * signed mean normal velocity, m^3/s.", "snippet": "fluid_volume_flow(${1:area}, ${2:mean_normal_velocity})"},
+    {"spelling": "fluid_flow_speed", "kind": "function", "detail": "Signed mean normal velocity = volume flow / positive area, m/s.", "snippet": "fluid_flow_speed(${1:volume_flow}, ${2:area})"},
+    {"spelling": "fluid_reynolds", "kind": "function", "detail": "rho*abs(v)*L/mu; dimensionless. Positive density, length, viscosity. General diagnostic, not proof of a flow regime.", "snippet": "fluid_reynolds(${1:density}, ${2:velocity}, ${3:characteristic_length}, ${4:dynamic_viscosity})"},
+    {"spelling": "fluid_dynamic_pressure", "kind": "function", "detail": "rho*v^2/2, Pa. Positive density; signed scalar velocity; not automatically total pressure.", "snippet": "fluid_dynamic_pressure(${1:density}, ${2:velocity})"},
+    {"spelling": "fluid_bernoulli_total_pressure", "kind": "function", "detail": "p+rho*v^2/2, Pa. Same-height, steady, incompressible, inviscid streamline model; no pumps, losses or heating; assumptions are user responsibility.", "snippet": "fluid_bernoulli_total_pressure(${1:static_pressure}, ${2:density}, ${3:velocity})"},
+    {"spelling": "fluid_pipe_pressure_drop", "kind": "function", "detail": "Signed Poiseuille drop 8*mu*L*Q/(pi*r^4), Pa. Circular fully developed Newtonian incompressible laminar flow; enforces Re < 2000 but cannot prove other assumptions. Radius, not diameter.", "snippet": "fluid_pipe_pressure_drop(${1:density}, ${2:dynamic_viscosity}, ${3:length}, ${4:radius}, ${5:volume_flow})"},
+    {"spelling": "str_to_hex", "kind": "function", "detail": "Encode UTF-8 bytes as fixed-width 2-digit base-16 groups; no separators; at most 1 MiB. Not encryption.", "snippet": "str_to_hex(${1:text})"},
+    {"spelling": "str_from_hex", "kind": "function", "detail": "Decode fixed-width 2-digit base-16 byte groups; rejects invalid digits, bytes above 255 and invalid UTF-8; no prefixes or separators.", "snippet": "str_from_hex(${1:text})"},
+    {"spelling": "str_to_octal", "kind": "function", "detail": "Encode UTF-8 bytes as fixed-width 3-digit base-8 groups; no separators; at most 1 MiB. Not encryption.", "snippet": "str_to_octal(${1:text})"},
+    {"spelling": "str_from_octal", "kind": "function", "detail": "Decode fixed-width 3-digit base-8 byte groups; rejects invalid digits, bytes above 255 and invalid UTF-8; no prefixes or separators.", "snippet": "str_from_octal(${1:text})"},
+    {"spelling": "str_to_binary", "kind": "function", "detail": "Encode UTF-8 bytes as fixed-width 8-digit base-2 groups; no separators; at most 1 MiB. Not encryption.", "snippet": "str_to_binary(${1:text})"},
+    {"spelling": "str_from_binary", "kind": "function", "detail": "Decode fixed-width 8-digit base-2 byte groups; rejects invalid digits, bytes above 255 and invalid UTF-8; no prefixes or separators.", "snippet": "str_from_binary(${1:text})"}
   ],
   "constants": [
     {

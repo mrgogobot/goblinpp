@@ -1,4 +1,8 @@
-# Goblin++ Rust Engine 0.1.0-alpha.39 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.40 (local, unreleased)
+
+Alpha.40 adds bounded Unicode/text byte encodings and exact-range integer radix conversions, plus dimension-checked introductory fluid mechanics in both engines. See [strings](docs/STRINGS.md), [fluids](docs/FLUID_MECHANICS.md), `examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`. VS Code 0.1.31 / JetBrains 0.3.21 include completion and help. Existing evidence profiles remain unchanged.
+
+## Previous stage: alpha.39
 
 Alpha.39 introduces the first `COMPLETELY_MAD` evidence-profile stage:
 automatic bounded final-state seals, separate explicit snapshots, partial-failure

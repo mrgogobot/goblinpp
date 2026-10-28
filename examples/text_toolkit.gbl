@@ -1,0 +1,29 @@
+GO_PARANOID
+
+name = "Ada π"
+upper = str_upper(name)
+lower = str_lower(upper)
+characters = len(name)
+bytes = str_bytes_len(name)
+size = sizeof(name)
+ordering = str_compare("Ada", "Grace")
+hex_text = str_to_hex("Aπ")
+restored = str_from_hex(hex_text)
+octal_text = str_to_octal("A")
+binary_text = str_to_binary("A")
+octal_restored = str_from_octal(octal_text)
+binary_restored = str_from_binary(binary_text)
+hex_number = to_base(65, 16)
+number = from_base(hex_number, 16)
+
+print("upper = {upper}; lower = {lower}")
+print("characters = {characters}; UTF-8 bytes = {bytes}; sizeof text = {size}")
+print("comparison = {ordering}; hex text = {hex_text}; restored = {restored}")
+print("octal bytes = {octal_text}; binary bytes = {binary_text}")
+print("integer 65 in hex = {hex_number}; back to decimal = {number}")
+seal upper
+seal bytes
+seal restored
+seal octal_restored
+seal binary_restored
+seal number

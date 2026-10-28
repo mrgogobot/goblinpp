@@ -1,3 +1,28 @@
+# 0.1.0-alpha.40 (local, unreleased, text toolkit and fluid mechanics)
+
+- Adds Unicode upper/lower, UTF-8 byte count (`str_bytes_len`, text-only
+  `sizeof`), explicit locale-independent `str_compare`, reversible fixed-width
+  UTF-8 hex/octal/binary codecs, and exact-range `to_base`/`from_base`.
+  Invalid UTF-8, malformed groups, over-limit expansion, noninteger/unitful
+  radix arguments and out-of-range integers refuse explicitly.
+- Adds nine scalar SI-dimension-checked `fluid_*` helpers for density,
+  viscosity conversions, continuity, Reynolds number, dynamic/total pressure
+  and laminar circular-pipe pressure drop. Model assumptions are documented;
+  pipe Reynolds >= 2000 refuses, without implying the other assumptions hold.
+- Both engines share core implementations; independent hand-calculated
+  fixtures, native standalone cases, failure preservation and offline
+  receipt verification cover the new behavior.
+- Existing direct text comparison, decimal conversion, evidence profiles,
+  parser policy and historical evidence are unchanged. No new dependencies;
+  Rust remains 1.92.0. Historical Chinese/community-review material untouched.
+- VS Code 0.1.31 / JetBrains 0.3.21 add completion, parameter help and highlighting.
+
+See [strings](docs/STRINGS.md), [fluid mechanics](docs/FLUID_MECHANICS.md),
+`examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`.
+Optional [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
+## Previous stage: alpha.39
+
 # 0.1.0-alpha.39 (local, unreleased, bounded automatic final-state evidence)
 
 - Adds `COMPLETELY_MAD` stage 1: a first top-level directive implying

@@ -61,7 +61,7 @@ def main() -> None:
         assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
         subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
                         "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -99,6 +99,16 @@ def main() -> None:
                 if parity_evidence is not None:
                     assert exact_evidence == parity_evidence, example
                 parity_evidence = exact_evidence
+                if example == "text_toolkit":
+                    assert "characters = 5; UTF-8 bytes = 6; sizeof text = 6" in run.stdout
+                    assert "hex text = 41cf80; restored = Aπ" in run.stdout
+                    assert "back to decimal = 65" in run.stdout
+                if example == "fluid_mechanics":
+                    assert "pipe Reynolds = 63.661977" in run.stdout
+                    artifacts = {entry["name"]: entry for entry in report["sealed_artifacts"]}
+                    drop = json.loads((root / directory / artifacts["pressure_drop"]["path"]).read_text())["value"]
+                    assert drop["dimension"] == [1, -1, -2, 0, 0, 0]
+                    assert abs(drop["value_si"] - 0.25464790894703254) < 1e-14
                 if example == "energy":
                     assert "CANONICAL_SOURCE_SHA256=6a1d72b91490bfc247bdf22322f7eb2ec59d5a88344d6c13a469e92883185a2d" in run.stdout
                 if example == "protected_values":
