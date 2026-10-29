@@ -1,0 +1,29 @@
+GO_PARANOID
+
+# Native file readers: no Python process or Python installation is needed.
+keys = npz_keys("scientific_data/arrays.npz")
+shape = npz_shape("scientific_data/arrays.npz", "matrix")
+values = npz_read("scientific_data/arrays.npz", "matrix")
+# uint64 catalogue IDs are text, so every digit survives.
+ids = npz_text("scientific_data/arrays.npz", "ids")
+
+row = scipy_sparse_row("scientific_data/sparse.npz", 0)
+entries = scipy_sparse_nnz("scientific_data/sparse.npz")
+
+# ECSV numeric columns carry their declared registered units into SI quantities.
+distances = ecsv_numbers("scientific_data/catalogue.ecsv", "distance")
+speeds = ecsv_numbers("scientific_data/catalogue.ecsv", "velocity")
+source_ids = ecsv_column("scientific_data/catalogue.ecsv", "source_id")
+
+print("NPZ keys = {keys}; shape = {shape}; values = {values}")
+print("exact IDs = {ids}")
+print("sparse first row = {row}; stored entries = {entries}")
+print("distances = {distances}; speeds = {speeds}")
+print("ECSV exact IDs = {source_ids}")
+seal values
+seal ids
+seal row
+seal distances
+seal speeds
+seal source_ids
+write_json("reader_summary.json", "shape", shape, "values", values, "source_ids", source_ids)

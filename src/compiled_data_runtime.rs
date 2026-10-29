@@ -47,7 +47,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         let data = data.borrow();
         data.clock.finish().map_err(|e|e.pretty())?;
         data.batches.finish().map_err(|e|e.pretty())?;
-        let imports = data.data_imports();
+        let mut imports = data.data_imports();
         let manifest = if let Ok(path) = std::env::var("GOBLIN_NATIVE_DATA_PATH") {
             std::path::PathBuf::from(path)
         } else if imports.is_empty() && data.generated.is_empty() && data.clock.evidence().readings.is_empty() && data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty()) && data.randomness.evidence().streams.is_empty() && data.inference.evidence()["functions"].as_array().is_some_and(|f| f.is_empty()) {
@@ -62,6 +62,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         let directory = manifest.parent().ok_or("Native data manifest has no directory.")?.join("native-outputs");
         if std::env::var("GOBLIN_NATIVE_DATA_PATH").is_err() {
             preserve_batch_inputs(&data,manifest.parent().unwrap())?;
+            preserve_scientific_inputs(&data, &mut imports, manifest.parent().unwrap())?;
         }
         std::fs::create_dir(&directory).map_err(|e| e.to_string())?;
         let mut artifacts = Vec::new();
@@ -74,7 +75,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
         }
         artifacts.extend(data.batches.publish(&directory,true).map_err(|e|e.pretty())?);
         artifacts.sort_by(|a,b|a["name"].as_str().cmp(&b["name"].as_str()));
-        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "plot_policy":goblinpp::plots::POLICY, "clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(), "data_imports":imports, "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
+        let value = serde_json::json!({"schema":"goblin.native-data.v1", "goblin_version":goblinpp::VERSION, "plot_policy":goblinpp::plots::POLICY, "clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(), "data_imports":imports,"scientific_input_policy":goblinpp::scientific_io::policy(), "generated_artifacts":artifacts, "rng_policy":goblinpp::random::policy(), "rng":data.randomness.evidence(), "inference_policy":goblinpp::inference_policy::policy(), "inference":data.inference.evidence(), "resource_policy":goblinpp::resources::policy(), "resources":goblinpp::resources::evidence(REQUESTED_LOOP_BUDGET,loop_steps), "batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence()});
         let mut value = value;
         value["fits_batch_policy"] = goblinpp::fits::batch::policy();
         value["array_math_policy"] = goblinpp::array_math::policy();
@@ -91,7 +92,8 @@ fn goblin_data_abort() {
         let mut data=data.borrow_mut();
         if data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty())
             && data.clock.evidence().readings.is_empty()
-            && data.batches.evidence()["readers"].as_array().is_some_and(|r|r.is_empty()) {
+            && data.batches.evidence()["readers"].as_array().is_some_and(|r|r.is_empty())
+            && data.scientific_inputs.imports().is_empty() {
                 data.batches=goblinpp::batches::Batches::default();
                 return;
             }
@@ -101,7 +103,9 @@ fn goblin_data_abort() {
             std::fs::create_dir(&directory).map_err(|e|e.to_string())?;
             preserve_batch_inputs(&data,&directory)?;
             let artifacts=data.batches.publish(&directory.join("outputs"),false).map_err(|e|e.pretty())?;
-            let evidence=serde_json::json!({"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(),"batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
+            let mut imports=data.scientific_inputs.imports();
+            preserve_scientific_inputs(&data, &mut imports, &directory)?;
+            let evidence=serde_json::json!({"scientific_input_policy":goblinpp::scientific_io::policy(),"data_imports":imports,"schema":"goblin.native-batch-failure.v1","status":"INCOMPLETE","clock_policy":goblinpp::clock::policy(),"clock":data.clock.evidence(),"batch_policy":goblinpp::batches::policy(),"batches":data.batches.evidence(),"generated_artifacts":artifacts});
             let mut evidence = evidence;
             evidence["fits_batch_policy"] = goblinpp::fits::batch::policy();
             evidence["array_math_policy"] = goblinpp::array_math::policy();
@@ -138,5 +142,21 @@ fn preserve_batch_inputs(data: &goblinpp::evaluator::Evaluation, directory: &std
     let mut file=OpenOptions::new().write(true).create_new(true).open(directory.join("batch-inputs.json")).map_err(|e|e.to_string())?;
     file.write_all(&serde_json::to_vec_pretty(&inputs).map_err(|e|e.to_string())?).map_err(|e|e.to_string())?;
     file.sync_all().map_err(|e|e.to_string())?;
+    Ok(())
+}
+
+fn preserve_scientific_inputs(data: &goblinpp::evaluator::Evaluation, imports: &mut [goblinpp::evaluator::DataImport], directory: &std::path::Path) -> Result<(),String> {
+    if !imports.iter().any(|s|matches!(s.format.as_str(),"NPY"|"NPZ"|"ECSV")) {return Ok(());}
+    let root=directory.join("scientific-inputs");
+    let mut builder=std::fs::DirBuilder::new();
+    #[cfg(unix)] {use std::os::unix::fs::DirBuilderExt;builder.mode(0o700);}
+    builder.create(&root).map_err(|e|e.to_string())?;
+    for import in imports.iter_mut().filter(|s|matches!(s.format.as_str(),"NPY"|"NPZ"|"ECSV")) {
+        let name=format!("{}.{}",import.sha256,import.format.to_ascii_lowercase());
+        let path=root.join(&name);
+        let hash=if path.exists() {goblinpp::hashing::sha256_file(&path).map_err(|e|e.pretty())?} else {data.copy_data_evidence(&import.sha256,&path).map_err(|e|e.pretty())?};
+        if hash!=import.sha256 {return Err("Scientific snapshot identity mismatch.".into());}
+        import.evidence_path=Some(format!("scientific-inputs/{name}"));import.evidence_sha256=Some(hash);
+    }
     Ok(())
 }

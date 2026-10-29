@@ -62,3 +62,5 @@ The Rust engine should not replace Python 0.0.7 as the stable reference until:
 3. Signing, recovery, and legacy adoption are ported with negative-path tests.
 4. FITS numerical semantics expand beyond the fixed-width `specObj-dr16.fits` gate to compressed images, special columns, declared units, and archive-diverse fixtures.
 5. A clean-machine release build reproduces the test result and manifest.
+
+Alpha.41: bounded NPY/NPZ, real CSR/CSC/COO NPZ and scalar ECSV readers support interpreter, audited native and standalone native execution. No Python runtime. See SCIENTIFIC_READERS.md for refusal policies and limits.

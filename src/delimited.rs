@@ -93,7 +93,14 @@ impl Table {
 }
 
 pub fn parse(text: &str, delimiter: u8) -> Result<Vec<Vec<String>>> {
-    if !matches!(delimiter, b',' | b'\t') || text.contains('\0') {
+    if !matches!(delimiter, b',' | b'\t') {
+        return Err(GoblinError::data("Invalid delimiter in table."));
+    }
+    parse_ecsv(text, delimiter)
+}
+
+pub(crate) fn parse_ecsv(text: &str, delimiter: u8) -> Result<Vec<Vec<String>>> {
+    if !matches!(delimiter, b',' | b'\t' | b' ') || text.contains('\0') {
         return Err(GoblinError::data("Invalid delimiter or NUL in table."));
     }
     let bytes = text.as_bytes();

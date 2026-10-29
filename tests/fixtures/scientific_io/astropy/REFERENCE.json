@@ -1,0 +1,38 @@
+{
+  "schema": "goblin.upstream-reader-fixtures.v1",
+  "scope": "SYNTHETIC_FORMAT_INTEROPERABILITY_NOT_SCIENTIFIC_VALIDATION",
+  "producer_versions": {
+    "python": "3.12.14",
+    "numpy": "2.5.4",
+    "astropy": "8.0.1"
+  },
+  "expectations": {
+    "distance_si": [
+      1250.0,
+      2500.0
+    ],
+    "velocity_si": [
+      3.0,
+      4.0
+    ],
+    "source_id": [
+      "9007199254740993",
+      "18446744073709551615"
+    ],
+    "accepted": [
+      true,
+      false
+    ],
+    "label": [
+      "Ada π",
+      "研究"
+    ]
+  },
+  "files": {
+    "comma.ecsv": "c777a2ec47b9dcd864484b5fa8b8711add8f5b2fb3a258e42952de342527788f",
+    "masked.ecsv": "5fc3d8e88a15f8ead36844123be1b5b206b4e3709dcff5dd37e7ab1df174f273",
+    "mixin.ecsv": "ebc69487b4449e42346655280a4ac0b840abb031e248378bb7ca97a5ddd3bd2c",
+    "space.ecsv": "66572d0e0174840624856fbe98e688caa64a28572d4e1938e2a0a48132e08a85",
+    "unsupported_unit.ecsv": "5bb5894957f722c72eb8039e77901ad0b2d87127598afabcee08a2a86b50ac18"
+  }
+}

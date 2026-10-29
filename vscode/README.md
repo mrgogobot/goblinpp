@@ -1,4 +1,4 @@
-# Goblin++ for Visual Studio Code 0.1.31 (local, unreleased)
+# Goblin++ for Visual Studio Code 0.1.32 (local, unreleased)
 
 Alpha.40: completion, highlighting and help for Unicode case/byte count, text encodings, integer radix conversion and dimension-checked fluid mechanics. See `examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`.
 
@@ -132,3 +132,5 @@ The extension launches `goblin++` with an argument array and no shell. Process c
 Compiled runs do not yet support FITS or output calls. Inline Rust is arbitrary native code and requires exact-hash authorization through the CLI; the VS Code compiled-run button does not bypass that approval.
 
 See [Editor Guide](docs/EDITOR_GUIDE.md), [Authoring Tutorial](docs/AUTHORING_TUTORIAL.md), and [Read-only Check](docs/CHECK.md).
+
+Alpha.41: native NPY/NPZ, SciPy sparse NPZ and scalar ECSV reader completion. See [reader guide](../docs/SCIENTIFIC_READERS.md) for explicit limits, ID and unit rules.

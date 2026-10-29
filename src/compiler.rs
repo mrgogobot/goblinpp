@@ -219,6 +219,8 @@ fn build_data_program(
         ("inference_policy", include_str!("inference_policy.rs")),
         ("resources", include_str!("resources.rs")),
         ("science", include_str!("science.rs")),
+        ("scientific_io", include_str!("scientific_io.rs")),
+        ("modules", include_str!("modules.rs")),
         ("statistics_runtime", include_str!("statistics_runtime.rs")),
         ("streaming", include_str!("streaming.rs")),
         ("text_runtime", include_str!("text_runtime.rs")),
@@ -239,6 +241,14 @@ fn build_data_program(
             lib.push_str(&format!("pub mod {name};\n"));
         }
         files.push((format!("src/{name}.rs"), contents.into()));
+    }
+    for (name, source) in [
+        ("npy", include_str!("scientific_io/npy.rs")),
+        ("npz", include_str!("scientific_io/npz.rs")),
+        ("sparse", include_str!("scientific_io/sparse.rs")),
+        ("ecsv", include_str!("scientific_io/ecsv.rs")),
+    ] {
+        files.push((format!("src/scientific_io/{name}.rs"), source.into()));
     }
     files.push(("src/lib.rs".into(), lib));
     let cache_key = sha256_bytes(
@@ -270,10 +280,12 @@ fn build_data_program(
     files.push(("src/main.rs".into(), source.into()));
     let inventory = files.iter().map(|(path, text)| serde_json::json!({"path":path, "bytes":text.len(), "sha256":sha256_bytes(text.as_bytes())})).collect::<Vec<_>>();
     for (path, text) in files {
+        let destination = project.join(path);
+        fs::create_dir_all(destination.parent().unwrap())?;
         let mut file = OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(project.join(path))?;
+            .open(destination)?;
         file.write_all(text.as_bytes())?;
         file.sync_all()?;
     }

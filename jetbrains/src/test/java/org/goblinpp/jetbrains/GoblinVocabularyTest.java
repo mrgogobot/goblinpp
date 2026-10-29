@@ -9,6 +9,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void scientificReaderCompletionKeepsContractsVisible() {
+        for (String name : new String[]{"npy_read","npy_text","npy_shape","npy_dtype","npy_order","npz_keys","npz_read","npz_text","npz_shape","npz_dtype","npz_order","scipy_sparse_shape","scipy_sparse_format","scipy_sparse_nnz","scipy_sparse_dense","scipy_sparse_row","ecsv_rows","ecsv_columns","ecsv_headers","ecsv_column","ecsv_read","ecsv_numbers","ecsv_dtype","ecsv_unit"}) {
+            var entry = GoblinVocabulary.find(name);
+            assertNotNull(entry,name);
+            assertTrue(entry.snippet().startsWith(name+"("));
+        }
+        assertTrue(GoblinVocabulary.find("npz_keys").detail().contains("unselected"));
+        assertTrue(GoblinVocabulary.find("ecsv_read").detail().contains("units"));
+    }
+
+    @Test
     void textAndFluidCompletionKeepsCriticalContractsVisible() {
         for (String name : new String[]{"str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"}) {
             var entry = GoblinVocabulary.find(name);

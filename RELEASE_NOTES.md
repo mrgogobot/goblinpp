@@ -1,3 +1,16 @@
+# 0.1.0-alpha.41 (local, unreleased, native scientific readers)
+
+- Native NPY 1/2/3 and stored/DEFLATE NPZ; logical C-order copies, explicit shape/dtype/storage order, exact integer ID text and no pickle/object execution.
+- Native real SciPy CSR/CSC/COO NPZ; checked indices/pointers, duplicate-coordinate refusal and bounded explicit densification or individual rows.
+- Native ECSV 1.0 scalar subset; exact text columns, typed reads, registered units converted to SI. Unsupported masks, mixins, YAML metadata and units are refused explicitly.
+- Original-byte snapshots, bounded access evidence and versioned implementation policy in receipts/freezes; offline operation replay and native/reference parity. Failures preserve safely captured originals.
+- New independent synthetic fixtures written by NumPy, SciPy and Astropy; Rust 1.92.0 retained. ZIP/DEFLATE dependencies added with locked versions and bundled third-party notices.
+- VS Code 0.1.32 / JetBrains 0.3.22 include completion, help and highlighting.
+
+See [scope, limits and examples](docs/SCIENTIFIC_READERS.md). This stage does not implement Python library calls, general Astropy objects, MAT/HDF5 or streaming ECSV. Integrity checks do not certify scientific validity or authenticated authorship.
+
+[Goblin++ merch](https://h4k3rl1f3.myspreadshop.co.uk)
+
 # 0.1.0-alpha.40 (local, unreleased, text toolkit and fluid mechanics)
 
 - Adds Unicode upper/lower, UTF-8 byte count (`str_bytes_len`, text-only

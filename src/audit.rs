@@ -117,6 +117,9 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
         parser_mode.as_ref().err().map(|e| e.to_string()),
     ));
     let schema = string_at(&receipt, &["schema"]);
+    if crate::scientific_io::needs_policy(run_dir, &receipt) {
+        checks.push(check("SCIENTIFIC_INPUT_EVIDENCE", crate::scientific_io::verify_access(run_dir, &receipt), None, None, Some("Original-byte snapshots, explicit reader policy and bounded reader calls replayed; not scientific validation.".into())));
+    }
     let clock_evidence_needed = crate::clock::requires_policy(&receipt)
         || receipt.get("clock_policy").is_some()
         || receipt.get("clock").is_some();
@@ -841,6 +844,11 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                 .ok()
                 .and_then(|b| serde_json::from_slice::<Value>(&b).ok());
             let verified = manifest.as_ref().is_some_and(|m| {
+                if crate::scientific_io::needs_policy(run_dir, &receipt)
+                    && m["scientific_input_policy"] != receipt["scientific_input_policy"]
+                {
+                    return false;
+                }
                 if m["schema"] != "goblin.native-data.v1" {
                     return false;
                 }

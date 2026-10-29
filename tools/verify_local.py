@@ -61,7 +61,7 @@ def main() -> None:
         assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
         subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
                         "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics"]:
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics", "scientific_readers"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:

@@ -265,6 +265,7 @@ fn value_only_builtin(name: &str) -> bool {
                 | "ecdf"
         )
         || name == "fits_batch_open"
+        || crate::scientific_io::is_function(name)
         || crate::fluids::is_function(name)
         || crate::text_runtime::toolkit_arity(name).is_some()
         || crate::numeric_comparison::is_function(name)
@@ -287,6 +288,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::plots::is_function(name)
+                    || crate::scientific_io::is_function(name)
                     || crate::fluids::is_function(name)
                     || crate::text_runtime::toolkit_arity(name).is_some()
                     || crate::table_join::is_function(name)
@@ -307,6 +309,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 require_writable_name(name)?;
                 for param in params {
                     if crate::plots::is_function(param)
+                        || crate::scientific_io::is_function(param)
                         || crate::fluids::is_function(param)
                         || crate::text_runtime::toolkit_arity(param).is_some()
                         || param == "fits_batch_open"

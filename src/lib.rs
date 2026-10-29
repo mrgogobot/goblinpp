@@ -45,6 +45,7 @@ pub mod resampling;
 pub mod resources;
 pub mod runtime;
 pub mod science;
+pub mod scientific_io;
 mod statistics_runtime;
 pub mod streaming;
 pub mod table_join;

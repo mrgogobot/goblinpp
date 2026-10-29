@@ -1,6 +1,6 @@
-# Goblin++ Rust Engine 0.1.0-alpha.40 (local, unreleased)
+# Goblin++ Rust Engine 0.1.0-alpha.41 (local, unreleased)
 
-Alpha.40 adds bounded Unicode/text byte encodings and exact-range integer radix conversions, plus dimension-checked introductory fluid mechanics in both engines. See [strings](docs/STRINGS.md), [fluids](docs/FLUID_MECHANICS.md), `examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`. VS Code 0.1.31 / JetBrains 0.3.21 include completion and help. Existing evidence profiles remain unchanged.
+Alpha.41 adds native NumPy NPY/NPZ, SciPy sparse NPZ (CSR/CSC/COO), and an explicit Astropy ECSV scalar subset. No Python runtime is required. Inputs are bounded, snapshotted and replay-verified; exact IDs and declared units receive checked conversions. See [scientific readers](docs/SCIENTIFIC_READERS.md) and `examples/scientific_readers.gbl`. VS Code 0.1.32 / JetBrains 0.3.22 add completion and help.
 
 ## Previous stage: alpha.39
 

@@ -144,6 +144,7 @@ pub fn create_freeze(source: impl AsRef<Path>) -> Result<(PathBuf, LedgerEvent)>
         "array_math_policy": crate::array_math::policy(),
         "table_join_policy": crate::table_join::POLICY,
         "statistics_policy": crate::science::statistics_policy(),
+        "scientific_input_policy": crate::scientific_io::policy(),
         "rng_policy": crate::random::policy(),
         "inference_policy": crate::inference_policy::policy(),
         "resource_policy": crate::resources::policy(),

@@ -1,0 +1,8 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: sample, datatype: float64}
+# schema: astropy-2.0
+sample
+1.0
+""

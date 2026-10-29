@@ -1,0 +1,13 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: distance, unit: km, datatype: float32}
+# - {name: velocity, unit: m / s, datatype: float64}
+# - {name: source_id, datatype: uint64}
+# - {name: accepted, datatype: bool}
+# - {name: label, datatype: string}
+# delimiter: ','
+# schema: astropy-2.0
+distance,velocity,source_id,accepted,label
+1.25,3.0,9007199254740993,True,Ada π
+2.5,4.0,18446744073709551615,False,研究

@@ -78,7 +78,8 @@ pub fn is_data_function(name: &str) -> bool {
     if crate::table_join::is_function(name) {
         return true;
     }
-    crate::plots::is_function(name)
+    crate::scientific_io::is_function(name)
+        || crate::plots::is_function(name)
         || crate::clock::is_function(name)
         || crate::random::is_function(name)
         || crate::resampling::is_function(name)
@@ -149,6 +150,7 @@ pub struct Evaluation {
     pub completely_mad: bool,
     pub generated: BTreeMap<String, GeneratedOutput>,
     pub batches: crate::batches::Batches,
+    pub scientific_inputs: crate::scientific_io::Inputs,
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
     pub interaction: Interaction,
@@ -185,6 +187,7 @@ impl Evaluation {
             completely_mad: false,
             generated: BTreeMap::new(),
             batches: crate::batches::Batches::default(),
+            scientific_inputs: crate::scientific_io::Inputs::default(),
             constants_used: BTreeMap::new(),
             paranoid: false,
             interaction: Interaction::default(),
@@ -677,6 +680,7 @@ impl Evaluation {
                 if self.tables.contains_key(&key)
                     || self.scans.contains_key(&key)
                     || self.data.contains_key(&key)
+                    || self.scientific_inputs.contains(&key)
                 {
                     return Err(GoblinError::data(
                         "Batch inputs cannot also be opened with eager/FITS/scan readers in the same run.",
@@ -690,6 +694,28 @@ impl Evaluation {
         }
         if crate::table_join::is_function(name) {
             return self.eval_join_call(name, args);
+        }
+        if crate::scientific_io::is_function(name) {
+            crate::scientific_io::require_arity(name, args.len())?;
+            let requested = Path::new(args[0].text(name)?);
+            let path = if requested.is_absolute() {
+                requested.to_owned()
+            } else {
+                self.base_dir.join(requested)
+            };
+            let key = path.canonicalize()?;
+            if self.batches.has_source(&key)
+                || self.tables.contains_key(&key)
+                || self.scans.contains_key(&key)
+                || self.data.contains_key(&key)
+            {
+                return Err(GoblinError::data(
+                    "Scientific input cannot also use another input reader in this run.",
+                ));
+            }
+            return self
+                .scientific_inputs
+                .call(&path, name, args.get(1).cloned());
         }
         if crate::delimited::is_function(name) {
             return self.eval_table_call(name, args);
@@ -1646,7 +1672,7 @@ impl Evaluation {
                 path.display()
             ))
         })?;
-        if self.batches.has_source(&key) {
+        if self.batches.has_source(&key) || self.scientific_inputs.contains(&key) {
             return Err(GoblinError::data(
                 "Batch input cannot also be read as FITS in one run.",
             ));
@@ -1684,7 +1710,7 @@ impl Evaluation {
             return Err(GoblinError::data("Refusing symbolic-link table input."));
         }
         let key = path.canonicalize()?;
-        if self.batches.has_source(&key) {
+        if self.batches.has_source(&key) || self.scientific_inputs.contains(&key) {
             return Err(GoblinError::data(
                 "Batch input cannot also use eager table reads in one run.",
             ));
@@ -1808,7 +1834,7 @@ impl Evaluation {
             return Err(GoblinError::data("Refusing symbolic-link streaming input."));
         }
         let key = path.canonicalize()?;
-        if self.batches.has_source(&key) {
+        if self.batches.has_source(&key) || self.scientific_inputs.contains(&key) {
             return Err(GoblinError::data(
                 "Batch input cannot also use scan reads in one run.",
             ));
@@ -1955,11 +1981,15 @@ impl Evaluation {
                     evidence_sha256: None,
                 }
             }))
+            .chain(self.scientific_inputs.imports())
             .chain(self.batches.imports())
             .collect()
     }
 
     pub fn copy_data_evidence(&self, sha256: &str, destination: &Path) -> Result<String> {
+        if let Some(result) = self.scientific_inputs.copy(sha256, destination) {
+            return result;
+        }
         if let Some(result) = self.batches.copy_input(sha256, destination) {
             return result;
         }
@@ -2050,6 +2080,9 @@ fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
     }
     if crate::fluids::is_function(name) {
         return crate::fluids::require_arity(name, args.len());
+    }
+    if crate::scientific_io::is_function(name) {
+        return crate::scientific_io::require_arity(name, args.len());
     }
     if crate::science::is_function(name) {
         return crate::science::require_arity(name, args.len());

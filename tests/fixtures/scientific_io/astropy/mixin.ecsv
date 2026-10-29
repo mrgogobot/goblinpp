@@ -1,0 +1,18 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: time, datatype: string}
+# meta: !!omap
+# - __serialized_columns__:
+#     time:
+#       __class__: astropy.time.core.Time
+#       format: iso
+#       in_subfmt: '*'
+#       out_subfmt: '*'
+#       precision: 3
+#       scale: utc
+#       value: !astropy.table.SerializedColumn {name: time}
+# schema: astropy-2.0
+time
+"2026-01-01 00:00:00.000"
+"2026-01-02 00:00:00.000"

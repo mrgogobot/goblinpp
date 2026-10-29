@@ -1,0 +1,177 @@
+{
+  "schema": "goblin.upstream-reader-fixtures.v1",
+  "scope": "SYNTHETIC_FORMAT_INTEROPERABILITY_NOT_SCIENTIFIC_VALIDATION",
+  "producer_versions": {
+    "python": "3.14.8",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1"
+  },
+  "expectations": {
+    "numeric_c": {
+      "shape": [
+        2,
+        3
+      ],
+      "dtype": "<f8",
+      "values": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0
+      ],
+      "f64_bits": [
+        "3ff0000000000000",
+        "4000000000000000",
+        "4008000000000000",
+        "4010000000000000",
+        "4014000000000000",
+        "4018000000000000"
+      ]
+    },
+    "numeric_f": {
+      "shape": [
+        2,
+        3
+      ],
+      "dtype": "<f8",
+      "values": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0
+      ],
+      "f64_bits": [
+        "3ff0000000000000",
+        "4000000000000000",
+        "4008000000000000",
+        "4010000000000000",
+        "4014000000000000",
+        "4018000000000000"
+      ]
+    },
+    "big_endian": {
+      "shape": [
+        3
+      ],
+      "dtype": ">f4",
+      "values": [
+        0.10000000149011612,
+        -0.0,
+        1.0000000031710769e-30
+      ],
+      "f64_bits": [
+        "3fb99999a0000000",
+        "8000000000000000",
+        "39b4484c00000000"
+      ]
+    },
+    "ids": {
+      "shape": [
+        2
+      ],
+      "dtype": "<u8",
+      "values": [
+        "9007199254740993",
+        "18446744073709551615"
+      ]
+    },
+    "booleans": {
+      "shape": [
+        2
+      ],
+      "dtype": "|b1",
+      "values": [
+        true,
+        false
+      ]
+    },
+    "unicode": {
+      "shape": [
+        3
+      ],
+      "dtype": "<U5",
+      "values": [
+        "Ada π",
+        "科学",
+        ""
+      ]
+    },
+    "bytes": {
+      "shape": [
+        2
+      ],
+      "dtype": "|S2",
+      "values": [
+        "A",
+        "π"
+      ]
+    },
+    "scalar": {
+      "shape": [],
+      "dtype": "<f8",
+      "values": [
+        3.5
+      ],
+      "f64_bits": [
+        "400c000000000000"
+      ]
+    },
+    "empty": {
+      "shape": [
+        0,
+        3
+      ],
+      "dtype": "<f4",
+      "values": [],
+      "f64_bits": []
+    },
+    "sparse": {
+      "shape": [
+        3,
+        4
+      ],
+      "values": [
+        0.0,
+        1.0,
+        0.0,
+        2.0,
+        3.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.0,
+        0.0
+      ],
+      "nnz": 4
+    }
+  },
+  "files": {
+    "big_endian.npy": "095adb842a5aaa4ba543710f0ee700359e9aea21e5b16c120d397402ec7b3aa2",
+    "booleans.npy": "4257418724eeadfcfc6affd95584b6da87d3ac25effd1de68ad2f9907cbe104c",
+    "bytes.npy": "6dd0d08dea17074721804ee64ed621dcf048e8f890cbf87e7f57770c88eb99e8",
+    "compressed.npz": "d8741d671950df4a3353ba147791c53e5b6aafde27f7667e50f770ce28bdf6b9",
+    "coo.npz": "5d1ddc1f3002a747e0c1ef3a14d3068a9ca5aeec9caee6b8134da58f1c3a6dd0",
+    "csc.npz": "0604339a9cea8b3d8bf7b2736e365cb118a1175e8349fe4c98fb7db5e0de96e9",
+    "csr.npz": "b790aa8ff77683517d9af9a850f9c7b5cdda1a0a3ab831970b722c5718732ea0",
+    "csr_array.npz": "459aefb53e8ff6338e2dd4bda0284ab6fe768da2e742074559b8009b37390e7d",
+    "duplicates.npz": "bd0c3cfa8240973c36a89df9f3dffbb393de92794d3d3150773cf246b40443f4",
+    "empty.npy": "f12304587232b93be216cce0f81674635df2730385202e391e39cc9f8942d779",
+    "ids.npy": "382443b6c75811c2323d39730e9e5d149b33063030c33885994624b8742139af",
+    "invalid_utf8.npy": "bd21bc8ca4733a15768430c1b5848d6afe00243f7bda4578cc1f5921b823d15b",
+    "nonfinite.npy": "6b27bb04b5104fb722004f049e61c548a653704a17cefa138d78c6769c99b9af",
+    "numeric_c.npy": "deb421ed8c6470346a3244e15213ae7d19d840735f59c858fb091bbcec7ca665",
+    "numeric_f.npy": "2e0fb6c2fa795ca385c6c59d72c9c23d46e7a5b3885e112601b5642d5334cdbd",
+    "objects.npy": "3b451a48f6daf9fd7d981f9ef761227bec0bbb19469cfbc578f2ac5aa6ce3352",
+    "scalar.npy": "542eeccf4fcc8c4a08be40a2fadc1410f4cacef22d3a07712adc8f8e66d4e454",
+    "stored.npz": "c0edfb45bab0d76295b128a03b99e5af58eae8f4314ee1806ffcec696e8fc356",
+    "unicode.npy": "a6e18a6e2af2a6852066a9c71ce55fa70c4fc7069a2bd6d5b8cff7e3f75f3877",
+    "version2.npy": "c478a626d3b1725afacba367f489d7baf4e8b6af9c65d23bdf33d223e6235d64",
+    "version3.npy": "92faeab970add2ce12611d87bd7505ad5f603c74923426fe2f9fe2793322c8a8"
+  }
+}

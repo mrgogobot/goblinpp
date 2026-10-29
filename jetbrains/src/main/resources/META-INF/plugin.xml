@@ -10,7 +10,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <p>Goblin++ JetBrains 0.3.21 (alpha.40):</p>
+      <p>Goblin++ JetBrains 0.3.22 (alpha.41): native NPY/NPZ, SciPy CSR/CSC/COO and scalar ECSV completion and help. No Python runtime.</p>
+      <p>Previous alpha.40:</p>
       <ul>
         <li>Unicode case conversion, UTF-8 byte sizes, string ordering and base-encoding completion</li>
         <li>Dimension-checked fluid mechanics helpers with parameter help and model assumptions</li>

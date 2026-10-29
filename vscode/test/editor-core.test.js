@@ -222,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 302);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 302);
+  assert.equal(entries.length, 326);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 326);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -400,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.31");
+  assert.equal(manifest.version, "0.1.32");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -465,3 +465,12 @@ test("alpha.40 text and fluid helpers expose their unit and encoding contracts",
   assert.match(detail("fluid_pipe_pressure_drop"), /Radius, not diameter/);
   assert.match(detail("fluid_bernoulli_total_pressure"), /assumptions are user responsibility/);
 });
+
+ test("alpha.41 readers expose format limits and safe conversions", () => {
+ const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+ for (const name of ["npy_read", "npy_text", "npy_shape", "npy_dtype", "npy_order", "npz_keys", "npz_read", "npz_text", "npz_shape", "npz_dtype", "npz_order", "scipy_sparse_shape", "scipy_sparse_format", "scipy_sparse_nnz", "scipy_sparse_dense", "scipy_sparse_row", "ecsv_rows", "ecsv_columns", "ecsv_headers", "ecsv_column", "ecsv_read", "ecsv_numbers", "ecsv_dtype", "ecsv_unit"]) {
+ const entry = runtimeVocabulary.functions.find(x=>x.spelling===name);
+ assert.ok(entry && entry.snippet.startsWith(name+"("),name);
+ assert.ok(builtins.test(name+"("),name);
+ }
+ });

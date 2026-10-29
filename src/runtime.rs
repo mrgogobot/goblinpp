@@ -103,6 +103,7 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         "freeze": { "status": "NOT_FROZEN" }, "ledger": Value::Null,
         "protocol_violation": Value::Null, "failure": Value::Null,
     });
+    receipt["scientific_input_policy"] = crate::scientific_io::policy();
     let stdout_path = run_dir.join("stdout.log");
     let stderr_path = run_dir.join("stderr.log");
     let preflight_ledger = ledger::audit(&root);
@@ -198,6 +199,14 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         }
         if freeze_path(source).exists() {
             let frozen: Value = serde_json::from_slice(&fs::read(freeze_path(source))?)?;
+            if crate::scientific_io::program_uses(&current.program)
+                && frozen.get("scientific_input_policy") != Some(&crate::scientific_io::policy())
+            {
+                return Err(protocol(
+                    "SCIENTIFIC_INPUT_POLICY_NOT_FROZEN",
+                    "This freeze did not pin the current scientific readers. Create a revision and freeze the child before adopting them.",
+                ));
+            }
             if frozen.get("fits_batch_policy").is_none()
                 && crate::fits::batch::program_uses(&current.program)
             {
@@ -759,6 +768,18 @@ fn enforce_freeze(source: &Path, root: &Path, run_dir: &Path, receipt: &mut Valu
                 "The declared math policy differs from the frozen policy. Historical evidence remains verifiable. Create an explicit revision to adopt a changed policy.",
             ));
         }
+        if report
+            .receipt
+            .as_ref()
+            .unwrap()
+            .get("scientific_input_policy")
+            .is_some_and(|p| *p != crate::scientific_io::policy())
+        {
+            return Err(protocol(
+                "SCIENTIFIC_INPUT_POLICY_CHANGED_AFTER_FREEZE",
+                "Scientific reader policy changed; create a reviewed revision.",
+            ));
+        }
         if !crate::science::frozen_statistics_policy_matches(report.receipt.as_ref().unwrap()) {
             receipt["freeze"]["status"] = json!("FAIL");
             receipt["freeze"]["classification"] = json!("STATISTICS_POLICY_CHANGED_AFTER_FREEZE");
@@ -908,6 +929,9 @@ fn preserve_data_evidence(
         let extension = match import.format.as_str() {
             "CSV-UTF8" => "csv",
             "TSV-UTF8" => "tsv",
+            "NPY" => "npy",
+            "NPZ" => "npz",
+            "ECSV" => "ecsv",
             _ => "fits",
         };
         let name = format!("{}.{extension}", import.sha256);
@@ -1081,6 +1105,7 @@ fn verify_native_data(path: &Path, expected: &Evaluation) -> Result<()> {
     generated.extend(expected.batches.descriptors(true)?);
     generated.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
     if manifest["schema"] != "goblin.native-data.v1"
+        || manifest["scientific_input_policy"] != crate::scientific_io::policy()
         || manifest["clock_policy"] != crate::clock::policy()
         || manifest["plot_policy"] != crate::plots::POLICY
         || manifest["clock"] != serde_json::to_value(expected.clock.evidence())?

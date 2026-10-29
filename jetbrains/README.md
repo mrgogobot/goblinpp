@@ -142,3 +142,5 @@ Plugin source code and functional editor assets are MIT-licensed. The Goblin++
 project logo is separate branding governed by `artwork/BRANDING.md`; including
 it in this official package does not grant third parties permission to brand
 unrelated projects as Goblin++.
+
+Alpha.41: native NPY/NPZ, SciPy sparse NPZ and scalar ECSV reader completion. See [reader guide](../docs/SCIENTIFIC_READERS.md) for explicit limits, ID and unit rules.
