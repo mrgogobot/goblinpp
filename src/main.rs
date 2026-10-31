@@ -27,6 +27,14 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum CommandSet {
+    /// Encrypt a file or text using the standard age format; separate from run evidence.
+    Encrypt(goblinpp::crypto_cli::CryptoArgs),
+    /// Authenticate and decrypt an age file before publishing any plaintext.
+    Decrypt(goblinpp::crypto_cli::CryptoArgs),
+    /// Display a bounded UTF-8 file with terminal controls escaped.
+    ReadFile {
+        file: PathBuf,
+    },
     /// Explicit bounded public HTTPS acquisition; never decode or execute the payload.
     #[cfg(unix)]
     Fetch(goblinpp::acquisition_cli::FetchArgs),
@@ -168,6 +176,9 @@ fn main() {
     let args = normalized_args();
     // Clap can echo unexpected argument values. Fetch errors must not repeat a URL/query.
     let redact_fetch_arguments = args.get(1).is_some_and(|arg| arg == "fetch");
+    let redact_crypto_arguments = args
+        .get(1)
+        .is_some_and(|arg| ["encrypt", "decrypt", "read-file"].contains(&arg.as_str()));
     let exit = match Cli::try_parse_from(args) {
         Ok(cli) => match dispatch(cli.command) {
             Ok(code) => code,
@@ -177,7 +188,11 @@ fn main() {
             }
         },
         Err(error) => {
-            if redact_fetch_arguments && error.exit_code() != 0 {
+            if redact_crypto_arguments && error.exit_code() != 0 {
+                eprintln!(
+                    "GOBLIN ERROR G902\n\nInvalid encryption/file arguments. Supplied values are omitted. Use goblin++ encrypt --help, decrypt --help or read-file --help."
+                );
+            } else if redact_fetch_arguments && error.exit_code() != 0 {
                 eprintln!(
                     "GOBLIN ERROR G901\n\nInvalid fetch arguments. Use 'goblin++ fetch --help'; provide --allow-host, --output, and exactly one of --sha256/--record-only. Supplied values are omitted."
                 );
@@ -191,8 +206,17 @@ fn main() {
 }
 
 fn normalized_args() -> Vec<String> {
-    let mut args = std::env::args().collect::<Vec<_>>();
+    let mut args = std::env::args_os().map(|argument| {
+        argument.into_string().unwrap_or_else(|_| {
+            eprintln!("GOBLIN ERROR G000\n\nArguments must be valid UTF-8. Supplied values are omitted.");
+            std::process::exit(2);
+        })
+    }).collect::<Vec<_>>();
+    goblinpp::crypto_cli::normalize_shortcuts(&mut args);
     let commands = [
+        "encrypt",
+        "decrypt",
+        "read-file",
         "fetch",
         "verify-fetch",
         "run",
@@ -225,6 +249,9 @@ fn normalized_args() -> Vec<String> {
 
 fn dispatch(command: CommandSet) -> Result<i32> {
     match command {
+        CommandSet::Encrypt(args) => goblinpp::crypto_cli::dispatch(args, true),
+        CommandSet::Decrypt(args) => goblinpp::crypto_cli::dispatch(args, false),
+        CommandSet::ReadFile { file } => goblinpp::crypto_cli::read_file(&file),
         #[cfg(unix)]
         CommandSet::Fetch(args) => goblinpp::acquisition_cli::dispatch(args),
         #[cfg(unix)]
@@ -336,6 +363,15 @@ fn dispatch(command: CommandSet) -> Result<i32> {
 
 fn command_run(args: RunArgs) -> Result<i32> {
     validate_hashes(&args.allowed_inline_rust)?;
+    if fs::read_to_string(&args.file).is_ok_and(|text| goblinpp::confidential::declared(&text)) {
+        if args.runs_root.is_some() || args.json || !args.allowed_inline_rust.is_empty() {
+            return Err(GoblinError::new(
+                "G902",
+                "GO_PRIVATE does not accept scientific run-directory, JSON-receipt or inline-Rust options.",
+            ));
+        }
+        return goblinpp::private_launcher::run(&args.file, args.compile, args.program_args);
+    }
     let run_dir = run_file(
         &args.file,
         &RunOptions {
@@ -482,6 +518,19 @@ fn command_check(file: PathBuf, json_output: bool) -> Result<i32> {
     let source_sha = sha256_bytes(&bytes);
     let text =
         std::str::from_utf8(&bytes).map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
+    if goblinpp::confidential::declared(text) {
+        goblinpp::private_launcher::load(&file)?;
+        if json_output {
+            emit_json(
+                &json!({"status":"PASS","execution_profile":"GO_PRIVATE","check":"STATIC_ONLY_NO_DATA_IO_NO_SECRET_INPUT"}),
+            );
+        } else {
+            println!(
+                "GOBLIN CHECK\nEXECUTION_PROFILE=GO_PRIVATE\nCHECK_STATUS=PASS\nCHECK_SCOPE=STATIC_ONLY_NO_DATA_IO_NO_SECRET_INPUT"
+            );
+        }
+        return Ok(0);
+    }
     let parsed = goblinpp::modules::resolve(&file, text)?.parsed;
     parsed.require_executable_program()?;
     let numeric_audit_preview = goblinpp::numeric_audit::snapshot(&file, &parsed.program)?;
@@ -595,6 +644,24 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
     let bytes = fs::read(&args.file)?;
     let text =
         std::str::from_utf8(&bytes).map_err(|_| GoblinError::lex("Source is not valid UTF-8."))?;
+    if goblinpp::confidential::declared(text) {
+        let parsed = goblinpp::private_launcher::load(&args.file)?;
+        if !args.allowed_inline_rust.is_empty() {
+            return Err(GoblinError::new("G902", "GO_PRIVATE forbids inline Rust."));
+        }
+        compiler::compile(&parsed, &args.output, &[])
+            .map_err(|_| goblinpp::private_launcher::failure())?;
+        if args.json {
+            emit_json(
+                &json!({"status":"PASS","execution_profile":"GO_PRIVATE","execution_status":"NOT_RUN","scientific_receipt":false}),
+            );
+        } else {
+            println!(
+                "COMPILE_STATUS=PASS\nEXECUTION_PROFILE=GO_PRIVATE\nCONFIDENTIAL_OPERATION=NO_RUN_RECEIPT"
+            );
+        }
+        return Ok(0);
+    }
     let parsed = goblinpp::modules::resolve(&args.file, text)?.parsed;
     parsed.require_executable_program()?;
     if goblinpp::numeric_audit::requested(&parsed.program).is_some() {
@@ -744,6 +811,12 @@ fn command_compile(args: CompileArgs) -> Result<i32> {
 }
 
 fn command_freeze(file: PathBuf, json_output: bool) -> Result<i32> {
+    if fs::read_to_string(&file).is_ok_and(|text| goblinpp::confidential::declared(&text)) {
+        return Err(GoblinError::new(
+            "G902",
+            "GO_PRIVATE cannot create scientific freeze receipts. Keep private scripts separate from frozen science sources.",
+        ));
+    }
     let (path, event) = create_freeze(&file)?;
     let receipt: Value = serde_json::from_slice(&fs::read(&path)?)?;
     if json_output {
@@ -1069,7 +1142,10 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
         "evidence_report": {"policy":goblinpp::evidence_report::POLICY,"commands":["evidence-report", "verify-report"],"case_max_bytes":goblinpp::evidence_report::CASE_BYTES,"evidence_file_max_bytes":goblinpp::evidence_report::FILE_BYTES,"evidence_total_max_bytes":goblinpp::evidence_report::TOTAL_BYTES,"authentication":"CHECKSUM_ONLY","network_requests":false,"findings":"ANALYST_DECLARATIONS_NOT_CERTIFIED"},
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "fluid_functions": goblinpp::fluids::FUNCTIONS,
-        "string_functions": ["str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "to_base", "from_base", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
+        "confidential_file_commands": {"format": "age-v1", "commands": ["encrypt", "decrypt", "read-file"], "scientific_receipts": false},
+        "confidential_functions": ["input_secret", "encrypt_text", "encrypt_file", "decrypt_file", "decrypt_text", "read_text", "display_file"],
+        "confidential_code_profile": "GO_PRIVATE; no scientific receipts; both engines; updated IDE masked input",
+        "string_functions": ["str_b64", "str_to_b64", "str_from_b64", "str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "to_base", "from_base", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_text", "parse_number", "parse_integer", "str_trim", "str_contains", "str_replace", "str_split", "str_join", "len"],
         "clock_functions": ["time_date"],
         "plot_functions": ["plot_line", "plot_scatter", "plot_histogram"],
         "plot_policy": goblinpp::plots::POLICY,

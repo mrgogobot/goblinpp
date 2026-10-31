@@ -65,7 +65,11 @@ pub fn compile(
     file.write_all(source.as_bytes())?;
     file.sync_all()?;
     let (result, support_manifest) = if needs_data {
-        build_data_program(&source, output)?
+        build_data_program(
+            &source,
+            output,
+            crate::confidential::private(&parsed.program),
+        )?
     } else {
         (
             Command::new("rustc")
@@ -91,6 +95,12 @@ pub fn compile(
             generated_source.display(),
             String::from_utf8_lossy(&result.stderr)
         )));
+    }
+    #[cfg(unix)]
+    if crate::confidential::private(&parsed.program) {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(output, fs::Permissions::from_mode(0o700))?;
+        fs::set_permissions(&generated_source, fs::Permissions::from_mode(0o600))?;
     }
     let rustc_version = Command::new("rustc")
         .arg("--version")
@@ -170,19 +180,30 @@ fn requires_data_runtime(program: &Program) -> bool {
             _ => false,
         }
     }
-    program.statements.iter().any(visit_stmt)
+    crate::confidential::private(program) || program.statements.iter().any(visit_stmt)
 }
 
 fn build_data_program(
     source: &str,
     output: &Path,
+    private: bool,
 ) -> Result<(std::process::Output, Option<PathBuf>)> {
     // A reviewable, pinned support crate is emitted beside the generated source.
     // Cargo is offline and locked: compilation never downloads code implicitly.
     let project = output.with_extension("native-build");
-    fs::create_dir(&project)?;
+    let mut directory = fs::DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        if private {
+            directory.mode(0o700);
+        }
+    }
+    directory.create(&project)?;
     fs::create_dir(project.join("src"))?;
     let modules = [
+        ("confidential", include_str!("confidential.rs")),
+        ("crypto_cli", include_str!("crypto_cli.rs")),
         ("plots", include_str!("plots.rs")),
         ("plot_provenance", include_str!("plot_provenance.rs")),
         ("clock", include_str!("clock.rs")),
@@ -250,6 +271,10 @@ fn build_data_program(
     ] {
         files.push((format!("src/scientific_io/{name}.rs"), source.into()));
     }
+    files.push((
+        "src/scientific_io/alpha41-policy.json".into(),
+        include_str!("scientific_io/alpha41-policy.json").into(),
+    ));
     files.push(("src/lib.rs".into(), lib));
     let cache_key = sha256_bytes(
         files
@@ -299,7 +324,11 @@ fn build_data_program(
         .open(&manifest)?;
     file.write_all(&bytes)?;
     file.sync_all()?;
-    let cache = std::env::temp_dir().join(format!("goblinpp-native-cache-{cache_key}"));
+    let cache = if private {
+        project.join("private-target")
+    } else {
+        std::env::temp_dir().join(format!("goblinpp-native-cache-{cache_key}"))
+    };
     fs::create_dir_all(&cache)?;
     if fs::symlink_metadata(&cache)?.file_type().is_symlink() {
         return Err(GoblinError::compile(
@@ -349,6 +378,7 @@ fn generate(program: &Program, blocks: &[InlineRustBlock]) -> Result<String> {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    let private = crate::confidential::private(program);
     let data_runtime = if requires_data_runtime(program) {
         include_str!("compiled_data_runtime.rs")
     } else {
@@ -708,6 +738,7 @@ fn hex(bytes: &[u8]) -> String {{
     output
 }}
 fn write_native_results(sealed: &BTreeMap<String, Value>, loop_steps: u64) -> Result<(), String> {{
+    if GOBLIN_PRIVATE {{ return Ok(()); }}
     let Ok(path) = std::env::var("GOBLIN_NATIVE_RESULT_PATH") else {{ return Ok(()); }};
     let mut file = OpenOptions::new().write(true).create_new(true).open(&path).map_err(|error| format!("cannot create native result manifest {{path}}: {{error}}"))?;
     writeln!(file, "RESOURCE\t{requested_budget_text}\t{loop_budget}\t{{loop_steps}}").map_err(|error| error.to_string())?;
@@ -733,6 +764,7 @@ fn write_native_results(sealed: &BTreeMap<String, Value>, loop_steps: u64) -> Re
 }}
 
 {functions}
+const GOBLIN_PRIVATE: bool = {private};
 fn goblin_main() -> Result<(), String> {{
 {mad_launcher_gate}    let mut goblin_final_names: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     let mut goblin_env: HashMap<String, Value> = HashMap::new();
@@ -745,10 +777,11 @@ fn goblin_main() -> Result<(), String> {{
 {body}    {data_finish}
 {final_capture}
     write_native_results(&goblin_sealed_values, goblin_loop_steps)?;
+    if GOBLIN_PRIVATE {{ println!("RUN_STATUS=PASS"); }}
     Ok(())
 }}
 
-fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN NATIVE ERROR\n\n{{error}}"); std::process::exit(1); }} }}
+fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN NATIVE ERROR\n\n{{}}", if GOBLIN_PRIVATE {{ "Private execution failed; values and paths omitted. Completed file operations remain completed." }} else {{ &error }}); std::process::exit(1); }} }}
 "#,
         version = crate::VERSION,
         body = body,
@@ -784,6 +817,7 @@ fn generate_statements(
             Stmt::Return(expr) => body.push_str(&format!("    return {};\n", generate_expr(expr)?)),
             Stmt::Break => body.push_str("    break;\n"),
             Stmt::Continue => body.push_str("    continue;\n"),
+            Stmt::Directive(name) if name == "GO_PRIVATE" => body.push_str("    println!(\"GOBLIN++ GO_PRIVATE MODE\\nEXECUTION_PROFILE=GO_PRIVATE\\nCONFIDENTIAL_OPERATION=NO_RUN_RECEIPT\");\n"),
             Stmt::Directive(_) => {
                 body.push_str("    // GO_PARANOID: enforced by the launcher and receipt policy.\n")
             }
@@ -1052,6 +1086,9 @@ fn generate_expr(expression: &Expr) -> Result<String> {
             generate_expr(expr)?
         ),
         Expr::Call { name, args } if crate::evaluator::is_data_function(name) => {
+            if crate::confidential::is_function(name) {
+                crate::confidential::arity(name, args.len())?;
+            }
             if crate::plots::is_function(name) {
                 crate::plots::require_arity(name, args.len())?;
             }

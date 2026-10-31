@@ -602,3 +602,21 @@ fn explicit_limits_and_malformed_sparse_pointers_refuse() {
             .is_err()
     );
 }
+
+#[test]
+fn retained_alpha41_policy_is_exact_and_verification_only() {
+    let old: serde_json::Value =
+        serde_json::from_str(include_str!("../src/scientific_io/alpha41-policy.json")).unwrap();
+    assert!(scientific_io::replay_policy_supported(&old));
+    assert_ne!(old, scientific_io::policy());
+    assert_eq!(scientific_io::policy()["zip_crate"], "9.0.0");
+    let mut forged = old.clone();
+    forged["algorithm_sha256"] = serde_json::json!("0".repeat(64));
+    assert!(!scientific_io::replay_policy_supported(&forged));
+    let t = tempdir().unwrap();
+    let p = program(t.path());
+    let run = run_file(&p, &RunOptions::default()).unwrap();
+    let mut r = read_receipt(&run).unwrap();
+    r["scientific_input_policy"] = old;
+    assert!(scientific_io::verify_access(&run, &r));
+}

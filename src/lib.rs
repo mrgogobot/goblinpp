@@ -11,6 +11,7 @@ pub mod clock;
 pub mod comparison;
 pub mod compiler;
 pub mod constants;
+pub mod crypto_cli;
 pub mod custody;
 pub mod delimited;
 pub mod electrical;
@@ -52,3 +53,6 @@ pub mod table_join;
 pub mod text_runtime;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub mod confidential;
+pub mod private_launcher;

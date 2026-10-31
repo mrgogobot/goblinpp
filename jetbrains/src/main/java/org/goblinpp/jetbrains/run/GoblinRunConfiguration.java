@@ -132,8 +132,7 @@ public final class GoblinRunConfiguration
                     commandLine.setWorkDirectory(directory);
                 }
 
-                OSProcessHandler handler = ProcessHandlerFactory.getInstance()
-                        .createColoredProcessHandler(commandLine);
+                OSProcessHandler handler = new org.goblinpp.jetbrains.actions.GoblinSecretInput(getProject(), commandLine);
                 ProcessTerminatedListener.attach(handler);
                 return handler;
             }

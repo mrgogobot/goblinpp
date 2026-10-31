@@ -10,6 +10,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <p>Alpha.42: age file/text encryption and decryption with hidden password dialogs/private stdin, explicit text previews, and Base64 completion. Requires alpha.42 executable. No secret arguments or scientific receipts.</p>
       <p>Goblin++ JetBrains 0.3.22 (alpha.41): native NPY/NPZ, SciPy CSR/CSC/COO and scalar ECSV completion and help. No Python runtime.</p>
       <p>Previous alpha.40:</p>
       <ul>
@@ -87,6 +88,10 @@
                     class="org.goblinpp.jetbrains.actions.GoblinStatusAction"
                     text="Show Current File Status"
                     description="Show Goblin++ custody status for the current source"/>
+            <action id="Goblin++.EncryptFile" class="org.goblinpp.jetbrains.actions.GoblinEncryptFileAction" text="Encrypt a File (age)" description="Explicit confidential file tools; no scientific run receipt"/>
+            <action id="Goblin++.EncryptText" class="org.goblinpp.jetbrains.actions.GoblinEncryptTextAction" text="Encrypt New Text (age)" description="Explicit confidential file tools; no scientific run receipt"/>
+            <action id="Goblin++.DecryptFile" class="org.goblinpp.jetbrains.actions.GoblinDecryptFileAction" text="Decrypt a File (age)" description="Explicit confidential file tools; no scientific run receipt"/>
+            <action id="Goblin++.ReadTextFile" class="org.goblinpp.jetbrains.actions.GoblinReadTextFileAction" text="Display a UTF-8 File" description="Explicit confidential file tools; no scientific run receipt"/>
             <action id="Goblin++.Doctor"
                     class="org.goblinpp.jetbrains.actions.GoblinDoctorAction"
                     text="Check Project with Doctor"

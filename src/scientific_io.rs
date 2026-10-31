@@ -93,7 +93,18 @@ pub fn require_arity(name: &str, n: usize) -> Result<()> {
     Ok(())
 }
 pub fn policy() -> serde_json::Value {
-    json!({"id":"goblin.scientific-input.v1","algorithm_sha256":hash_canonical_json(&json!([include_str!("scientific_io.rs"),include_str!("scientific_io/npy.rs"),include_str!("scientific_io/npz.rs"),include_str!("scientific_io/sparse.rs"),include_str!("scientific_io/ecsv.rs")])).expect("static source serialization"),"input_bytes":MAX_BYTES,"materialized_items":MAX_ITEMS,"cache_total_bytes":64*1024*1024,"cache_files":32,"access_records_per_file":64,"numpy_layout":"LOGICAL_C_ORDER_FLAT_COPY_WITH_EXPLICIT_SHAPE","integer_conversion":"EXACT_RANGE_NUMERIC_OR_EXPLICIT_TEXT","zip_crate":"8.6.0","deflate_backend":"flate2-1.1.10/miniz_oxide-0.9.1","npz":"STORED_OR_DEFLATE;128_ENTRIES;16_MIB_MEMBER;64_MIB_EXPANDED;NO_EXTRACTION;NO_PICKLE","sparse":"CSR_CSC_COO;NO_DUPLICATE_SUM;BOUNDED_EXPLICIT_DENSIFICATION","ecsv":"VERSION_1_SCALAR_FLOW_MAP_SUBSET;NO_MASKS_MIXINS_OR_YAML_CONSTRUCTORS;UNITS_APPLIED_ON_NUMERIC_READ","unit_registry_sha256":hash_canonical_json(&json!(crate::quantity::unit_snapshots())).expect("static unit serialization"),"authentication":"CHECKSUM_ONLY"})
+    json!({"id":"goblin.scientific-input.v2","algorithm_sha256":hash_canonical_json(&json!([include_str!("scientific_io.rs"),include_str!("scientific_io/npy.rs"),include_str!("scientific_io/npz.rs"),include_str!("scientific_io/sparse.rs"),include_str!("scientific_io/ecsv.rs"),include_str!("scientific_io/alpha41-policy.json")])).expect("static source serialization"),"input_bytes":MAX_BYTES,"materialized_items":MAX_ITEMS,"cache_total_bytes":64*1024*1024,"cache_files":32,"access_records_per_file":64,"numpy_layout":"LOGICAL_C_ORDER_FLAT_COPY_WITH_EXPLICIT_SHAPE","integer_conversion":"EXACT_RANGE_NUMERIC_OR_EXPLICIT_TEXT","zip_crate":"9.0.0","deflate_backend":"flate2-1.1.10/miniz_oxide-0.9.1","npz":"STORED_OR_DEFLATE;128_ENTRIES;16_MIB_MEMBER;64_MIB_EXPANDED;NO_EXTRACTION;NO_PICKLE","sparse":"CSR_CSC_COO;NO_DUPLICATE_SUM;BOUNDED_EXPLICIT_DENSIFICATION","ecsv":"VERSION_1_SCALAR_FLOW_MAP_SUBSET;NO_MASKS_MIXINS_OR_YAML_CONSTRUCTORS;UNITS_APPLIED_ON_NUMERIC_READ","unit_registry_sha256":hash_canonical_json(&json!(crate::quantity::unit_snapshots())).expect("static unit serialization"),"authentication":"CHECKSUM_ONLY"})
+}
+/// Exact retained alpha.41 policy, replayed using the same bounded read-only
+/// decoder semantics. ZIP 9 fixes extraction APIs; Goblin++ never extracts NPZ.
+/// This permits evidence verification, not execution under an old freeze.
+pub fn replay_policy_supported(recorded: &serde_json::Value) -> bool {
+    *recorded == policy()
+        || *recorded
+            == serde_json::from_str::<serde_json::Value>(include_str!(
+                "scientific_io/alpha41-policy.json"
+            ))
+            .expect("retained alpha.41 policy")
 }
 pub fn requires_policy(receipt: &serde_json::Value) -> bool {
     receipt["goblin_version"]
@@ -333,7 +344,7 @@ pub fn verify_access(run: &Path, receipt: &serde_json::Value) -> bool {
     (|| -> Result<bool> {
         if receipt
             .get("scientific_input_policy")
-            .is_some_and(|p| *p != policy())
+            .is_some_and(|p| !replay_policy_supported(p))
             || needs_policy(run, receipt) && receipt.get("scientific_input_policy").is_none()
         {
             return Ok(false);

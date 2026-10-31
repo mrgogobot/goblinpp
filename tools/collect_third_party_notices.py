@@ -9,6 +9,8 @@ the license bundle shipped with the active Rust standard library.
 from __future__ import annotations
 
 import re
+import hashlib
+import json
 import shutil
 import subprocess
 import tomllib
@@ -57,6 +59,34 @@ def copy_notices(source: Path, destination: Path) -> list[str]:
     return [path.name for path in files]
 
 
+def crate_notices(source: Path, destination: Path, name: str, version: str) -> list[str]:
+    """Use only explicitly reviewed, hash-bound fallbacks for missing crate notices."""
+    if any(p.is_file() and LICENSE_NAME.match(p.name) for p in source.iterdir()):
+        return copy_notices(source, destination)
+    fallback = ROOT / "tools/license_sources/crates" / f"{name}-{version}"
+    metadata = json.loads((fallback / "PROVENANCE.json").read_text())
+    package = tomllib.loads((source / "Cargo.toml").read_text())["package"]
+    revision = json.loads((source / ".cargo_vcs_info.json").read_text())["git"]["sha1"]
+    if (metadata["crate"], metadata["version"], metadata["declared_license"],
+            metadata["upstream_repository"], metadata["upstream_commit_from_crate_vcs"]) != (
+            name, version, package["license"], package["repository"], revision):
+        raise SystemExit(f"license evidence identity mismatch for {name}-{version}")
+    expected = set()
+    for entry in metadata["files"]:
+        filename = entry["file"]
+        if Path(filename).name != filename or not LICENSE_NAME.match(filename):
+            raise SystemExit("invalid license evidence filename")
+        expected.add(filename)
+        if hashlib.sha256((fallback / filename).read_bytes()).hexdigest() != entry["sha256"]:
+            raise SystemExit(f"license evidence hash mismatch for {name}-{version}")
+    actual = {p.name for p in fallback.iterdir() if p.is_file() and LICENSE_NAME.match(p.name)}
+    if not expected or expected != actual:
+        raise SystemExit(f"license evidence inventory mismatch for {name}-{version}")
+    copied = copy_notices(fallback, destination)
+    shutil.copy2(fallback / "PROVENANCE.json", destination / "PROVENANCE.json")
+    return copied + ["PROVENANCE.json"]
+
+
 def main() -> None:
     if OUTPUT.exists() or NOTICE.exists():
         raise SystemExit(
@@ -95,7 +125,7 @@ def main() -> None:
     collected: list[tuple[str, str, str, list[str]]] = []
     for (name, version), license_expression in sorted(packages.items()):
         source = registry_package(name, version)
-        copied = copy_notices(source, CRATE_LICENSES / f"{name}-{version}")
+        copied = crate_notices(source, CRATE_LICENSES / f"{name}-{version}", name, version)
         collected.append((name, version, license_expression, copied))
 
     sysroot = Path(run("rustc", "--print", "sysroot"))
@@ -118,6 +148,8 @@ def main() -> None:
         f"This notice bundle accompanies the Goblin++ {tomllib.loads((ROOT / 'Cargo.toml').read_text())['package']['version']} macOS arm64 binary.",
         "It was collected offline from the exact `Cargo.lock` normal-dependency tree",
         f"for `{TARGET}` and from the active Rust standard-library documentation.",
+        "Crates omitting top-level notices use reviewed upstream evidence under",
+        "`tools/license_sources/crates/`, bound to the crate revision and file hashes.",
         "It records upstream terms; it does not replace them or constitute legal advice.",
         "Goblin++ itself remains licensed as stated in `LICENSE` and `LICENSE-DOCS.md`.",
         "",

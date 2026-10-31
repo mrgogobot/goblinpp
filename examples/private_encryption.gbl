@@ -1,0 +1,20 @@
+# Practice with PUBLIC text first: this example explicitly prints the recovered message.
+GO_PRIVATE
+
+key = input_secret("Passphrase (12 or more UTF-8 bytes): ")
+confirmation = input_secret("Confirm passphrase: ")
+while key != confirmation {
+    print("Passphrases differ; try again.")
+    key = input_secret("Passphrase: ")
+    confirmation = input_secret("Confirm passphrase: ")
+}
+
+message = input_secret("PUBLIC practice message (hidden entry): ")
+encrypt_text(message, key, "private-message.age")
+decrypt_file("private-message.age", key, "private-restored.txt")
+recovered = decrypt_text("private-message.age", key)
+print("Recovered demonstration text: {recovered}")
+print(read_text("private-restored.txt"))
+# Alternative safe-to-render preview: display_file("private-restored.txt")
+# To protect an existing binary/text file:
+# encrypt_file("input.bin", key, "protected-input.age")

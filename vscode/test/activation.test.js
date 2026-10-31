@@ -14,6 +14,7 @@ test("extension activates and registers commands and language providers", async 
   const symbols = [];
   const settings = new Map();
   let inserted;
+  const confidentialLog = [];
   let lastDecorations = [];
   const disposable = () => ({ dispose() {} });
   const source = "energy = hbar * omega # hbar";
@@ -98,12 +99,12 @@ test("extension activates and registers commands and language providers", async 
     window: {
       activeTextEditor: activeEditor,
       visibleTextEditors: [activeEditor],
-      createOutputChannel: () => ({ append() {}, appendLine() {}, show() {}, dispose() {} }),
+      createOutputChannel: () => ({ append(value) { confidentialLog.push(value); }, appendLine(value) { confidentialLog.push(value); }, show() {}, dispose() {} }),
       createStatusBarItem: () => ({ show() {}, dispose() {} }),
       createTextEditorDecorationType: () => disposable(),
       onDidChangeVisibleTextEditors: () => disposable(),
       showQuickPick: async (items) => items.find((item) => item.insertText === "hbar"),
-      showInputBox: async (options) => options?.title === "Goblin++ program input" ? "Ada" : options?.title === "Goblin++ program arguments" ? '["--name", "Ada"]' : "⚡",
+      showInputBox: async (options) => options?.title === "Goblin++ secret input" ? "public masked code passphrase" : options?.title === "Goblin++ program input" ? "Ada" : options?.title === "Goblin++ program arguments" ? '["--name", "Ada"]' : "⚡",
       showInformationMessage() {},
       showWarningMessage() {},
       showErrorMessage() {},
@@ -136,14 +137,14 @@ test("extension activates and registers commands and language providers", async 
     const context = { extensionPath, subscriptions: [] };
     extension.activate(context);
 
-    assert.equal(commands.size, 17);
+    assert.equal(commands.size, 21);
     assert.equal(completions.length, 1);
     assert.equal(hovers.length, 1);
     assert.equal(symbols.length, 1);
-    assert.equal(context.subscriptions.length, 29);
+    assert.equal(context.subscriptions.length, 33);
 
     const items = completions[0].provider.provideCompletionItems();
-    assert.equal(items.length, 326);
+    assert.equal(items.length, 337);
     for (const name of ["csv_join", "tsv_join"]) assert(items.some((item) => item.label === name && item.kind === 2));
     assert(items.some((item) => item.label === "time_date" && item.kind === 2));
     assert(items.some((item) => item.label === "csv_numbers" && item.kind === 2));
@@ -178,6 +179,8 @@ test("extension activates and registers commands and language providers", async 
     assert(items.some((item) => item.label === "µL" && item.kind === 4));
     assert.match(items.find((item) => item.label === "input").insertText.value, /Prompt/);
     assert(commands.has("goblinpp.runCompiledFile"));
+    for (const name of ["encryptFile", "encryptText", "decryptFile", "readTextFile"]) assert(commands.has("goblinpp." + name));
+    assert(items.some(item => item.label === "str_b64"));
 
     await commands.get("goblinpp.insertSymbol")();
     assert.equal(inserted, "hbar");
@@ -209,6 +212,7 @@ test("extension activates and registers commands and language providers", async 
         if (launched.length === 1) {
           process.stderr.emit("data", "GOBLIN_INPUT_PROMPT_V1\t4e616d653f20\n");
         }
+        if (launched.length === 2) process.stderr.emit("data", "GOBLIN_SECRET_PROMPT_V1\t506173737068726173653a20\n");
         process.stdout.emit("data", "RUN_STATUS=PASS\n");
         setImmediate(() => process.emit("close", 0));
       });
@@ -226,7 +230,45 @@ test("extension activates and registers commands and language providers", async 
       ["run", "/tmp/energy.gbl", "--compile"],
       ["run", "/tmp/energy.gbl", "--", "--name", "Ada"],
     ]);
-    assert.deepEqual(answers, ["Ada\n"]);
+    assert.deepEqual(answers.map(a => a.toString()), ["Ada\n", "public masked code passphrase\n"]);
+    assert(!confidentialLog.join("\n").includes("public masked code passphrase"));
+
+    // File protection prompts hide passwords and send them only through child stdin.
+    const secret = "public mock passphrase";
+    const privateText = "private mock text";
+    const secureLaunches = [];
+    const prompts = [];
+    fakeVscode.window.showOpenDialog = async () => [{scheme: "file", fsPath: "/tmp/input.age"}];
+    fakeVscode.window.showSaveDialog = async () => ({scheme: "file", fsPath: "/tmp/output.file"});
+    fakeVscode.window.showWarningMessage = async () => "Display text";
+    fakeVscode.window.showInputBox = async opts => { prompts.push(opts); return opts.prompt.startsWith("Text to encrypt") ? privateText : secret; };
+    childProcess.spawn = (executable, args, options) => {
+      const process = new EventEmitter();
+      process.stdout = new EventEmitter(); process.stderr = new EventEmitter();
+      const call = {args, options}; secureLaunches.push(call);
+      process.stdin = new EventEmitter();
+      process.stdin.end = (bytes, callback) => { call.payload = Buffer.from(bytes); if (callback) callback(); call.cleared = bytes.every(n => n === 0); };
+      queueMicrotask(() => { process.stdout.emit("data", Buffer.from("STATUS=PASS\n")); process.emit("close", 0); });
+      return process;
+    };
+    try {
+      for (const mode of ["encryptFile", "encryptText", "decryptFile", "readTextFile"]) await commands.get("goblinpp." + mode)();
+      assert.equal(secureLaunches.length, 4);
+      assert(secureLaunches.every(call => call.options.shell === false));
+      assert(secureLaunches.every(call => !call.args.join(" ").includes(secret) && !call.args.join(" ").includes(privateText)));
+      assert.equal(secureLaunches[1].payload.toString(), secret + "\n" + privateText);
+      assert(secureLaunches.every(call => call.cleared));
+      assert(prompts.every(opts => opts.password === true));
+      assert(!confidentialLog.join("\n").includes(secret)); assert(!confidentialLog.join("\n").includes(privateText));
+      fakeVscode.window.showInputBox = async () => undefined;
+      await commands.get("goblinpp.encryptFile")();
+      assert.equal(secureLaunches.length,4,"cancelled password prompt must not spawn");
+      fakeVscode.workspace.isTrusted = false;
+      await commands.get("goblinpp.encryptFile")();
+      assert.equal(secureLaunches.length,4,"an untrusted workspace must not start file protection");
+      fakeVscode.workspace.isTrusted = true;
+    } finally { childProcess.spawn = originalSpawn; }
+
     assert(launched.every((item) => item.executable === "/mock/goblin++" && item.options.shell === false));
   } finally {
     Module._load = originalLoad;

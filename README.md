@@ -1,3 +1,30 @@
+# Alpha.43 local: callable encryption/decryption
+
+Use the file-protection functions directly from `.gbl` code with `GO_PRIVATE`:
+`input_secret`, `encrypt_text`, `encrypt_file`, `decrypt_text`, `decrypt_file`,
+`read_text` and `display_file`. Both interpreter and native compilation support
+these functions; updated VS Code 0.1.34 and JetBrains 0.3.24 mask secret input
+through the normal Run action. [Code guide](docs/PRIVATE_FUNCTIONS.md).
+
+Private scripts create no scientific receipts and cannot silently weaken
+`GO_PARANOID`/`COMPLETELY_MAD`. Standard age encryption and the existing CLI
+file actions remain available. Rust remains 1.92.0; no dependency upgrades.
+
+# Alpha.42 — confidential file commands and Base64 (local, unreleased)
+
+Adds standard age-v1 passphrase encryption/decryption, hidden password entry,
+no-overwrite file outputs, authenticated-before-display text previews, and four
+file actions in both IDE plugins. These confidential operations run separately
+from scientific evidence: no plaintext input copies or password receipts.
+`str_b64`, `str_to_b64` and strict UTF-8 `str_from_b64` work in both engines;
+Base64 is encoding, not encryption. Literal `-key` is supported with a warning;
+hidden entry is the default. See [File protection](docs/ENCRYPTION.md).
+
+Rust remains 1.92.0. New locked crypto/password dependencies are used. ZIP and TLS certificate
+dependencies receive security fixes; the reader policy records ZIP 9.0.0. No public publication or independent security
+certification is claimed by this local candidate. The previous alpha.41 release
+remains preserved unchanged.
+
 # Goblin++ Rust Engine 0.1.0-alpha.41 (local, unreleased)
 
 Alpha.41 adds native NumPy NPY/NPZ, SciPy sparse NPZ (CSR/CSC/COO), and an explicit Astropy ECSV scalar subset. No Python runtime is required. Inputs are bounded, snapshotted and replay-verified; exact IDs and declared units receive checked conversions. See [scientific readers](docs/SCIENTIFIC_READERS.md) and `examples/scientific_readers.gbl`. VS Code 0.1.32 / JetBrains 0.3.22 add completion and help.

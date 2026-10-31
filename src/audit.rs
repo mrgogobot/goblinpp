@@ -360,7 +360,17 @@ pub fn verify_run(run_dir: impl AsRef<Path>) -> Result<Verification> {
                     .and_then(|mode| crate::parser::parse_source_with_mode(&text, *mode).ok())
             })
             .map(|parsed| parsed.execution_profile());
-        let source_paranoid = source_profile.map(|profile| profile != "EVERYDAY");
+        if source_profile == Some("GO_PRIVATE") {
+            checks.push(check(
+                "PRIVATE_PROFILE_HAS_NO_SCIENTIFIC_RECEIPT",
+                false,
+                None,
+                None,
+                None,
+            ));
+        }
+        let source_paranoid =
+            source_profile.map(|profile| matches!(profile, "GO_PARANOID" | "COMPLETELY_MAD"));
         // Earlier receipts have only the inherited-check flag. Do not rewrite them.
         if let Some(declared_profile) = receipt.get("execution_profile") {
             let expected_profile = source_profile.or_else(|| {

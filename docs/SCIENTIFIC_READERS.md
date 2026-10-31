@@ -1,3 +1,11 @@
+## Alpha.42 security maintenance
+
+The current input policy is v2 and records ZIP 9.0.0. The NPZ reader continues
+to read bounded members without extraction. The exact retained alpha.41 policy
+remains accepted for evidence replay, while execution under a prior freeze
+requires an explicit revision and new freeze. Modified/unknown historical
+policies refuse. See [File protection and dependency review](ENCRYPTION.md).
+
 # Native scientific data readers — alpha.41
 
 Goblin++ reads a bounded subset of NumPy NPY/NPZ, SciPy sparse NPZ and Astropy ECSV directly in Rust. Interpreter, `run --compile` and standalone compiled programs use the same reader implementation. Python is not required at runtime. These are file-format readers, not NumPy/SciPy/Astropy Python APIs. Existing FITS functions remain available.

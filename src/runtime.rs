@@ -38,6 +38,18 @@ pub fn run_file(source: impl AsRef<Path>, options: &RunOptions) -> Result<PathBu
         ));
     }
     let source_bytes = fs::read(source)?;
+    if let Ok(text) = std::str::from_utf8(&source_bytes) {
+        if crate::confidential::declared(text) {
+            return Err(GoblinError::new(
+                "G902",
+                "GO_PRIVATE requires the private CLI launcher; no run evidence was created.",
+            ));
+        }
+        // Refuse crypto calls before any plaintext preservation, including imports.
+        if let Ok(resolved) = crate::modules::resolve(source, text) {
+            crate::confidential::validate(&resolved.parsed.program)?;
+        }
+    }
     let source_sha = sha256_bytes(&source_bytes);
     let root = ledger::project_root_for(source)?;
     let source_parent = source

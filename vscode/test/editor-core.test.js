@@ -222,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 326);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 326);
+  assert.equal(entries.length, 337);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 337);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -400,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.32");
+  assert.equal(manifest.version, "0.1.34");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -453,7 +453,7 @@ test("alpha.27 language coloring and extension identity are internally consisten
 
 test("alpha.40 text and fluid helpers expose their unit and encoding contracts", () => {
   const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
-  for (const name of ["str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"]) {
+  for (const name of ["str_b64", "str_to_b64", "str_from_b64", "str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"]) {
     const entry = runtimeVocabulary.functions.find((item) => item.spelling === name);
     assert.ok(entry && entry.snippet.startsWith(name + "("), name);
     assert.ok(builtins.test(name + "("), name);
@@ -474,3 +474,11 @@ test("alpha.40 text and fluid helpers expose their unit and encoding contracts",
  assert.ok(builtins.test(name+"("),name);
  }
  });
+
+
+test("private script completion and secret prompt decoding state their boundaries", () => {
+  const entries=core.vocabularyEntries(lexicon,runtimeVocabulary);
+  for(const name of ["GO_PRIVATE","input_secret","encrypt_text","encrypt_file","decrypt_file","decrypt_text","read_text","display_file"]) assert(entries.some(e=>e.spelling===name));
+  assert.equal(core.decodeSecretPromptLine("GOBLIN_SECRET_PROMPT_V1\t506173737068726173653a20"),"Passphrase: ");
+  for(const bad of ["GOBLIN_SECRET_PROMPT_V1\tff","GOBLIN_SECRET_PROMPT_V1\t0a","GOBLIN_SECRET_PROMPT_V1\tabc","GOBLIN_SECRET_PROMPT_V1\t"+"61".repeat(4097)]) assert.equal(core.decodeSecretPromptLine(bad),null);
+});

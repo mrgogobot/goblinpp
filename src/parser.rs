@@ -31,6 +31,8 @@ pub(crate) fn validate_numeric_audit_path(path: &str) -> Result<()> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SyntaxMode {
     Current,
+    /// Alpha.39-42 share the final-state parser policy, before private keywords.
+    PrePrivate,
     PreMad,
     CompoundUnitsNoLoopBudget,
     LegacyQuantity,
@@ -44,7 +46,15 @@ pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
         .strip_prefix("0.1.0-alpha.")
         .and_then(|v| v.parse::<u32>().ok());
     match receipt.get("parser_policy") {
-        Some(value) if value.as_str() == Some(PARSER_POLICY) => Ok(SyntaxMode::Current),
+        Some(value) if value.as_str() == Some(PARSER_POLICY) => {
+            // The immutable runtime version also pins reserved-word additions.
+            // Never reinterpret a historical GO_PRIVATE identifier as a directive.
+            Ok(if alpha.is_some_and(|v| (39..=42).contains(&v)) {
+                SyntaxMode::PrePrivate
+            } else {
+                SyntaxMode::Current
+            })
+        }
         Some(value)
             if value.as_str() == Some(PRE_MAD_PARSER_POLICY) && alpha.is_some_and(|v| v <= 38) =>
         {
@@ -82,6 +92,7 @@ pub fn reserved_function_name(name: &str) -> bool {
             | "return"
             | "GO_PARANOID"
             | "COMPLETELY_MAD"
+            | "GO_PRIVATE"
             | "GO_LOOP_BUDGET"
             | "seal"
             | "for"
@@ -182,6 +193,7 @@ pub fn reserved_function_name(name: &str) -> bool {
 /// Execution checks are intentionally separate from syntax/canonical parsing:
 /// historical receipts must remain verifiable without executing their programs.
 pub fn validate_execution(program: &Program) -> Result<()> {
+    crate::confidential::validate(program)?;
     crate::resources::validate_program(program)?;
     if completely_mad(program) {
         let directives = program
@@ -230,6 +242,9 @@ pub fn require_writable_name(name: &str) -> Result<()> {
 }
 
 fn value_only_builtin(name: &str) -> bool {
+    if crate::confidential::is_function(name) {
+        return !crate::confidential::is_effect(name);
+    }
     // Effectful calls and user-defined functions may intentionally be statements.
     // All registered value-returning builtins must have their result consumed.
     reserved_function_name(name)
@@ -265,6 +280,7 @@ fn value_only_builtin(name: &str) -> bool {
                 | "ecdf"
         )
         || name == "fits_batch_open"
+        || crate::confidential::is_function(name)
         || crate::scientific_io::is_function(name)
         || crate::fluids::is_function(name)
         || crate::text_runtime::toolkit_arity(name).is_some()
@@ -288,6 +304,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 // Keep historical canonical parsing possible, but prevent a new
                 // builtin from silently overriding a user function at execution.
                 if crate::plots::is_function(name)
+                    || crate::confidential::is_function(name)
                     || crate::scientific_io::is_function(name)
                     || crate::fluids::is_function(name)
                     || crate::text_runtime::toolkit_arity(name).is_some()
@@ -309,6 +326,7 @@ fn validate_statements(statements: &[Stmt]) -> Result<()> {
                 require_writable_name(name)?;
                 for param in params {
                     if crate::plots::is_function(param)
+                        || crate::confidential::is_function(param)
                         || crate::scientific_io::is_function(param)
                         || crate::fluids::is_function(param)
                         || crate::text_runtime::toolkit_arity(param).is_some()
@@ -385,7 +403,9 @@ impl ParsedSource {
         Ok(sha256_bytes(&self.canonical_bytes()?))
     }
     pub fn execution_profile(&self) -> &'static str {
-        if completely_mad(&self.program) {
+        if crate::confidential::private(&self.program) {
+            "GO_PRIVATE"
+        } else if completely_mad(&self.program) {
             "COMPLETELY_MAD"
         } else if self
             .program
@@ -400,7 +420,7 @@ impl ParsedSource {
     }
     /// Compatibility predicate for the postflight checks inherited by both profiles.
     pub fn paranoid(&self) -> bool {
-        self.execution_profile() != "EVERYDAY"
+        matches!(self.execution_profile(), "GO_PARANOID" | "COMPLETELY_MAD")
     }
     pub fn require_executable_program(&self) -> Result<()> {
         if self.program.statements.is_empty() {
@@ -471,10 +491,15 @@ impl Parser {
         &self.tokens[self.cursor]
     }
     fn name_reserved(&self, name: &str) -> bool {
-        if name == "GO_LOOP_BUDGET" {
-            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreMad)
-        } else if name == "COMPLETELY_MAD" {
+        if name == "GO_PRIVATE" || crate::confidential::is_function(name) {
             self.mode == SyntaxMode::Current
+        } else if name == "GO_LOOP_BUDGET" {
+            matches!(
+                self.mode,
+                SyntaxMode::Current | SyntaxMode::PrePrivate | SyntaxMode::PreMad
+            )
+        } else if name == "COMPLETELY_MAD" {
+            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PrePrivate)
         } else {
             reserved_function_name(name)
         }
@@ -556,8 +581,10 @@ impl Parser {
     }
 
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
-        if matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreMad)
-            && self.ident_is("GO_LOOP_BUDGET")
+        if matches!(
+            self.mode,
+            SyntaxMode::Current | SyntaxMode::PrePrivate | SyntaxMode::PreMad
+        ) && self.ident_is("GO_LOOP_BUDGET")
         {
             if in_block {
                 return Err(GoblinError::parse(
@@ -807,7 +834,9 @@ impl Parser {
             validate_numeric_audit_path(&path)?;
             return Ok(Stmt::NumericAudit(path));
         }
-        if self.mode == SyntaxMode::Current && self.ident_is("COMPLETELY_MAD") {
+        if matches!(self.mode, SyntaxMode::Current | SyntaxMode::PrePrivate)
+            && self.ident_is("COMPLETELY_MAD")
+        {
             if in_block || self.in_function {
                 return Err(GoblinError::parse(
                     "COMPLETELY_MAD must be a main-source top-level directive.",
@@ -815,6 +844,15 @@ impl Parser {
             }
             self.advance();
             return Ok(Stmt::Directive("COMPLETELY_MAD".into()));
+        }
+        if self.mode == SyntaxMode::Current && self.ident_is("GO_PRIVATE") {
+            if in_block || self.in_function {
+                return Err(GoblinError::parse(
+                    "GO_PRIVATE must be a main-source top-level directive.",
+                ));
+            }
+            self.advance();
+            return Ok(Stmt::Directive("GO_PRIVATE".into()));
         }
         if self.ident_is("GO_PARANOID") {
             if in_block {

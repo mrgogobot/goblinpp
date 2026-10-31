@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "reference": "filippo.io/age v1.3.2",
+  "rust_implementation": "age 0.12.1",
+  "directions": [
+    "Goblin++ encrypt -> Go age decrypt",
+    "Go age encrypt -> Goblin++ decrypt"
+  ],
+  "plaintext_bytes": 131116,
+  "plaintext_sha256": "c08c7100bb3e669439a8631fbb0d767f125e556ad63ff2078252983f824788e5",
+  "fixture_sha256": "090b87a4598015058b99e30c895465f0595c0f55d9699a0faa569e360a0d2ead",
+  "fixture_plaintext": "Independent age fixture — π\n",
+  "fixture_passphrase": "public test passphrase only",
+  "test_data_only": true
+}

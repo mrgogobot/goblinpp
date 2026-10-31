@@ -1,3 +1,21 @@
+# Alpha.43: callable confidential functions
+
+Open a trusted GO_PRIVATE .gbl script and use the ordinary Run/Play command.
+input_secret() opens a masked dialog. Completion and hover help cover
+ encrypt_text, encrypt_file, decrypt_file, decrypt_text, read_text and display_file.
+Select the installed alpha.43 executable; this requires extension 0.1.34.
+The full code tutorial is docs/PRIVATE_FUNCTIONS.md in the runtime bundle.
+
+## Alpha.42 file protection
+
+New commands/actions: Encrypt a File (age), Encrypt New Text (age), Decrypt a File
+(age), Display a UTF-8 File. Passwords/new secret text use masked dialogs and a
+private stdin pipe, not command arguments, terminal input, or scientific receipts.
+Screen previews warn about plaintext display. Install/select alpha.42 separately
+from the plugin (VS Code 0.1.33 / JetBrains 0.3.23). `str_b64`, `str_to_b64` and
+`str_from_b64` have code completion; Base64 is encoding, not encryption.
+See the runtime bundle's `docs/ENCRYPTION.md` for commands, limits and temporary-file risks.
+
 # Goblin++ VS Code editor guide
 
 This guide targets the Rust engine 0.1.0-alpha.17 and extension 0.1.12.

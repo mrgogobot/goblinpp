@@ -78,7 +78,8 @@ pub fn is_data_function(name: &str) -> bool {
     if crate::table_join::is_function(name) {
         return true;
     }
-    crate::scientific_io::is_function(name)
+    crate::confidential::is_function(name)
+        || crate::scientific_io::is_function(name)
         || crate::plots::is_function(name)
         || crate::clock::is_function(name)
         || crate::random::is_function(name)
@@ -153,6 +154,7 @@ pub struct Evaluation {
     pub scientific_inputs: crate::scientific_io::Inputs,
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
+    pub private: bool,
     pub interaction: Interaction,
     pub clock: crate::clock::Clock,
     pub randomness: crate::random::Randomness,
@@ -190,6 +192,7 @@ impl Evaluation {
             scientific_inputs: crate::scientific_io::Inputs::default(),
             constants_used: BTreeMap::new(),
             paranoid: false,
+            private: false,
             interaction: Interaction::default(),
             clock: crate::clock::Clock::default(),
             randomness: crate::random::Randomness::default(),
@@ -222,6 +225,7 @@ impl Evaluation {
 
     pub fn register_functions(&mut self, program: &Program) -> Result<()> {
         crate::parser::validate_execution(program)?;
+        self.private = crate::confidential::private(program);
         self.completely_mad = crate::parser::completely_mad(program);
         self.requested_loop_budget = crate::resources::requested(program);
         for statement in &program.statements {
@@ -270,6 +274,7 @@ impl Evaluation {
                 self.paranoid = true;
                 Ok(ExecFlow::Normal)
             }
+            Stmt::Directive(name) if name == "GO_PRIVATE" => Ok(ExecFlow::Normal),
             Stmt::Directive(name) => Err(GoblinError::parse(format!("Unknown directive: {name}"))),
             Stmt::Assign { name, expr } => {
                 crate::parser::require_writable_name(name)?;
@@ -615,6 +620,12 @@ impl Evaluation {
 
     #[inline(never)]
     fn eval_builtin_call(&mut self, name: &str, args: &[Value]) -> Result<Value> {
+        if self.private && is_data_function(name) && !crate::confidential::is_function(name) {
+            return Err(GoblinError::new(
+                "G902",
+                "Scientific evidence machinery is unavailable in GO_PRIVATE.",
+            ));
+        }
         if crate::plots::is_function(name) {
             let outputs = crate::plots::call(name, args)?;
             // Preflight the complete pair before inserting either artifact.
@@ -688,6 +699,24 @@ impl Evaluation {
                 }
             }
             return self.batches.call(&self.base_dir, name, args);
+        }
+        if crate::confidential::is_function(name) {
+            if !self.private {
+                return Err(GoblinError::new(
+                    "G902",
+                    "Confidential functions require GO_PRIVATE.",
+                ));
+            }
+            if name == "input_secret" {
+                crate::confidential::arity(name, args.len())?;
+                let prompt = args
+                    .first()
+                    .map(|v| v.text(name))
+                    .transpose()?
+                    .unwrap_or("Passphrase (hidden): ");
+                return self.interaction.secret(prompt).map(Value::Text);
+            }
+            return crate::confidential::call(&self.base_dir, name, args);
         }
         if crate::random::is_function(name) {
             return self.randomness.call(name, args);
@@ -2039,6 +2068,9 @@ fn legacy_angle_warning(name: &str, radians: &str, degrees: &str) -> String {
 /// Validate before evaluating arguments; never silently change refusal ordering
 /// or prompt/write side effects while keeping the dispatch frame off the stack.
 fn validate_builtin_arity(name: &str, args: &[Expr]) -> Result<()> {
+    if crate::confidential::is_function(name) {
+        return crate::confidential::arity(name, args.len());
+    }
     if crate::plots::is_function(name) {
         return crate::plots::require_arity(name, args.len());
     }

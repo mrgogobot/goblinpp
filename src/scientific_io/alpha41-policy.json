@@ -1,0 +1,18 @@
+{
+  "id": "goblin.scientific-input.v1",
+  "algorithm_sha256": "b2eb1fc70a6c55e8ba50381155f36205d0397e0dab3a9dd75f2e62740dfa7c82",
+  "input_bytes": 16777216,
+  "materialized_items": 100000,
+  "cache_total_bytes": 67108864,
+  "cache_files": 32,
+  "access_records_per_file": 64,
+  "numpy_layout": "LOGICAL_C_ORDER_FLAT_COPY_WITH_EXPLICIT_SHAPE",
+  "integer_conversion": "EXACT_RANGE_NUMERIC_OR_EXPLICIT_TEXT",
+  "zip_crate": "8.6.0",
+  "deflate_backend": "flate2-1.1.10/miniz_oxide-0.9.1",
+  "npz": "STORED_OR_DEFLATE;128_ENTRIES;16_MIB_MEMBER;64_MIB_EXPANDED;NO_EXTRACTION;NO_PICKLE",
+  "sparse": "CSR_CSC_COO;NO_DUPLICATE_SUM;BOUNDED_EXPLICIT_DENSIFICATION",
+  "ecsv": "VERSION_1_SCALAR_FLOW_MAP_SUBSET;NO_MASKS_MIXINS_OR_YAML_CONSTRUCTORS;UNITS_APPLIED_ON_NUMERIC_READ",
+  "unit_registry_sha256": "33dff141ca702678d4b057a56ce4a266b5c5c394478cfc2aaa94ac888183d210",
+  "authentication": "CHECKSUM_ONLY"
+}

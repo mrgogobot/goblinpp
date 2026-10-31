@@ -1,0 +1,17 @@
+{
+  "crate": "bech32",
+  "version": "0.9.1",
+  "declared_license": "MIT",
+  "upstream_repository": "https://github.com/rust-bitcoin/rust-bech32",
+  "upstream_commit_from_crate_vcs": "d12513f1e3768a7f2a2e1b4d650139eb92a4ae9b",
+  "files": [
+    {
+      "file": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-bitcoin/rust-bech32/d12513f1e3768a7f2a2e1b4d650139eb92a4ae9b/src/lib.rs",
+      "sha256": "a9fb0742c73abf6bd7bfca753580dd5318489aac40ecaac0601b809730d4de3c",
+      "upstream_sha256": "8a4efd91229148ea1e86234c9513628910a7419a3c8a6500e8ce18149b8f3a85",
+      "extraction": "Leading MIT license comment; comment markers removed"
+    }
+  ],
+  "purpose": "Preserved license terms omitted from registry top level; not executable code."
+}

@@ -1,0 +1,8 @@
+GO_PARANOID
+# Public demonstration text only. Base64 is encoding, not encryption.
+encoded = str_b64("Hello, π")
+restored = str_from_b64(encoded)
+print("Base64 = {encoded}")
+print("Restored = {restored}")
+seal encoded
+seal restored

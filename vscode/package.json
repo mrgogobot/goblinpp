@@ -2,7 +2,7 @@
   "name": "goblinpp",
   "displayName": "Goblin++",
   "description": "Editor support for the Goblin++ Rust scientific language and custody workflow.",
-  "version": "0.1.32",
+  "version": "0.1.34",
   "publisher": "goblinpp-project",
   "license": "MIT",
   "repository": {
@@ -41,7 +41,11 @@
     "onCommand:goblinpp.checkFile",
     "onCommand:goblinpp.toggleCheckOnSave",
     "onCommand:goblinpp.openAuthoringTutorial",
-    "onCommand:goblinpp.openEditorGuide"
+    "onCommand:goblinpp.openEditorGuide",
+    "onCommand:goblinpp.encryptFile",
+    "onCommand:goblinpp.encryptText",
+    "onCommand:goblinpp.decryptFile",
+    "onCommand:goblinpp.readTextFile"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -148,6 +152,22 @@
       {
         "command": "goblinpp.openEditorGuide",
         "title": "Goblin++: Open Editor Guide"
+      },
+      {
+        "command": "goblinpp.encryptFile",
+        "title": "Goblin++: Encrypt a File (age)"
+      },
+      {
+        "command": "goblinpp.encryptText",
+        "title": "Goblin++: Encrypt New Text (age)"
+      },
+      {
+        "command": "goblinpp.decryptFile",
+        "title": "Goblin++: Decrypt a File (age)"
+      },
+      {
+        "command": "goblinpp.readTextFile",
+        "title": "Goblin++: Display a UTF-8 File"
       }
     ],
     "menus": {

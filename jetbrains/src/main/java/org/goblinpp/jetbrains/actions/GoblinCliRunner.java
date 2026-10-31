@@ -30,7 +30,7 @@ public final class GoblinCliRunner {
             commandLine.setWorkDirectory(project.getBasePath());
         }
         try {
-            OSProcessHandler handler = new OSProcessHandler(commandLine);
+            OSProcessHandler handler = new GoblinSecretInput(project, commandLine);
             ConsoleView console = TextConsoleBuilderFactory.getInstance()
                     .createBuilder(project)
                     .getConsole();

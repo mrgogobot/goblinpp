@@ -1,0 +1,17 @@
+{
+  "crate": "cookie-factory",
+  "version": "0.3.3",
+  "declared_license": "MIT",
+  "upstream_repository": "https://github.com/rust-bakery/cookie-factory",
+  "upstream_commit_from_crate_vcs": "d36b805dbd7dd65f2df947235c5bcc573afe2c76",
+  "files": [
+    {
+      "file": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-bakery/cookie-factory/d36b805dbd7dd65f2df947235c5bcc573afe2c76/LICENSES/MIT.txt",
+      "sha256": "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de",
+      "upstream_sha256": "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de",
+      "extraction": "Verbatim upstream file"
+    }
+  ],
+  "purpose": "Preserved license terms omitted from registry top level; not executable code."
+}

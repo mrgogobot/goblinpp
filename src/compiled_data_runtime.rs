@@ -7,7 +7,8 @@ thread_local! {
                 std::env::var("GOBLIN_NATIVE_DATA_BASE").unwrap_or_else(|_| ".".into()));
             let mut argv = vec![std::env::var("GOBLIN_SOURCE_ARGV0").unwrap_or_else(|_| std::env::args().next().unwrap_or_default())];
             argv.extend(std::env::args().skip(1));
-            evaluation.configure_interaction(argv, goblinpp::interaction::InputPolicy::Disabled).expect("valid native argv");
+            evaluation.private = GOBLIN_PRIVATE;
+            evaluation.configure_interaction(argv, if GOBLIN_PRIVATE {goblinpp::interaction::InputPolicy::Interactive} else {goblinpp::interaction::InputPolicy::Disabled}).expect("valid native argv");
             evaluation
         });
 }
@@ -37,12 +38,13 @@ fn goblin_data_call(name: &str, values: Vec<Result<Value, String>>, env: &HashMa
     let env = env.iter().map(|(k,v)| Ok((k.clone(), data_value(v.clone())?))).collect::<Result<HashMap<_,_>,String>>()?;
     GOBLIN_DATA.with(|data| {
         let mut data = data.borrow_mut();
-        data.clock.configure_native_replay().map_err(|e| e.pretty())?;
+        if !GOBLIN_PRIVATE { data.clock.configure_native_replay().map_err(|e| e.pretty())?; }
         data.native_data_call(name, values, env).map(from_data_value).map_err(|e| e.pretty())
     })
 }
 
 fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
+    if GOBLIN_PRIVATE {return Ok(());}
     GOBLIN_DATA.with(|data| {
         let data = data.borrow();
         data.clock.finish().map_err(|e|e.pretty())?;
@@ -88,6 +90,7 @@ fn goblin_data_finish(loop_steps: u64) -> Result<(), String> {
 }
 
 fn goblin_data_abort() {
+    if GOBLIN_PRIVATE {return;}
     GOBLIN_DATA.with(|data| {
         let mut data=data.borrow_mut();
         if data.batches.evidence()["writers"].as_array().is_some_and(|w|w.is_empty())

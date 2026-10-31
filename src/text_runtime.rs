@@ -123,7 +123,8 @@ pub fn length(value: &str) -> usize {
 pub fn toolkit_arity(name: &str) -> Option<usize> {
     match name {
         "str_upper" | "str_lower" | "str_bytes_len" | "sizeof" | "str_to_hex" | "str_from_hex"
-        | "str_to_octal" | "str_from_octal" | "str_to_binary" | "str_from_binary" => Some(1),
+        | "str_to_octal" | "str_from_octal" | "str_to_binary" | "str_from_binary" | "str_b64"
+        | "str_to_b64" | "str_from_b64" => Some(1),
         "str_compare" | "to_base" | "from_base" => Some(2),
         _ => None,
     }
@@ -174,6 +175,9 @@ fn byte_codec(name: &str) -> Result<(u32, usize, bool), String> {
 
 /// Fixed-width UTF-8 byte groups; not encryption or integer formatting.
 pub fn byte_encoding(name: &str, value: &str) -> Result<String, String> {
+    if ["str_b64", "str_to_b64", "str_from_b64"].contains(&name) {
+        return base64_text(value, name != "str_from_b64");
+    }
     let (base, width, encode) = byte_codec(name)?;
     if value.len() > MAX_TEXT_BYTES {
         return Err(format!(
@@ -422,4 +426,75 @@ fn decimal_syntax(value: &str) -> bool {
         }
     }
     pos == bytes.len()
+}
+
+/// RFC 4648 standard alphabet with mandatory canonical padding. Encoding, not encryption.
+/// Self-contained because this module is embedded in standalone native programs.
+pub fn base64_text(value: &str, encode: bool) -> Result<String, String> {
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    if value.len() > MAX_TEXT_BYTES {
+        return Err("Base64 input exceeds 1 MiB.".into());
+    }
+    if encode {
+        let size = value.len().div_ceil(3) * 4;
+        if size > MAX_TEXT_BYTES {
+            return Err("Base64 output exceeds 1 MiB.".into());
+        }
+        let mut out = String::with_capacity(size);
+        for group in value.as_bytes().chunks(3) {
+            let a = group[0] as usize;
+            let b = *group.get(1).unwrap_or(&0) as usize;
+            let c = *group.get(2).unwrap_or(&0) as usize;
+            out.push(ALPHABET[a >> 2] as char);
+            out.push(ALPHABET[((a & 3) << 4) | (b >> 4)] as char);
+            out.push(if group.len() > 1 {
+                ALPHABET[((b & 15) << 2) | (c >> 6)] as char
+            } else {
+                '='
+            });
+            out.push(if group.len() > 2 {
+                ALPHABET[c & 63] as char
+            } else {
+                '='
+            });
+        }
+        return Ok(out);
+    }
+    if !value.len().is_multiple_of(4) {
+        return Err(
+            "Base64 requires canonical RFC 4648 padding; no whitespace or URL alphabet.".into(),
+        );
+    }
+    let mut out = Vec::with_capacity(value.len() / 4 * 3);
+    let groups = value.as_bytes().as_chunks::<4>().0;
+    for (i, group) in groups.iter().enumerate() {
+        let decode = |b: u8| {
+            ALPHABET
+                .iter()
+                .position(|x| *x == b)
+                .map(|n| n as u8)
+                .ok_or_else(|| "Invalid Base64 character or padding.".to_string())
+        };
+        let a = decode(group[0])?;
+        let b = decode(group[1])?;
+        let last = i + 1 == groups.len();
+        if group[2] == b'=' {
+            if !last || group[3] != b'=' || b & 15 != 0 {
+                return Err("Noncanonical Base64 padding bits.".into());
+            }
+            out.push((a << 2) | (b >> 4));
+        } else {
+            let c = decode(group[2])?;
+            out.push((a << 2) | (b >> 4));
+            out.push((b << 4) | (c >> 2));
+            if group[3] == b'=' {
+                if !last || c & 3 != 0 {
+                    return Err("Noncanonical Base64 padding bits.".into());
+                }
+            } else {
+                out.push((c << 6) | decode(group[3])?);
+            }
+        }
+    }
+    String::from_utf8(out).map_err(|_| "Base64 decodes to non-UTF-8 bytes; text required.".into())
 }

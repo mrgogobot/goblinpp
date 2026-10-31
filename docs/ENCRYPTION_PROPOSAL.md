@@ -1,3 +1,11 @@
+# Encryption proposal history
+
+**Alpha.42 update:** explicit file/text commands now use the established age v1
+format and Rust age implementation. This is not AES-256-GCM, encrypted scientific
+runs, or directory encryption. See [the implemented commands and limits](ENCRYPTION.md).
+The original proposal below remains historical; its unimplemented requirements
+must not be interpreted as shipped guarantees.
+
 # Proposal: optional encrypted export
 
 **Status: proposed, not implemented.** Goblin++ currently hashes and preserves

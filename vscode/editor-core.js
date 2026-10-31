@@ -41,6 +41,7 @@ const KNOWN_COMMANDS = new Set([
   "verify",
 ]);
 
+const SECRET_PROMPT_PREFIX = "GOBLIN_SECRET_PROMPT_V1\t";
 const INPUT_PROMPT_PREFIX = "GOBLIN_INPUT_PROMPT_V1\t";
 
 function decodeInputPromptLine(line) {
@@ -54,6 +55,13 @@ function decodeInputPromptLine(line) {
   const bytes = Buffer.from(hex, "hex");
   const prompt = bytes.toString("utf8");
   return Buffer.from(prompt, "utf8").equals(bytes) ? prompt : null;
+}
+
+function decodeSecretPromptLine(line) {
+  if (typeof line !== "string" || !line.startsWith(SECRET_PROMPT_PREFIX)) return null;
+  if (line.length > SECRET_PROMPT_PREFIX.length + 8192) return null;
+  const prompt = decodeInputPromptLine(INPUT_PROMPT_PREFIX + line.slice(SECRET_PROMPT_PREFIX.length));
+  return prompt !== null && !/[\u0000-\u001f\u007f-\u009f]/u.test(prompt) ? prompt : null;
 }
 
 function parseProgramArguments(value) {
@@ -415,6 +423,8 @@ function iconDecorations(text, mappings) {
 module.exports = {
   CONSTANT_ICONS,
   INPUT_PROMPT_PREFIX,
+  SECRET_PROMPT_PREFIX,
+  decodeSecretPromptLine,
   KNOWN_COMMANDS,
   decodeInputPromptLine,
   dimensionLabel,

@@ -1,3 +1,21 @@
+# Alpha.43 callable encryption update
+
+Install/select Goblin++ alpha.43. Ordinary Run now supports `GO_PRIVATE` programs
+and masked `input_secret()` dialogs. Completion and help cover `encrypt_text`,
+`encrypt_file`, `decrypt_text`, `decrypt_file`, `read_text` and `display_file`.
+Use docs/PRIVATE_FUNCTIONS.md in the runtime bundle. The original confidential
+menu actions remain available. Do not put real secrets in source or argv.
+
+## Alpha.42 file protection
+
+New commands/actions: Encrypt a File (age), Encrypt New Text (age), Decrypt a File
+(age), Display a UTF-8 File. Passwords/new secret text use masked dialogs and a
+private stdin pipe, not command arguments, terminal input, or scientific receipts.
+Screen previews warn about plaintext display. Install/select alpha.42 separately
+from the plugin (VS Code 0.1.33 / JetBrains 0.3.23). `str_b64`, `str_to_b64` and
+`str_from_b64` have code completion; Base64 is encoding, not encryption.
+See the runtime bundle's `docs/ENCRYPTION.md` for commands, limits and temporary-file risks.
+
 # Goblin++ for Visual Studio Code 0.1.32 (local, unreleased)
 
 Alpha.40: completion, highlighting and help for Unicode case/byte count, text encodings, integer radix conversion and dimension-checked fluid mechanics. See `examples/text_toolkit.gbl` and `examples/fluid_mechanics.gbl`.

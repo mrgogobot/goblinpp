@@ -1,3 +1,37 @@
+# 0.1.0-alpha.43 - Callable confidential file functions (local)
+
+- `GO_PRIVATE` scripts call encryption, decryption, text reading and display from
+  ordinary code, functions, loops and imports. Both engines use the existing
+  standard age implementation and no-overwrite/authenticated-publication rules.
+- `input_secret` uses hidden terminal input or the updated IDE masked prompt
+  protocol. Secret responses are not scientific input replay events.
+- Private runs produce no scientific run directory, receipt, log or automatic
+  capture. Mixed audit profiles, freezes, seals, numeric audits, inline Rust and
+  scientific evidence I/O refuse explicitly. Static check does not execute.
+- VS Code 0.1.34 and JetBrains 0.3.24 add completion/help/highlighting and secret
+  prompts to normal Run actions. Existing menu actions remain.
+- Private native builds use an isolated temporary target cache; standalone
+  compilation retains explicit output artifacts. Passwords are ordinary runtime
+  strings: do not hardcode, print, log, commit or put real secrets in argv.
+- Rust 1.92.0 and locked external dependency versions are retained.
+- Guide: docs/PRIVATE_FUNCTIONS.md. Optional merchandise:
+  https://h4k3rl1f3.myspreadshop.co.uk
+
+# Alpha.42 — confidential file commands and Base64 (local, unreleased)
+
+Adds standard age-v1 passphrase encryption/decryption, hidden password entry,
+no-overwrite file outputs, authenticated-before-display text previews, and four
+file actions in both IDE plugins. These confidential operations run separately
+from scientific evidence: no plaintext input copies or password receipts.
+`str_b64`, `str_to_b64` and strict UTF-8 `str_from_b64` work in both engines;
+Base64 is encoding, not encryption. Literal `-key` is supported with a warning;
+hidden entry is the default. See [File protection](docs/ENCRYPTION.md).
+
+Rust remains 1.92.0. New locked crypto/password dependencies are used. ZIP and TLS certificate
+dependencies receive security fixes; the reader policy records ZIP 9.0.0. No public publication or independent security
+certification is claimed by this local candidate. The previous alpha.41 release
+remains preserved unchanged.
+
 # 0.1.0-alpha.41 (local, unreleased, native scientific readers)
 
 - Native NPY 1/2/3 and stored/DEFLATE NPZ; logical C-order copies, explicit shape/dtype/storage order, exact integer ID text and no pickle/object execution.

@@ -27,6 +27,7 @@ pub struct Interaction {
     pub arguments_accessed: bool,
     policy: InputPolicy,
     next_provided: usize,
+    secret_calls: usize,
 }
 
 impl Default for Interaction {
@@ -37,6 +38,7 @@ impl Default for Interaction {
             arguments_accessed: false,
             policy: InputPolicy::Disabled,
             next_provided: 0,
+            secret_calls: 0,
         }
     }
 }
@@ -136,6 +138,73 @@ impl Interaction {
             response: response.clone(),
         });
         response.ok_or_else(|| GoblinError::new("G203", "input() reached end of standard input."))
+    }
+
+    /// Never appends a password response to replayable input_events.
+    pub fn secret(&mut self, prompt: &str) -> Result<String> {
+        if prompt.len() > 4096
+            || self.secret_calls >= MAX_INPUT_EVENTS
+            || prompt.chars().any(char::is_control)
+        {
+            return Err(GoblinError::new(
+                "G902",
+                "Invalid or excessive secret prompt.",
+            ));
+        }
+        self.secret_calls += 1;
+        let response = match &self.policy {
+            InputPolicy::Disabled => {
+                return Err(GoblinError::new(
+                    "G902",
+                    "input_secret() does not run during static checks.",
+                ));
+            }
+            InputPolicy::Provided(lines) => {
+                let v = lines.get(self.next_provided).cloned();
+                self.next_provided += 1;
+                v.ok_or_else(|| GoblinError::new("G902", "Secret input ended."))?
+            }
+            InputPolicy::Interactive => {
+                if std::env::var("GOBLIN_SECRET_PROMPT_PROTOCOL").as_deref() == Ok("hex-v1")
+                    || std::env::var("GOBLIN_INPUT_PROMPT_PROTOCOL").as_deref() == Ok("hex-v1")
+                {
+                    let encoded = prompt
+                        .as_bytes()
+                        .iter()
+                        .map(|b| format!("{b:02x}"))
+                        .collect::<String>();
+                    eprintln!("GOBLIN_SECRET_PROMPT_V1\t{encoded}");
+                    let mut line = String::new();
+                    io::stdin()
+                        .lock()
+                        .take(4098)
+                        .read_line(&mut line)
+                        .map_err(|_| GoblinError::new("G902", "Secret input failed."))?;
+                    if !line.ends_with('\n') {
+                        return Err(GoblinError::new(
+                            "G902",
+                            "Secret input ended or exceeded the limit.",
+                        ));
+                    }
+                    line.pop();
+                    if line.ends_with('\r') {
+                        line.pop();
+                    }
+                    line
+                } else {
+                    crate::crypto_cli::hidden_password(prompt).map_err(|_| {
+                        GoblinError::new(
+                            "G902",
+                            "A normal terminal or updated IDE is required for input_secret().",
+                        )
+                    })?
+                }
+            }
+        };
+        if response.is_empty() || response.len() > 4096 || response.contains(['\n', '\r', '\0']) {
+            return Err(GoblinError::new("G902", "Invalid secret input."));
+        }
+        Ok(response)
     }
 
     pub fn evidence_needed(&self) -> bool {

@@ -1,3 +1,86 @@
+# Alpha.43 callable confidential functions (local, unreleased)
+
+Verified locally on 2026-10-31, macOS arm64, retained Rust 1.92.0:
+
+- Staged full regression suite: **593 passed**. A later three-test historical
+  private-keyword suite passed after adding version-aware parsing: **596 distinct
+  Rust tests** covered in total. The affected final-state/loop-budget suites
+  also passed (23 + 4 overlapping tests). Do not add reruns to the distinct count.
+- The **9 private-function integration gates** passed, including interpreted and
+  native execution, runtime secret input without recorded responses, UTF-8 and
+  binary round trips, imported g_func wrappers, wrong-password/no-overwrite
+  refusal, redacted failures, static checks without data I/O, profile exclusion,
+  frozen-source refusal and no automatic scientific artifacts. A final cheap
+  gate also exercised all 1024 allowed secret prompts and the next-call refusal.
+- Standard CLI encryption's existing **11 tests** passed after sharing its
+  implementation with code functions. No new cipher or dependency is introduced.
+- VS Code 0.1.34: **28 passed**, no skipped tests, including the real CLI and
+  mocked masked-prompt transport. JetBrains 0.3.24: **30 passed** and installer
+  build successful. Automated tests do not claim live installed IDE interaction.
+- Python tooling/evidence tests: **17 passed**. Formatting, warning-denying
+  Clippy and optimized engine/Orbit builds passed. Rust and dependency versions
+  are unchanged apart from the application version.
+- The actual retained alpha.42 executable produced a frozen science run and a
+  separate run using GO_PRIVATE/input_secret as old identifiers. Alpha.43
+  verified both original receipts without rewriting them, and executed the
+  unchanged ordinary frozen source successfully. Historical parsers are not
+  enabled for compilation. The original alpha.42 archive hash remains
+  `878fac6e918d04db096b724e7daa5971543389582cfcfb7d90c7a584598efdd1`.
+- An initial private test used unescaped braces in a source literal; it was
+  corrected to use the existing double-brace syntax. Another new history test
+  incorrectly expected a historical bare identifier to be a parse error; the
+  corrected gate confirms it remains an expression, not a private directive.
+  Both failed candidates remain in local validation logs. No production test
+  bypass or reduced encryption work factor was introduced.
+
+Post-packaging validation checks the immutable ZIP, inventory and isolated
+installation, then executes 45 receipt-verified public science examples and
+2 private example executions (interpreted/native, intentionally no receipts).
+Its actual outcome is recorded beside the delivered package. The terminal's
+hidden-TTY prompt remains a user-local acceptance check from alpha.42; masked
+IDE protocol/private stdin transport is tested, not a security certification.
+
+No user-prefix installation, commit, push, public release or Zenodo publication
+is performed by these local checks. Private strings are ordinary values in
+memory; explicitly printing, hardcoding or committing them still exposes them.
+
+## Earlier local stage
+
+# Alpha.42 confidential files and Base64 (local, unreleased)
+
+Verified locally on 2026-10-31, macOS arm64, retained Rust 1.92.0:
+
+- Full locked/offline Rust suite: **584 passed**, no failed results. Formatting,
+  warning-denying Clippy and optimized binaries pass.
+- Encryption gates cover binary/text round trips, independent Go age v1.3.2
+  interoperability in both directions, wrong keys, modified/truncated ciphertext,
+  excessive headers/KDF costs, overwrite/symlink refusal, private output permissions,
+  redacted errors and no scientific run/ledger creation. Base64 includes strict
+  padding, UTF-8, size bounds and interpreted/standalone compiled parity.
+- VS Code: **27 passed** with the actual CLI, plus a later **26-test** UI rerun
+  after trust guards (overlapping suites, not additive). JetBrains: **28 passed**;
+  installer build successful. Automated checks do not claim live IDE interaction.
+- Python packaging/evidence checks: **17 passed**. Separate cube extractor and
+  regional suites: **14 + 5 passed**; both helper Clippy gates pass.
+- Rust age 0.11.5 and the independent Go age 1.3.2 executable mutually decrypt
+  the same public 131098-byte fixture. Original alpha.41 NPZ receipts still verify;
+  old reader-policy freezes explicitly refuse new execution, with verified refusal.
+- RustSec database snapshot `2295466c4e9df26647fd67d8fa1c705ac2fc7f81`:
+  **zero known vulnerability advisories** after targeted dependency repairs;
+  two unmaintained build-dependency warnings remain documented in ENCRYPTION.md.
+  This is not a certification or a guarantee that vulnerabilities do not exist.
+- Private password stdin paths pass. The restricted tool session cannot complete
+  the normal hidden-TTY prompt; this remains a local-terminal acceptance check.
+  No successful masked-prompt test is claimed. Prompt handling uses rpassword.
+- Packaging preserves missing crate license notices from reviewed upstream files,
+  binds them to registry revisions and SHA-256 hashes, and refuses altered evidence.
+
+Post-packaging inventory, isolated installation and example-run checks are recorded
+separately with the delivered package. No user-prefix install, commit, push,
+public release or Zenodo submission is performed in this local stage.
+
+## Earlier local validation records
+
 # Alpha.37 named numerical consistency audit (local, unreleased)
 
 Verified locally on 2026-10-22, macOS arm64, retained Rust 1.92.0:

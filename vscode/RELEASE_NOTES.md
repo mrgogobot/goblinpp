@@ -1,3 +1,15 @@
+## 0.1.34
+
+Alpha.43 callable encryption/decryption: GO_PRIVATE programs run through the
+ordinary Run action with masked input_secret dialogs. Adds encryption, decryption,
+text reading/display completion and help. Secret responses use private stdin,
+without being printed or stored in settings. Existing file menu actions remain.
+Requires alpha.43; updating the plugin does not update the executable.
+
+## 0.1.33
+
+Confidential age file/text commands use masked dialogs and stdin pipes; no secret arguments or scientific receipts. Explicit text previews warn before display. Adds Base64 completion/help. Requires alpha.42.
+
 # 0.1.31 (local, unreleased)
 
 Adds alpha.40 string toolkit and fluid mechanics completion, highlighting and parameter help.

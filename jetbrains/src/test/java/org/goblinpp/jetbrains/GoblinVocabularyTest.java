@@ -21,7 +21,7 @@ final class GoblinVocabularyTest {
 
     @Test
     void textAndFluidCompletionKeepsCriticalContractsVisible() {
-        for (String name : new String[]{"str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"}) {
+        for (String name : new String[]{"str_b64", "str_to_b64", "str_from_b64", "str_upper", "str_lower", "str_bytes_len", "sizeof", "str_compare", "str_to_hex", "str_from_hex", "str_to_octal", "str_from_octal", "str_to_binary", "str_from_binary", "to_base", "from_base", "fluid_density", "fluid_kinematic_viscosity", "fluid_dynamic_viscosity", "fluid_volume_flow", "fluid_flow_speed", "fluid_reynolds", "fluid_dynamic_pressure", "fluid_bernoulli_total_pressure", "fluid_pipe_pressure_drop"}) {
             var entry = GoblinVocabulary.find(name);
             assertNotNull(entry, name);
             assertEquals("function", entry.kind());

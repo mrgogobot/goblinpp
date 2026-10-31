@@ -144,6 +144,17 @@ function runCli(command, target, extra, cwd, label) {
       while ((newline = stderrPending.indexOf("\n")) !== -1) {
         const line = stderrPending.slice(0, newline).replace(/\r$/, "");
         stderrPending = stderrPending.slice(newline + 1);
+        const secretPrompt = core.decodeSecretPromptLine(line);
+        if (secretPrompt !== null) {
+          output.appendLine("Secret input requested (response is not logged).");
+          vscode.window.showInputBox({title: "Goblin++ secret input", prompt: secretPrompt, password: true, ignoreFocusOut: true,
+            validateInput: value => !value || /[\r\n\0]/u.test(value) || Buffer.byteLength(value, "utf8") > 4096 ? "Use 1-4096 UTF-8 bytes, without newline or NUL." : undefined}).then(answer => {
+              if (answer === undefined || !answer || /[\r\n\0]/u.test(answer) || Buffer.byteLength(answer,"utf8")>4096) child.stdin?.end();
+              else { const bytes=Buffer.from(answer+"\n","utf8");child.stdin?.write(bytes,()=>bytes.fill(0)); }
+            },()=>child.stdin?.end());
+          continue;
+        }
+        if (line.startsWith(core.SECRET_PROMPT_PREFIX)) { child.stdin?.end(); output.appendLine("Invalid secret prompt; input closed."); continue; }
         const prompt = core.decodeInputPromptLine(line);
         if (prompt !== null) {
           output.appendLine("Input requested: " + prompt);
@@ -467,7 +478,74 @@ function symbolProvider() {
   };
 }
 
+
+// Confidential commands never use runCli's scientific input protocol or argument logger.
+// Passwords/text travel over a private pipe, not process arguments or an IDE terminal.
+async function confidentialCommand(mode) {
+  if (!ensureTrusted()) return;
+  let input;
+  let text;
+  if (mode === "encryptText") {
+    text = await vscode.window.showInputBox({prompt: "Text to encrypt (hidden; not saved in a .gbl file)", password: true, ignoreFocusOut: true, validateInput: value => Buffer.byteLength(value, "utf8") > 1048576 ? "New text entry is limited to 1 MiB; encrypt a file instead." : undefined});
+    if (text === undefined) return;
+  } else {
+    const chosen = await vscode.window.showOpenDialog({canSelectFiles: true, canSelectFolders: false, canSelectMany: false, title: mode === "decryptFile" ? "Select an age-encrypted file" : "Select a local file"});
+    if (!chosen || !chosen[0]) return;
+    input = chosen[0];
+    if (input.scheme !== "file") { vscode.window.showErrorMessage("Select a local file."); return; }
+  }
+  const reading = mode === "readTextFile";
+  let destination;
+  let password;
+  const encrypt = mode.startsWith("encrypt");
+  if (!reading) {
+    destination = await vscode.window.showSaveDialog({title: "Choose a NEW output file (existing files are refused)", saveLabel: encrypt ? "Encrypt to new file" : "Decrypt to new file"});
+    if (!destination || destination.scheme !== "file") return;
+    password = await vscode.window.showInputBox({prompt: encrypt ? "Long, unique encryption passphrase (minimum 12 UTF-8 bytes)" : "Decryption passphrase", password: true, ignoreFocusOut: true,
+      validateInput: value => /[\r\n\0]/u.test(value) || Buffer.byteLength(value, "utf8") > 4096 || !value || (encrypt && Buffer.byteLength(value, "utf8") < 12) ? "Use a valid passphrase; encryption requires at least 12 UTF-8 bytes." : undefined});
+    if (password === undefined) return;
+    if (encrypt) {
+      const confirmation = await vscode.window.showInputBox({prompt: "Confirm encryption passphrase", password: true, ignoreFocusOut: true});
+      if (confirmation === undefined) return;
+      if (confirmation !== password) { vscode.window.showErrorMessage("Passphrases did not match."); return; }
+    }
+  } else {
+    const answer = await vscode.window.showWarningMessage("Display plaintext in the Goblin++ Output panel? It may remain in IDE logs and screen history.", {modal: true}, "Display text");
+    if (answer !== "Display text") return;
+  }
+  const cwd = workspaceRootFor(input) || (input ? path.dirname(input.fsPath) : process.cwd());
+  const args = reading ? ["read-file", input.fsPath] : [encrypt ? "encrypt" : "decrypt", "--key-stdin", "--output", destination.fsPath,
+    ...(input ? ["--input", input.fsPath] : ["--text-stdin"])];
+  await new Promise(resolve => {
+    const child = childProcess.spawn(executableFor(cwd), args, {cwd, shell: false, windowsHide: true});
+    let seen = 0;
+    let failed = false;
+    output.appendLine(`\n=== Goblin++ ${reading ? "explicit text preview" : "confidential file operation"} ===`);
+    output.show(true);
+    const receive = chunk => {
+      seen += chunk.length;
+      if (seen > 8 * 1024 * 1024) { failed = true; child.kill(); return; }
+      output.append(chunk.toString());
+    };
+    child.stdout.on("data", receive);
+    child.stderr.on("data", receive);
+    child.on("error", () => { failed = true; vscode.window.showErrorMessage("Goblin++ could not start. Check the configured executable."); resolve(); });
+    child.stdin.on("error", () => {}); // An authentication/validation failure can close stdin early.
+    const payload = reading ? Buffer.alloc(0) : Buffer.from(password + "\n" + (text === undefined ? "" : text), "utf8");
+    password = undefined; text = undefined;
+    child.stdin.end(payload, () => payload.fill(0));
+    child.on("close", code => {
+      if (!failed && code === 0) vscode.window.showInformationMessage(reading ? "Goblin++ text preview completed." : "Goblin++ confidential file operation completed. Original files remain unchanged.");
+      else vscode.window.showErrorMessage("Goblin++ file operation did not complete. See its redacted diagnostic.");
+      resolve();
+    });
+  });
+}
+
 function activate(context) {
+  for (const mode of ["encryptFile", "encryptText", "decryptFile", "readTextFile"]) {
+    registerCommand(context, "goblinpp." + mode, () => confidentialCommand(mode));
+  }
   output = vscode.window.createOutputChannel("Goblin++");
   status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   status.command = "goblinpp.statusFile";

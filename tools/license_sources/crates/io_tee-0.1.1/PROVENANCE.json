@@ -1,0 +1,23 @@
+{
+  "crate": "io_tee",
+  "version": "0.1.1",
+  "declared_license": "MIT OR Apache-2.0",
+  "upstream_repository": "https://github.com/TheOnlyMrCat/io_tee",
+  "upstream_commit_from_crate_vcs": "8a7adecebf3429cbc58a0368751d1851dfaf58ed",
+  "files": [
+    {
+      "file": "NOTICE-upstream-README.md",
+      "url": "https://raw.githubusercontent.com/TheOnlyMrCat/io_tee/8a7adecebf3429cbc58a0368751d1851dfaf58ed/README.md",
+      "sha256": "0ba20a4b5d8188a85014c5f6d52b5407aec2077986c05f6ba686f9899b767b95",
+      "upstream_sha256": "0ba20a4b5d8188a85014c5f6d52b5407aec2077986c05f6ba686f9899b767b95",
+      "extraction": "Verbatim upstream file"
+    },
+    {
+      "file": "LICENSE-APACHE",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+      "extraction": "Standard Apache-2.0 text, selected from the upstream README dual-license offer; no invented copyright holder"
+    }
+  ],
+  "purpose": "Preserved license terms omitted from registry top level; not executable code."
+}

@@ -1,0 +1,24 @@
+{
+  "crate": "intl_pluralrules",
+  "version": "7.0.2",
+  "declared_license": "Apache-2.0/MIT",
+  "upstream_repository": "https://github.com/zbraniecki/pluralrules",
+  "upstream_commit_from_crate_vcs": "d0715d5b7cca72e228d6e6c4de154bd30dfdd06a",
+  "files": [
+    {
+      "file": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-MIT",
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "upstream_sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "extraction": "Verbatim upstream file"
+    },
+    {
+      "file": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-APACHE",
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "upstream_sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "extraction": "Verbatim upstream file"
+    }
+  ],
+  "purpose": "Preserved license terms omitted from registry top level; not executable code."
+}

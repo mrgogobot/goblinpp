@@ -1,3 +1,13 @@
+# Alpha.42 confidential-command boundary
+
+Dedicated `encrypt`/`decrypt` commands now protect explicit files using standard
+age encryption, separately from scientific receipts. Ordinary runs, Base64,
+`GO_PARANOID` and `COMPLETELY_MAD` still preserve plaintext evidence. Literal
+`--key` and literal plaintext can leak through shell/process history; default
+hidden entry and IDE private pipes avoid putting secrets in arguments.
+Read [File protection and its limits](ENCRYPTION.md) before using real secrets.
+This local alpha is not independently security certified.
+
 # Security and trust boundaries
 
 ## Explicit public HTTPS acquisition (local alpha.36 candidate)

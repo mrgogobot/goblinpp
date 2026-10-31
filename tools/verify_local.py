@@ -61,7 +61,10 @@ def main() -> None:
         assert subprocess.check_output([str(orbit_binary), "--version"], text=True).strip() == f"goblin-orbit {version}"
         subprocess.run(["python3", str(root / "tools/verify_orbit_local.py"),
                         "--goblinpp", str(binary), "--orbit", str(orbit_binary)], check=True)
-        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics", "scientific_readers"]:
+        private_check = root / "tools/verify_private_local.py"
+        if private_check.is_file():
+            subprocess.run(["python3", str(private_check), "--goblinpp", str(binary)], check=True)
+        for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics", "scientific_readers", "base64_text"]:
             rng_evidence = None
             parity_evidence = None
             for extra in [[], ["--compile"]]:
@@ -99,6 +102,9 @@ def main() -> None:
                 if parity_evidence is not None:
                     assert exact_evidence == parity_evidence, example
                 parity_evidence = exact_evidence
+                if example == "base64_text":
+                    assert "Base64 = SGVsbG8sIM+A" in run.stdout
+                    assert "Restored = Hello, π" in run.stdout
                 if example == "text_toolkit":
                     assert "characters = 5; UTF-8 bytes = 6; sizeof text = 6" in run.stdout
                     assert "hex text = 41cf80; restored = Aπ" in run.stdout
