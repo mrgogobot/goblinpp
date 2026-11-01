@@ -1,0 +1,17 @@
+GO_PRIVATE
+
+# Optional first argument selects a relay, e.g. 127.0.0.1:7444.
+endpoint = "127.0.0.1:7443"
+if argc > 1 {
+    endpoint = argv(1)
+}
+net_timeout(60000)
+recipient = read_text("network-demo/recipient.txt")
+envelope = e2e_encrypt("Hello from Goblin++!", recipient)
+server = net_connect(endpoint, "localhost", "network-demo/ca.pem", "network-demo/client.pem", "network-demo/client-key.pem")
+net_send(server, envelope)
+reply = net_receive(server)
+# Untrusted replies can contain terminal controls; Base64 is a safe display encoding.
+reply_b64 = str_b64(reply)
+print("Server reply (Base64) = {reply_b64}")
+net_close(server)

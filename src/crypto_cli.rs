@@ -112,7 +112,7 @@ pub fn normalize_shortcuts(args: &mut [String]) {
     }
 }
 
-fn open_regular(path: &Path, limit: u64) -> Result<File> {
+pub(crate) fn open_regular(path: &Path, limit: u64) -> Result<File> {
     if !fs::symlink_metadata(path)
         .map_err(io_error)?
         .file_type()

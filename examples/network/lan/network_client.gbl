@@ -1,0 +1,14 @@
+GO_PRIVATE
+
+# Put this program beside the client's certificates and SERVER_IP.txt.
+server_ip = read_text("SERVER_IP.txt")
+endpoint = server_ip + ":7443"
+net_allow(endpoint)
+net_timeout(60000)
+
+connection = net_connect(endpoint, server_ip, "ca.pem", "client.pem", "client-key.pem")
+net_send(connection, "Hello from the LAN client!")
+reply = net_receive(connection)
+verified = reply == "Hello from the LAN server!"
+print("NETWORK_EXCHANGE_VERIFIED={verified}")
+net_close(connection)

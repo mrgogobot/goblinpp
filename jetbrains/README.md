@@ -162,3 +162,9 @@ it in this official package does not grant third parties permission to brand
 unrelated projects as Goblin++.
 
 Alpha.41: native NPY/NPZ, SciPy sparse NPZ and scalar ECSV reader completion. See [reader guide](../docs/SCIENTIFIC_READERS.md) for explicit limits, ID and unit rules.
+
+### 0.3.25: secure networking
+
+Alpha.44 `net_*` and `e2e_*` functions have completion/highlighting/help. Select
+the alpha.44 executable. Run server/client in separate terminals or IDE windows.
+See the runtime NETWORKING.md for credential setup and trust limits.

@@ -1,6 +1,6 @@
 [package]
 name = "goblinpp"
-version = "0.1.0-alpha.43"
+version = "0.1.0-alpha.45"
 edition = "2024"
 rust-version = "1.92"
 description = "Evidence-first scientific language engine"
@@ -17,6 +17,9 @@ name = "goblin-orbit"
 path = "src/bin/goblin-orbit.rs"
 
 [dependencies]
+base64 = "=0.23.1"
+rcgen = "=0.14.10"
+rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 age = { version = "=0.11.5", default-features = false }
 rpassword = "=7.5.4"
 zeroize = "1"
@@ -33,9 +36,6 @@ ureq = { version = "=3.4.2", default-features = false, features = ["rustls", "pl
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
-[dev-dependencies]
-rcgen = "0.14.5"
-rustls = { version = "0.23.34", default-features = false, features = ["ring", "std", "tls12"] }
 
 [profile.release]
 lto = "thin"

@@ -1,0 +1,14 @@
+GO_PRIVATE
+
+net_timeout(60000)
+server = net_listen("127.0.0.1:7443", "network-demo/server.pem", "network-demo/server-key.pem", "network-demo/ca.pem")
+client = net_accept(server)
+envelope = net_receive(client)
+message = e2e_decrypt(envelope, "network-demo/recipient.key")
+
+# Display only public status. The decrypted message is available to your code.
+characters = len(message)
+print("Recipient decrypted {characters} characters.")
+net_send(client, "Message decrypted by the recipient.")
+net_close(client)
+net_close(server)

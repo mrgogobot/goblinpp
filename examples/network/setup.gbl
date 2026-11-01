@@ -1,0 +1,6 @@
+GO_PRIVATE
+
+# Run once. Creates fresh local TLS certificates and owner-only private keys.
+# Refuses to replace an existing network-demo directory.
+net_demo_credentials("network-demo")
+print("Setup complete. Start server.gbl, then client.gbl in another terminal.")

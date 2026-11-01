@@ -28,7 +28,7 @@ fn recorded_runtime_pins_keyword_additions_without_reinterpreting_old_sources() 
             &json!({"goblin_version":"0.1.0-alpha.43","parser_policy":parser::PARSER_POLICY})
         )
         .unwrap(),
-        SyntaxMode::Current
+        SyntaxMode::PreNetwork
     );
 }
 #[test]

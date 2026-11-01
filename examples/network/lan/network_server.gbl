@@ -1,0 +1,21 @@
+GO_PRIVATE
+
+# Put this program beside the server's certificates and SERVER_IP.txt.
+server_ip = read_text("SERVER_IP.txt")
+endpoint = server_ip + ":7443"
+net_allow(endpoint)
+net_timeout(60000)
+
+listener = net_listen(endpoint, "server.pem", "server-key.pem", "ca.pem")
+connection = net_accept(listener)
+message = net_receive(connection)
+
+if message == "Hello from the LAN client!" {
+    net_send(connection, "Hello from the LAN server!")
+    print("NETWORK_EXCHANGE_VERIFIED=true")
+} else {
+    net_send(connection, "Unexpected message.")
+    print("NETWORK_EXCHANGE_VERIFIED=false")
+}
+net_close(connection)
+net_close(listener)

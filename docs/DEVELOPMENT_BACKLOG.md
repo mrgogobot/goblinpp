@@ -149,6 +149,7 @@ Evidence labels:
 | GBL-026 | Science I/O | Explicit audited downloads of FITS and other scientific files | Local alpha.36 CLI foundation; language builtin and broader protocol/auth stages not implemented |
 | GBL-027 | Scientific storage | Lossless 3-D-aware encoding/compression and decoding | Requested 2026-10-15; codec/container choice and benchmarks queued |
 | GBL-028 | Cube workflow | Download and directly open/process FITS cubes with bounded memory | Requested 2026-10-15; native study extraction exists, language integration queued |
+| GBL-029 | AI / ML | Easy-to-use training, distillation and optimisation library | Requested 2026-11-01; future work only, no backend or API selected |
 
 WB-3 promotes GBL-006/007/008/009/012 to P0; adds ECDF to GBL-007;
 promotes GBL-013 to P1; and retains bootstrap as P1 dependent on GBL-008.
@@ -664,6 +665,61 @@ Suggested implementation order: GBL-026 acquisition/custody foundation, then
 GBL-028 local cube handles/integration, then GBL-027 benchmarked compression
 and indexed decoding. These can be separate milestones; no release number or
 promise to implement all three at once is assigned here.
+
+## AI / ML library (logged 2026-11-01)
+
+### GBL-029 — Training, distillation and optimisation
+
+Requested by Malin Hess for **later implementation**: an easy-to-use Goblin++
+library for data scientists and AI engineers to train models, distil teacher
+models into smaller students, and optimise models/training. Status: **QUEUED,
+NOT IMPLEMENTED**. No backend, release, builtin spelling or GPU guarantee has
+been selected; this note does not authorise immediate implementation.
+
+Proposed scope to specify before coding:
+
+- A small, consistent API for dataset preparation, training, evaluation,
+  checkpoints/resume, teacher/student distillation and optimisation. Distinguish
+  parameter/hyperparameter optimisation from deployment compression such as
+  pruning or quantisation; validate each supported operation separately.
+- Evaluate maintained native backends and safe, documented model/tensor formats.
+  Be explicit about CPU/GPU support, backend/dependency versions and optional
+  accelerators. Never silently substitute a Python execution path or execute
+  arbitrary code while reading a model artifact.
+- Hardware-aware capability checks and resource budgeting: detect supported CPU,
+  RAM, GPU/VRAM (including shared/unified-memory limits), storage and execution
+  backend constraints; consider current availability as well as installed size.
+  Reserve explicit capacity for the OS and other workloads, and respect stricter
+  operator/scheduler limits. These are future library requirements, not current
+  hardware probes or permission to upload system information.
+- Choose the most capable model/configuration **for the declared task within
+  those budgets**, using measured validation/benchmark evidence. Parameter count
+  or device name alone is not a quality measure. Candidate planning may include
+  batch size, context length, precision, gradient accumulation and offloading,
+  but must declare quality/performance tradeoffs and never silently replace a
+  model or change experiment settings. Record the selection and adjustments.
+- Define conservative admission estimates, measured peak-memory checks, runtime
+  budget monitoring and failure/checkpoint/resume behavior. Refuse unsupported
+  or over-budget work instead of relying on an optimistic fit estimate. Separate
+  advisory estimates from actual OS/backend-enforced isolation; hardware checks
+  alone cannot guarantee freedom from OOM, thermal limits or system failure.
+- Record dataset/model hashes, source/provenance identifiers, frozen data splits,
+  preprocessing, configuration, RNG algorithms/seeds, checkpoint lineage,
+  optimisation objectives, resource budgets and resulting artifact hashes.
+  Preserve failed/interrupted runs and distinguish a resumed run from a new one.
+- Keep held-out evaluation separate from fitting and model selection. Define
+  task metrics, baselines and declared numerical tolerances before reporting
+  improvements; a receipt PASS is not a model-quality or generalisation claim.
+- Specify the limits of reproducibility. A seed alone does not guarantee identical
+  results on different devices/backends; report nondeterministic operations and
+  supported guarantees instead of promising bit-identical GPU training.
+- Keep private data, credentials and sensitive model material outside automatic
+  public evidence and AI context. Define compatible audit/private policies rather
+  than weakening existing profiles. Distillation/compression is not encryption
+  or a guarantee that training data cannot be recovered.
+- Include day-one examples, reference fixtures, finite/shape/type checks,
+  malformed-input refusal, measured memory/resource limits and tests in the
+  supported execution engines and IDE workflows before shipping the library.
 
 ## Documentation and outreach notes
 

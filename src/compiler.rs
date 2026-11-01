@@ -202,6 +202,8 @@ fn build_data_program(
     directory.create(&project)?;
     fs::create_dir(project.join("src"))?;
     let modules = [
+        ("networking", include_str!("networking.rs")),
+        ("recipient_crypto", include_str!("recipient_crypto.rs")),
         ("confidential", include_str!("confidential.rs")),
         ("crypto_cli", include_str!("crypto_cli.rs")),
         ("plots", include_str!("plots.rs")),
@@ -781,7 +783,7 @@ fn goblin_main() -> Result<(), String> {{
     Ok(())
 }}
 
-fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN NATIVE ERROR\n\n{{}}", if GOBLIN_PRIVATE {{ "Private execution failed; values and paths omitted. Completed file operations remain completed." }} else {{ &error }}); std::process::exit(1); }} }}
+fn main() {{ if let Err(error) = goblin_main() {{ {data_abort} eprintln!("GOBLIN NATIVE ERROR\n\n{{}}", if GOBLIN_PRIVATE {{ "Private execution failed; values and paths omitted. Check keys, certificates, endpoint permission, timeout and limits. Completed file operations remain completed." }} else {{ &error }}); std::process::exit(1); }} }}
 "#,
         version = crate::VERSION,
         body = body,

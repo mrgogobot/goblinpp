@@ -1,3 +1,84 @@
+# Alpha.45 two-computer LAN starter (local candidate)
+
+The new pair helper was checked for separate role keys and owner-only files,
+no retained CA key, invalid-address/no-overwrite refusal, actual TLS IP matching,
+and rejection of a client certificate acting as a server. Four dedicated LAN
+regression cases pass. A genuine alpha.44 receipt using net_pair_credentials as
+an old user function still verifies under the version-aware parser.
+
+Compiled network_setup/network_server/network_client programs exchange the expected
+greetings using separate role directories. The extracted standalone kit is tested
+again. Both cases use one computer. The optional non-loopback interface test was
+NOT_RUN because no supported active private interface was detected; physical
+TWO_COMPUTER_TEST=NOT_PERFORMED. The included guide defines that user-local check.
+
+The setup computer is trusted and initially creates both private keys; only the
+appropriate role folder should be transferred. This short-lived learning helper
+is not a managed production PKI/CSR/revocation system, and no speed benchmark or
+independent security audit is claimed. Rust remains 1.92.0; dependencies retained.
+
+Current regression, editor, IDE and installed-package results are recorded beside
+the final artifacts in machine-readable local validation files. Earlier candidates
+and logs remain preserved. No private credentials are distributed or committed.
+
+## Previous stage
+
+# Alpha.44 secure networking and recipient messages (local candidate)
+
+Checked on 2026-11-01, macOS arm64, retained Rust 1.92.0. Current results and
+post-package outcomes are retained beside the delivered ZIP in LOCAL_VALIDATION.json;
+reruns are not additional distinct tests.
+
+- Full locked/offline Rust regression: **612 passed**, no failed/ignored tests.
+  The later IDE capability-advertisement test also passed: **613 distinct Rust
+  tests** covered, without adding overlapping reruns to that count.
+  Final affected networking/recipient/history suites and warning-denying Clippy
+  also passed; overlapping reruns are not additional distinct tests. The
+  missing-client-certificate gate was tightened to negotiate the correct ALPN,
+  isolating client authentication from unrelated protocol selection.
+- New networking/recipient gates cover mutual TLS 1.3, wrong/expired/unknown
+  certificates, wrong server name, missing/wrong client identity, TLS-1.2 refusal,
+  absolute stalled-peer deadlines, message framing/UTF-8/size errors, resource
+  budgets, endpoint permissions, key permissions/symlinks/no-overwrite, randomized
+  standard age ciphertext, wrong recipient, corruption/truncation/trailing data,
+  password-envelope/header refusal and static privacy guards.
+- Real interpreted and native Goblin++ clients AND servers exchange recipient
+  messages. A real relay runs from a separate directory without the recipient
+  private key. Private operations create no scientific receipt or ledger.
+- Goblin++ IDE 0.2.2: **19 real frontend/RunStore integration tests** and **3
+  native backend tests** passed. New coverage includes actual interpreted/native
+  networking against independent Node/OpenSSL TLS, recipient encryption,
+  peer-certificate fingerprints, stale-engine refusal and private-key exclusion
+  from automatic AI context. This does not claim a live installed GUI test.
+  VS Code **29** and JetBrains **30** tests passed; both updated installers built.
+- Python tooling/evidence checks: **18 passed**. Separate cube helper suites **14 + 5** passed with the updated nested lockfile.
+  Historical alpha.43 receipts using a now-reserved net_send user function still
+  verify with version-aware parsing; current execution refuses builtin collisions.
+- Freshly retrieved RustSec snapshot `2295466c4e9df26647fd67d8fa1c705ac2fc7f81`:
+  zero known vulnerability advisories; existing unmaintained build dependencies
+  basic-toml (RUSTSEC-2026-0374) and proc-macro-error2 (RUSTSEC-2026-0173) remain
+  reported. No cryptographic/security certification is implied. Existing locked
+  dependency versions are retained; rcgen/Rustls are promoted to runtime use and
+  the existing locked Base64 crate is used directly. Current binary notices cover
+  179 external package sets.
+- Independent Python/OpenSSL TLS peers test both directions against Goblin++;
+  the package verifier repeats those checks against the isolated installed
+  interpreter/native clients and servers. This does not delegate application
+  networking or encryption to Python; it is an external interoperability check.
+- Initial validation scaffolding needed Quantity scalar unwrapping, a historical
+  parser expectation update, revised editor completion counts and the correct
+  20-character example expectation. The build selected the existing native JDK21
+  after an old x86 Java and JDK25 were unsuitable. Failed candidates/logs remain
+  preserved; no production security gate was bypassed.
+
+The runtime remains an alpha. age message encryption authenticates ciphertext
+integrity, not sender identity or freshness; no message signatures, replay
+registry or forward-secrecy ratchet is claimed. Remote authorization/revocation
+service policy remains an application/deployment responsibility. Networking
+requires GO_PRIVATE and cannot weaken scientific evidence profiles.
+
+## Previous stage
+
 # Alpha.43 callable confidential functions (local, unreleased)
 
 Verified locally on 2026-10-31, macOS arm64, retained Rust 1.92.0:

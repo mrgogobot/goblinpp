@@ -1,0 +1,10 @@
+GO_PRIVATE
+
+connection = net_connect("127.0.0.1:7443", "localhost", "network-demo/ca.pem", "network-demo/client.pem", "network-demo/client-key.pem")
+net_send(connection, "Hello from the client!")
+
+reply = net_receive(connection)
+server_said_hello = reply == "Hello from the server!"
+print("Server said hello = {server_said_hello}")
+
+net_close(connection)

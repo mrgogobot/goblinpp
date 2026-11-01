@@ -1,0 +1,8 @@
+GO_PRIVATE
+
+# Fresh learning credentials; refuses existing paths. Never share the private keys.
+net_demo_credentials("network-demo")
+recipient = e2e_keygen("network-demo/recipient.key", "network-demo/recipient.txt")
+print("Local TLS credentials created in network-demo/.")
+print("Recipient public key = {recipient}")
+print("Start network_server.gbl, then network_client.gbl in another terminal.")

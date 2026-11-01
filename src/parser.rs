@@ -33,6 +33,10 @@ pub enum SyntaxMode {
     Current,
     /// Alpha.39-42 share the final-state parser policy, before private keywords.
     PrePrivate,
+    /// Alpha.43 private functions, before the networking/recipient additions.
+    PreNetwork,
+    /// Alpha.44 before LAN pair provisioning.
+    PreLan,
     PreMad,
     CompoundUnitsNoLoopBudget,
     LegacyQuantity,
@@ -51,6 +55,10 @@ pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
             // Never reinterpret a historical GO_PRIVATE identifier as a directive.
             Ok(if alpha.is_some_and(|v| (39..=42).contains(&v)) {
                 SyntaxMode::PrePrivate
+            } else if alpha == Some(43) {
+                SyntaxMode::PreNetwork
+            } else if alpha == Some(44) {
+                SyntaxMode::PreLan
             } else {
                 SyntaxMode::Current
             })
@@ -491,15 +499,33 @@ impl Parser {
         &self.tokens[self.cursor]
     }
     fn name_reserved(&self, name: &str) -> bool {
-        if name == "GO_PRIVATE" || crate::confidential::is_function(name) {
+        if name == "net_pair_credentials" {
             self.mode == SyntaxMode::Current
+        } else if crate::networking::is_function(name) || crate::recipient_crypto::is_function(name)
+        {
+            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreLan)
+        } else if name == "GO_PRIVATE" || crate::confidential::is_function(name) {
+            matches!(
+                self.mode,
+                SyntaxMode::Current | SyntaxMode::PreLan | SyntaxMode::PreNetwork
+            )
         } else if name == "GO_LOOP_BUDGET" {
             matches!(
                 self.mode,
-                SyntaxMode::Current | SyntaxMode::PrePrivate | SyntaxMode::PreMad
+                SyntaxMode::Current
+                    | SyntaxMode::PreLan
+                    | SyntaxMode::PreNetwork
+                    | SyntaxMode::PrePrivate
+                    | SyntaxMode::PreMad
             )
         } else if name == "COMPLETELY_MAD" {
-            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PrePrivate)
+            matches!(
+                self.mode,
+                SyntaxMode::Current
+                    | SyntaxMode::PreLan
+                    | SyntaxMode::PreNetwork
+                    | SyntaxMode::PrePrivate
+            )
         } else {
             reserved_function_name(name)
         }
@@ -583,7 +609,11 @@ impl Parser {
     fn statement(&mut self, in_block: bool) -> Result<Stmt> {
         if matches!(
             self.mode,
-            SyntaxMode::Current | SyntaxMode::PrePrivate | SyntaxMode::PreMad
+            SyntaxMode::Current
+                | SyntaxMode::PreLan
+                | SyntaxMode::PreNetwork
+                | SyntaxMode::PrePrivate
+                | SyntaxMode::PreMad
         ) && self.ident_is("GO_LOOP_BUDGET")
         {
             if in_block {
@@ -834,8 +864,13 @@ impl Parser {
             validate_numeric_audit_path(&path)?;
             return Ok(Stmt::NumericAudit(path));
         }
-        if matches!(self.mode, SyntaxMode::Current | SyntaxMode::PrePrivate)
-            && self.ident_is("COMPLETELY_MAD")
+        if matches!(
+            self.mode,
+            SyntaxMode::Current
+                | SyntaxMode::PreLan
+                | SyntaxMode::PreNetwork
+                | SyntaxMode::PrePrivate
+        ) && self.ident_is("COMPLETELY_MAD")
         {
             if in_block || self.in_function {
                 return Err(GoblinError::parse(
@@ -845,7 +880,11 @@ impl Parser {
             self.advance();
             return Ok(Stmt::Directive("COMPLETELY_MAD".into()));
         }
-        if self.mode == SyntaxMode::Current && self.ident_is("GO_PRIVATE") {
+        if matches!(
+            self.mode,
+            SyntaxMode::Current | SyntaxMode::PreLan | SyntaxMode::PreNetwork
+        ) && self.ident_is("GO_PRIVATE")
+        {
             if in_block || self.in_function {
                 return Err(GoblinError::parse(
                     "GO_PRIVATE must be a main-source top-level directive.",

@@ -1,0 +1,16 @@
+GO_PRIVATE
+
+# The relay forwards ciphertext. It never reads recipient.key.
+# On a real relay machine, provision only its own TLS identity and public CA.
+net_timeout(60000)
+listener = net_listen("127.0.0.1:7444", "network-demo/server.pem", "network-demo/server-key.pem", "network-demo/ca.pem")
+client = net_accept(listener)
+recipient_server = net_connect("127.0.0.1:7443", "localhost", "network-demo/ca.pem", "network-demo/client.pem", "network-demo/client-key.pem")
+envelope = net_receive(client)
+net_send(recipient_server, envelope)
+reply = net_receive(recipient_server)
+net_send(client, reply)
+net_close(recipient_server)
+net_close(client)
+net_close(listener)
+print("Encrypted message forwarded without a recipient private key.")

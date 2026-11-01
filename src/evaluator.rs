@@ -155,6 +155,7 @@ pub struct Evaluation {
     pub constants_used: BTreeMap<String, ConstantUse>,
     pub paranoid: bool,
     pub private: bool,
+    pub network: crate::networking::Network,
     pub interaction: Interaction,
     pub clock: crate::clock::Clock,
     pub randomness: crate::random::Randomness,
@@ -193,6 +194,7 @@ impl Evaluation {
             constants_used: BTreeMap::new(),
             paranoid: false,
             private: false,
+            network: crate::networking::Network::default(),
             interaction: Interaction::default(),
             clock: crate::clock::Clock::default(),
             randomness: crate::random::Randomness::default(),
@@ -706,6 +708,9 @@ impl Evaluation {
                     "G902",
                     "Confidential functions require GO_PRIVATE.",
                 ));
+            }
+            if crate::networking::is_function(name) {
+                return self.network.call(&self.base_dir, name, args);
             }
             if name == "input_secret" {
                 crate::confidential::arity(name, args.len())?;

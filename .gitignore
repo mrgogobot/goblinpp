@@ -21,3 +21,11 @@ goblin-native-outputs-*/
 /jetbrains/.idea/
 **/__pycache__/
 *.pyc
+
+# Locally generated TLS and recipient secrets for networking examples.
+/examples/network-demo/
+
+/examples/network/network-demo/
+
+# Per-computer LAN credentials are private and never belong in source control.
+**/lan-pair/

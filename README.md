@@ -1,3 +1,35 @@
+# Alpha.45 local — two-computer LAN starter
+
+Adds `net_pair_credentials(new_directory, server_ipv4)` for a dedicated 90-day
+TLS pair with the server's actual private IPv4 SAN, separate role credentials and
+no retained CA signing key. The setup computer is trusted and initially sees
+both keys. A production PKI/CSR/revocation workflow remains separate.
+
+Start with [the LAN quickstart](examples/network/lan/QUICKSTART.md). Run the
+source examples directly; separate compiled client/server programs are optional.
+The bundle includes the runtime, sources and Linux build instructions. Existing
+networking, recipient encryption and scientific workflows remain available.
+Rust stays 1.92.0; dependency versions are retained. This is not a throughput
+benchmark or independently audited production service framework.
+
+Simple client/server examples: start with [NETWORK_EXAMPLES.md](NETWORK_EXAMPLES.md)
+and the clearly named `examples/network/` folder.
+
+# Alpha.44 local — TLS networking and recipient encryption
+
+Adds callable `net_*` client/server functions over mutually authenticated TLS 1.3,
+plus age X25519 `e2e_*` recipient-message encryption. Localhost is allowed by default;
+other numeric endpoints require explicit permission. Messages, credentials and
+operation durations are bounded. Functions require `GO_PRIVATE` to keep plaintext
+and keys outside scientific receipts. These are tested alpha facilities, not an
+independent security certification or a complete authenticated messenger.
+
+Start with [the networking guide](docs/NETWORKING.md) and
+`examples/network_setup.gbl`, `network_server.gbl`, `network_client.gbl` and
+`network_relay.gbl`. Both interpreter/native execution and IDE Run are supported.
+VS Code 0.1.35 / JetBrains 0.3.25 include completion/help. Rust stays 1.92.0;
+existing locked dependency versions are retained.
+
 # Alpha.43 local: callable encryption/decryption
 
 Use the file-protection functions directly from `.gbl` code with `GO_PRIVATE`:

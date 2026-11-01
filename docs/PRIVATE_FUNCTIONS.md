@@ -205,3 +205,10 @@ recorded runtime version together with their parser policy. An old variable or
 user function named GO_PRIVATE/input_secret/encrypt_text is not reinterpreted
 as a new directive or builtin. Historical parsing is verification-only; review
 and explicitly rename conflicting identifiers before new execution.
+
+## Alpha.44 networking
+
+`GO_PRIVATE` also supports bounded TLS 1.3 client/server networking and standard
+age X25519 recipient-message encryption. See [NETWORKING.md](NETWORKING.md) for
+functions, examples, limits and the distinction between transport encryption and
+recipient-only messages.

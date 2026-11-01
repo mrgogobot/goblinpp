@@ -12,7 +12,7 @@ use std::{
 pub fn failure() -> GoblinError {
     GoblinError::new(
         "G902",
-        "Private execution failed. Secret-bearing values and paths are omitted. Check argument types, passphrase, input integrity, output existence and documented limits. Previously completed file operations remain completed.",
+        "Private execution failed. Secret-bearing values and paths are omitted. Check argument types, passphrase, input integrity, output existence, TLS certificates, explicit endpoint permission, timeout and documented limits. Previously completed file operations remain completed.",
     )
 }
 pub fn load(source: &Path) -> Result<ParsedSource> {

@@ -1,0 +1,8 @@
+GO_PRIVATE
+
+# Run on one trusted setup computer. Never copy the whole lan-pair folder to a peer.
+server_ip = input("Server LAN IPv4 address (for example 192.168.1.42): ")
+net_pair_credentials("lan-pair", server_ip)
+print("Created lan-pair/server and lan-pair/client with separate identities.")
+print("Keep server credentials on the server; transfer only the client folder securely.")
+print("See README.md for copying the programs and checking CA fingerprints.")

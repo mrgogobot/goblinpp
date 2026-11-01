@@ -64,3 +64,7 @@ Freeze commits exact source bytes. The extension asks for modal confirmation. A 
 ## Troubleshooting
 
 If Goblin++ cannot start, set `goblinpp.executablePath` to the absolute Rust binary and run `goblin++ --version` in a terminal. If highlighting is missing, confirm the file ends in `.gbl` or select **Goblin++** from VS Code's language picker. If a preview passes but a run refuses, the preview intentionally did not check freeze or custody state; inspect the complete run output.
+
+Alpha.44: select the matching runtime and open `network_setup.gbl`, then run the
+server and client in separate terminals/windows. `net_*` and `e2e_*` completion
+requires VS Code 0.1.35; private networking creates no scientific receipts.

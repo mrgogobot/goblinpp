@@ -5,22 +5,25 @@ use crate::evaluator::Value;
 use std::path::{Path, PathBuf};
 
 pub fn is_function(name: &str) -> bool {
-    matches!(
-        name,
-        "input_secret"
-            | "encrypt_text"
-            | "encrypt_file"
-            | "decrypt_file"
-            | "decrypt_text"
-            | "read_text"
-            | "display_file"
-    )
+    crate::networking::is_function(name)
+        || crate::recipient_crypto::is_function(name)
+        || matches!(
+            name,
+            "input_secret"
+                | "encrypt_text"
+                | "encrypt_file"
+                | "decrypt_file"
+                | "decrypt_text"
+                | "read_text"
+                | "display_file"
+        )
 }
 pub fn is_effect(name: &str) -> bool {
-    matches!(
-        name,
-        "encrypt_text" | "encrypt_file" | "decrypt_file" | "display_file"
-    )
+    crate::networking::is_effect(name)
+        || matches!(
+            name,
+            "encrypt_text" | "encrypt_file" | "decrypt_file" | "display_file"
+        )
 }
 pub fn private(program: &Program) -> bool {
     program
@@ -41,6 +44,12 @@ pub fn declared(text: &str) -> bool {
     })
 }
 pub fn arity(name: &str, n: usize) -> Result<()> {
+    if crate::networking::is_function(name) {
+        return crate::networking::arity(name, n);
+    }
+    if crate::recipient_crypto::is_function(name) {
+        return crate::recipient_crypto::arity(name, n);
+    }
     let valid = match name {
         "input_secret" => n <= 1,
         "encrypt_text" | "encrypt_file" | "decrypt_file" => n == 3,
@@ -233,6 +242,22 @@ pub fn call(base: &Path, name: &str, args: &[Value]) -> Result<Value> {
         .iter()
         .map(|v| v.text(name))
         .collect::<Result<Vec<_>>>()?;
+    if crate::recipient_crypto::is_function(name) {
+        let result = match name {
+            "e2e_keygen" => {
+                let public = crate::recipient_crypto::keygen(&path(base, texts[0]))?;
+                if let Some(output) = texts.get(1) {
+                    crate::recipient_crypto::save_new(&path(base, output), public.as_bytes())?;
+                }
+                Ok(public)
+            }
+            "e2e_public_key" => crate::recipient_crypto::public_key(&path(base, texts[0])),
+            "e2e_encrypt" => crate::recipient_crypto::encrypt(texts[0], texts[1]),
+            "e2e_decrypt" => crate::recipient_crypto::decrypt(texts[0], &path(base, texts[1])),
+            _ => unreachable!(),
+        };
+        return result.map(Value::Text);
+    }
     let input = path(base, texts[0]);
     match name {
         "encrypt_text" => {

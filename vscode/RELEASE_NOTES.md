@@ -1,3 +1,12 @@
+## 0.1.36
+
+Alpha.45 LAN pair setup completion and help; select the matching runtime.
+
+## 0.1.35
+
+Alpha.44 networking and age recipient-message completion, highlighting and help.
+Select an alpha.44 runtime. Existing private masked prompts remain unchanged.
+
 ## 0.1.34
 
 Alpha.43 callable encryption/decryption: GO_PRIVATE programs run through the

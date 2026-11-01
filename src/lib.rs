@@ -56,3 +56,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod confidential;
 pub mod private_launcher;
+
+pub mod networking;
+pub mod recipient_crypto;

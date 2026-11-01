@@ -1,6 +1,6 @@
 # Third-party notices
 
-This notice bundle accompanies the Goblin++ 0.1.0-alpha.43 macOS arm64 binary.
+This notice bundle accompanies the Goblin++ 0.1.0-alpha.45 macOS arm64 binary.
 It was collected offline from the exact `Cargo.lock` normal-dependency tree
 for `aarch64-apple-darwin` and from the active Rust standard-library documentation.
 Crates omitting top-level notices use reviewed upstream evidence under
@@ -8,7 +8,7 @@ Crates omitting top-level notices use reviewed upstream evidence under
 It records upstream terms; it does not replace them or constitute legal advice.
 Goblin++ itself remains licensed as stated in `LICENSE` and `LICENSE-DOCS.md`.
 
-External Rust packages in this binary dependency tree: **171**.
+External Rust packages in this binary dependency tree: **179**.
 
 | Package | Declared license expression | Preserved files |
 | --- | --- | --- |
@@ -49,6 +49,7 @@ External Rust packages in this binary dependency tree: **171**.
 | `crypto-common` `0.1.7` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/crypto-common-0.1.7/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/crypto-common-0.1.7/LICENSE-MIT) |
 | `crypto-common` `0.2.2` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/crypto-common-0.2.2/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/crypto-common-0.2.2/LICENSE-MIT) |
 | `curve25519-dalek` `4.1.3` | `BSD-3-Clause` | [`LICENSE`](third-party/licenses/crates/curve25519-dalek-4.1.3/LICENSE) |
+| `deranged` `0.5.9` | `MIT OR Apache-2.0` | [`LICENSE-Apache`](third-party/licenses/crates/deranged-0.5.9/LICENSE-Apache), [`LICENSE-MIT`](third-party/licenses/crates/deranged-0.5.9/LICENSE-MIT) |
 | `digest` `0.10.7` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/digest-0.10.7/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/digest-0.10.7/LICENSE-MIT) |
 | `digest` `0.11.3` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/digest-0.11.3/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/digest-0.11.3/LICENSE-MIT) |
 | `displaydoc` `0.2.7` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/displaydoc-0.2.7/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/displaydoc-0.2.7/LICENSE-MIT) |
@@ -102,17 +103,20 @@ External Rust packages in this binary dependency tree: **171**.
 | `minimal-lexical` `0.2.1` | `MIT/Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/minimal-lexical-0.2.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/minimal-lexical-0.2.1/LICENSE-MIT), [`LICENSE.md`](third-party/licenses/crates/minimal-lexical-0.2.1/LICENSE.md) |
 | `miniz_oxide` `0.9.1` | `MIT OR Zlib OR Apache-2.0` | [`LICENSE`](third-party/licenses/crates/miniz_oxide-0.9.1/LICENSE), [`LICENSE-APACHE.md`](third-party/licenses/crates/miniz_oxide-0.9.1/LICENSE-APACHE.md), [`LICENSE-MIT.md`](third-party/licenses/crates/miniz_oxide-0.9.1/LICENSE-MIT.md), [`LICENSE-ZLIB.md`](third-party/licenses/crates/miniz_oxide-0.9.1/LICENSE-ZLIB.md) |
 | `nom` `7.1.3` | `MIT` | [`LICENSE`](third-party/licenses/crates/nom-7.1.3/LICENSE) |
+| `num-conv` `0.2.2` | `MIT OR Apache-2.0` | [`LICENSE-Apache`](third-party/licenses/crates/num-conv-0.2.2/LICENSE-Apache), [`LICENSE-MIT`](third-party/licenses/crates/num-conv-0.2.2/LICENSE-MIT) |
 | `num-traits` `0.2.19` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/num-traits-0.2.19/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/num-traits-0.2.19/LICENSE-MIT) |
 | `once_cell` `1.21.4` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/once_cell-1.21.4/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/once_cell-1.21.4/LICENSE-MIT) |
 | `opaque-debug` `0.3.1` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/opaque-debug-0.3.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/opaque-debug-0.3.1/LICENSE-MIT) |
 | `parking_lot` `0.12.5` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/parking_lot-0.12.5/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/parking_lot-0.12.5/LICENSE-MIT) |
 | `parking_lot_core` `0.9.12` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/parking_lot_core-0.9.12/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/parking_lot_core-0.9.12/LICENSE-MIT) |
 | `pbkdf2` `0.12.2` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/pbkdf2-0.12.2/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/pbkdf2-0.12.2/LICENSE-MIT) |
+| `pem` `4.0.0` | `MIT` | [`LICENSE.md`](third-party/licenses/crates/pem-4.0.0/LICENSE.md) |
 | `percent-encoding` `2.3.2` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/percent-encoding-2.3.2/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/percent-encoding-2.3.2/LICENSE-MIT) |
 | `pin-project` `1.1.13` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/pin-project-1.1.13/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/pin-project-1.1.13/LICENSE-MIT) |
 | `pin-project-internal` `1.1.13` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/pin-project-internal-1.1.13/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/pin-project-internal-1.1.13/LICENSE-MIT) |
 | `pin-project-lite` `0.2.17` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/pin-project-lite-0.2.17/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/pin-project-lite-0.2.17/LICENSE-MIT) |
 | `poly1305` `0.8.0` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/poly1305-0.8.0/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/poly1305-0.8.0/LICENSE-MIT) |
+| `powerfmt` `0.2.1` | `MIT OR Apache-2.0` | [`LICENSE-Apache`](third-party/licenses/crates/powerfmt-0.2.1/LICENSE-Apache), [`LICENSE-MIT`](third-party/licenses/crates/powerfmt-0.2.1/LICENSE-MIT) |
 | `ppv-lite86` `0.2.21` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/ppv-lite86-0.2.21/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/ppv-lite86-0.2.21/LICENSE-MIT) |
 | `proc-macro-error-attr2` `2.0.0` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/proc-macro-error-attr2-2.0.0/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/proc-macro-error-attr2-2.0.0/LICENSE-MIT) |
 | `proc-macro-error2` `2.0.1` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/proc-macro-error2-2.0.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/proc-macro-error2-2.0.1/LICENSE-MIT) |
@@ -121,6 +125,7 @@ External Rust packages in this binary dependency tree: **171**.
 | `rand` `0.8.8` | `MIT OR Apache-2.0` | [`COPYRIGHT`](third-party/licenses/crates/rand-0.8.8/COPYRIGHT), [`LICENSE-APACHE`](third-party/licenses/crates/rand-0.8.8/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/rand-0.8.8/LICENSE-MIT) |
 | `rand_chacha` `0.3.1` | `MIT OR Apache-2.0` | [`COPYRIGHT`](third-party/licenses/crates/rand_chacha-0.3.1/COPYRIGHT), [`LICENSE-APACHE`](third-party/licenses/crates/rand_chacha-0.3.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/rand_chacha-0.3.1/LICENSE-MIT) |
 | `rand_core` `0.6.4` | `MIT OR Apache-2.0` | [`COPYRIGHT`](third-party/licenses/crates/rand_core-0.6.4/COPYRIGHT), [`LICENSE-APACHE`](third-party/licenses/crates/rand_core-0.6.4/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/rand_core-0.6.4/LICENSE-MIT) |
+| `rcgen` `0.14.10` | `MIT OR Apache-2.0` | [`LICENSE`](third-party/licenses/crates/rcgen-0.14.10/LICENSE) |
 | `ring` `0.17.14` | `Apache-2.0 AND ISC` | [`LICENSE`](third-party/licenses/crates/ring-0.17.14/LICENSE), [`LICENSE-BoringSSL`](third-party/licenses/crates/ring-0.17.14/LICENSE-BoringSSL), [`LICENSE-other-bits`](third-party/licenses/crates/ring-0.17.14/LICENSE-other-bits) |
 | `rpassword` `7.5.4` | `Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/rpassword-7.5.4/LICENSE-APACHE) |
 | `rtoolbox` `0.0.6` | `Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/rtoolbox-0.0.6/LICENSE-APACHE) |
@@ -160,6 +165,8 @@ External Rust packages in this binary dependency tree: **171**.
 | `tempfile` `3.27.0` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/tempfile-3.27.0/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/tempfile-3.27.0/LICENSE-MIT) |
 | `thiserror` `1.0.69` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/thiserror-1.0.69/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/thiserror-1.0.69/LICENSE-MIT) |
 | `thiserror-impl` `1.0.69` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/thiserror-impl-1.0.69/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/thiserror-impl-1.0.69/LICENSE-MIT) |
+| `time` `0.3.55` | `MIT OR Apache-2.0` | [`LICENSE-Apache`](third-party/licenses/crates/time-0.3.55/LICENSE-Apache), [`LICENSE-MIT`](third-party/licenses/crates/time-0.3.55/LICENSE-MIT) |
+| `time-core` `0.1.9` | `MIT OR Apache-2.0` | [`LICENSE-Apache`](third-party/licenses/crates/time-core-0.1.9/LICENSE-Apache), [`LICENSE-MIT`](third-party/licenses/crates/time-core-0.1.9/LICENSE-MIT) |
 | `tinystr` `0.8.5` | `Unicode-3.0` | [`LICENSE`](third-party/licenses/crates/tinystr-0.8.5/LICENSE) |
 | `toml` `0.5.11` | `MIT/Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/toml-0.5.11/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/toml-0.5.11/LICENSE-MIT) |
 | `type-map` `0.5.1` | `MIT/Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/type-map-0.5.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/type-map-0.5.1/LICENSE-MIT) |
@@ -178,6 +185,7 @@ External Rust packages in this binary dependency tree: **171**.
 | `walkdir` `2.5.0` | `Unlicense/MIT` | [`COPYING`](third-party/licenses/crates/walkdir-2.5.0/COPYING), [`LICENSE-MIT`](third-party/licenses/crates/walkdir-2.5.0/LICENSE-MIT), [`UNLICENSE`](third-party/licenses/crates/walkdir-2.5.0/UNLICENSE) |
 | `webpki-roots` `1.0.10` | `CDLA-Permissive-2.0` | [`LICENSE`](third-party/licenses/crates/webpki-roots-1.0.10/LICENSE) |
 | `x25519-dalek` `2.0.1` | `BSD-3-Clause` | [`LICENSE`](third-party/licenses/crates/x25519-dalek-2.0.1/LICENSE) |
+| `yasna` `0.6.0` | `MIT OR Apache-2.0` | [`LICENSE-APACHE`](third-party/licenses/crates/yasna-0.6.0/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/yasna-0.6.0/LICENSE-MIT) |
 | `zerocopy` `0.8.63` | `BSD-2-Clause OR Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/zerocopy-0.8.63/LICENSE-APACHE), [`LICENSE-BSD`](third-party/licenses/crates/zerocopy-0.8.63/LICENSE-BSD), [`LICENSE-MIT`](third-party/licenses/crates/zerocopy-0.8.63/LICENSE-MIT) |
 | `zeroize` `1.9.1` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/zeroize-1.9.1/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/zeroize-1.9.1/LICENSE-MIT) |
 | `zeroize_derive` `1.5.0` | `Apache-2.0 OR MIT` | [`LICENSE-APACHE`](third-party/licenses/crates/zeroize_derive-1.5.0/LICENSE-APACHE), [`LICENSE-MIT`](third-party/licenses/crates/zeroize_derive-1.5.0/LICENSE-MIT) |

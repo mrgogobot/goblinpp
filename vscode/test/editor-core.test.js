@@ -222,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 337);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 337);
+  assert.equal(entries.length, 353);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 353);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -400,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.34");
+  assert.equal(manifest.version, "0.1.36");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -482,3 +482,13 @@ test("private script completion and secret prompt decoding state their boundarie
   assert.equal(core.decodeSecretPromptLine("GOBLIN_SECRET_PROMPT_V1\t506173737068726173653a20"),"Passphrase: ");
   for(const bad of ["GOBLIN_SECRET_PROMPT_V1\tff","GOBLIN_SECRET_PROMPT_V1\t0a","GOBLIN_SECRET_PROMPT_V1\tabc","GOBLIN_SECRET_PROMPT_V1\t"+"61".repeat(4097)]) assert.equal(core.decodeSecretPromptLine(bad),null);
 });
+
+ test("alpha.44 TLS and recipient encryption help preserves security boundaries", () => {
+ const builtins=new RegExp(grammar.repository.functions.patterns[0].match);
+ for (const name of ['net_demo_credentials','net_allow','net_timeout','net_listen','net_connect','net_accept','net_send','net_receive','net_close','net_address','net_peer_sha256','e2e_keygen','e2e_public_key','e2e_encrypt','e2e_decrypt']) {
+  const entry=runtimeVocabulary.functions.find(v=>v.spelling===name);
+  assert.ok(entry?.detail.includes('GO_PRIVATE only')); assert.ok(entry.snippet.includes(name)); assert.ok(builtins.test(name+'('));
+ }
+ assert.match(runtimeVocabulary.functions.find(v=>v.spelling==='e2e_encrypt').detail,/No sender authentication/);
+ assert.match(runtimeVocabulary.functions.find(v=>v.spelling==='net_connect').detail,/No plaintext|no DNS/);
+ });

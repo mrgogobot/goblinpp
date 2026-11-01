@@ -64,6 +64,9 @@ def main() -> None:
         private_check = root / "tools/verify_private_local.py"
         if private_check.is_file():
             subprocess.run(["python3", str(private_check), "--goblinpp", str(binary)], check=True)
+        network_check = root / "tools/verify_network_local.py"
+        if network_check.is_file():
+            subprocess.run(["python3", str(network_check), "--goblinpp", str(binary), "--compile"], check=True)
         for example in ["energy", "csv_modules", "output_demo", "protected_values", "numeric_text", "numeric_comparison", "fits_subset", "statistics_distribution", "compound_units", "seeded_random", "inference", "streaming_catalogue", "batch_catalogue", "clock_time", "array_plots", "fits_batches", "table_joins", "completely_mad", "text_toolkit", "fluid_mechanics", "scientific_readers", "base64_text"]:
             rng_evidence = None
             parity_evidence = None

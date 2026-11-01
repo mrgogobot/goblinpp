@@ -22,11 +22,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_DIRS = ("src", "tests", "examples", "docs", "assets", "tools", "vscode", "jetbrains", "community-review", "studies", ".github")
 SOURCE_FILES = (
-    "Cargo.toml", "Cargo.lock", "build.rs", "CITATION.cff", "README.md", "RELEASE_NOTES.md",
+    "Cargo.toml", "Cargo.lock", "build.rs", "NETWORK_EXAMPLES.md", "CITATION.cff", "README.md", "RELEASE_NOTES.md",
     "RELEASE_CHECKLIST.md", "LICENSE", "LICENSE-DOCS.md", "BRANDING.md", "install.sh", ".gitignore",
     ".zenodo.json", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md",
 )
-EXCLUDED_DIRS = {".git", ".gradle", ".intellijPlatform", ".idea", "build", "target", "dist", "node_modules", "runs", ".goblin", "__pycache__", ".vscode-test", "vsix"}
+EXCLUDED_DIRS = {".git", ".gradle", ".intellijPlatform", ".idea", "build", "target", "dist", "node_modules", "runs", ".goblin", "__pycache__", ".vscode-test", "vsix", "network-demo", "lan-pair"}
 
 
 def sha256(path: Path) -> str:
@@ -48,6 +48,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "dist/releases",
                         help="Fresh destination for a corrected bundle; never replace existing packages.")
+    parser.add_argument("--with-network-programs", action="store_true", help="Include separately reviewed compiled LAN programs.")
     args = parser.parse_args()
     version = tomllib.loads((ROOT / "Cargo.toml").read_text())["package"]["version"]
     extension_version = json.loads((ROOT / "vscode/package.json").read_text())["version"]
@@ -63,6 +64,15 @@ def main() -> None:
     for artifact in (binary, orbit_binary, vsix, plugin):
         if not artifact.is_file():
             raise SystemExit(f"Build the required artifact first: {artifact}")
+    network_manifest = None
+    if args.with_network_programs:
+        network_inputs = ROOT / "dist/network-demo" / version / "macos-arm64"
+        network_manifest = json.loads((network_inputs / "BUILD_MANIFEST.json").read_text())
+        if network_manifest["engine_version"] != version or network_manifest["engine_sha256"] != sha256(binary):
+            raise SystemExit("Build the matching LAN example programs first.")
+        for program in network_manifest["programs"]:
+            if sha256(network_inputs / program["file"]) != program["sha256"] or sha256(ROOT / program["source"]) != program["source_sha256"]:
+                raise SystemExit("A compiled LAN program or its source changed after review.")
     observed = subprocess.check_output([str(binary), "--version"], text=True).strip()
     if observed != f"goblin++ {version}":
         raise SystemExit(f"Release binary has the wrong version: {observed}")
@@ -114,6 +124,13 @@ def main() -> None:
         editors.mkdir()
         for installer in (vsix, plugin):
             shutil.copy2(installer, editors / installer.name)
+
+        if network_manifest is not None:
+            programs = staged / "network-programs/macos-arm64"
+            programs.mkdir(parents=True)
+            for program in network_manifest["programs"]:
+                shutil.copy2(network_inputs / program["file"], programs / program["file"])
+            shutil.copy2(network_inputs / "BUILD_MANIFEST.json", programs.parent / "BUILD_MANIFEST.json")
 
         subprocess.run([sys.executable, str(staged / "tools/collect_third_party_notices.py")],
                        cwd=staged, check=True)

@@ -9,6 +9,6 @@ final class GoblinSecretPromptTest {
         assertNull(GoblinSecretInput.decode("ordinary output"));
     }
     @Test void privateFunctionVocabularyIsAvailable(){
-        for(String name:new String[]{"GO_PRIVATE","input_secret","encrypt_text","encrypt_file","decrypt_text","decrypt_file","read_text","display_file"})assertNotNull(GoblinVocabulary.find(name),name);
+        for(String name:new String[]{"GO_PRIVATE","input_secret","encrypt_text","encrypt_file","decrypt_text","decrypt_file","read_text","display_file","net_pair_credentials","net_connect","net_listen","net_send","net_receive","net_peer_sha256","e2e_encrypt","e2e_decrypt","e2e_keygen"})assertNotNull(GoblinVocabulary.find(name),name);
     }
 }

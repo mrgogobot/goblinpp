@@ -1,0 +1,14 @@
+GO_PRIVATE
+
+# Wait up to 60 seconds for this one client.
+net_timeout(60000)
+listener = net_listen("127.0.0.1:7443", "network-demo/server.pem", "network-demo/server-key.pem", "network-demo/ca.pem")
+connection = net_accept(listener)
+
+message = net_receive(connection)
+client_said_hello = message == "Hello from the client!"
+print("Client said hello = {client_said_hello}")
+net_send(connection, "Hello from the server!")
+
+net_close(connection)
+net_close(listener)
