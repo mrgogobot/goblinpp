@@ -222,8 +222,8 @@ test("native executable discovery prefers explicit path, bundled build, then use
 
 test("completion combines legacy spellings with alpha.27 runtime features", () => {
   const entries = core.vocabularyEntries(lexicon, runtimeVocabulary);
-  assert.equal(entries.length, 353);
-  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 353);
+  assert.equal(entries.length, 356);
+  assert.equal(new Set(entries.map((entry) => entry.spelling)).size, 356);
   for (const spelling of ["rng_seed", "rng_word", "rng_uniform", "rng_integer"]) {
     const entry = entries.find((item) => item.spelling === spelling);
     assert.equal(entry.kind, "function");
@@ -400,7 +400,7 @@ test("all TextMate regular expressions compile", () => {
 test("alpha.27 language coloring and extension identity are internally consistent", () => {
   assert.equal(manifest.name, "goblinpp");
   assert.equal(manifest.publisher, "goblinpp-project");
-  assert.equal(manifest.version, "0.1.36");
+  assert.equal(manifest.version, "0.1.37");
   assert(manifest.contributes.commands.some((item) => item.command === "goblinpp.runCompiledFile"));
   assert.equal(grammar.repository.unsupported, undefined);
   const comparisons = new RegExp(grammar.repository.operators.patterns[0].match);
@@ -492,3 +492,12 @@ test("private script completion and secret prompt decoding state their boundarie
  assert.match(runtimeVocabulary.functions.find(v=>v.spelling==='e2e_encrypt').detail,/No sender authentication/);
  assert.match(runtimeVocabulary.functions.find(v=>v.spelling==='net_connect').detail,/No plaintext|no DNS/);
  });
+
+test("AI planning completion distinguishes estimates from training", () => {
+  const builtins = new RegExp(grammar.repository.functions.patterns[0].match);
+  for (const name of ["ai_hardware", "ai_plan", "ai_plan_status"]) {
+    assert(builtins.test(`${name}(`));
+    const entry = runtimeVocabulary.functions.find(x => x.spelling === name);
+    assert(entry && entry.snippet && entry.detail.includes("GO_PRIVATE"));
+  }
+});

@@ -1,0 +1,7 @@
+GO_PRIVATE
+
+# A resource estimate, not a training job. No Python or model download.
+plan = ai_plan("ai_resources.json")
+decision = ai_plan_status(plan)
+print("Resource plan = {decision}")
+print("No training was started.")

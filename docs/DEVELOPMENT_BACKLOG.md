@@ -149,7 +149,7 @@ Evidence labels:
 | GBL-026 | Science I/O | Explicit audited downloads of FITS and other scientific files | Local alpha.36 CLI foundation; language builtin and broader protocol/auth stages not implemented |
 | GBL-027 | Scientific storage | Lossless 3-D-aware encoding/compression and decoding | Requested 2026-10-15; codec/container choice and benchmarks queued |
 | GBL-028 | Cube workflow | Download and directly open/process FITS cubes with bounded memory | Requested 2026-10-15; native study extraction exists, language integration queued |
-| GBL-029 | AI / ML | Easy-to-use training, distillation and optimisation library | Requested 2026-11-01; future work only, no backend or API selected |
+| GBL-029 | AI / ML | Easy-to-use training, distillation and optimisation library | Alpha.46: hardware/resource planning; training, distillation and optimization backends remain queued |
 
 WB-3 promotes GBL-006/007/008/009/012 to P0; adds ECDF to GBL-007;
 promotes GBL-013 to P1; and retains bootstrap as P1 dependent on GBL-008.
@@ -670,11 +670,17 @@ promise to implement all three at once is assigned here.
 
 ### GBL-029 — Training, distillation and optimisation
 
-Requested by Malin Hess for **later implementation**: an easy-to-use Goblin++
+Requested by Malin Hess on 2026-11-01: an easy-to-use Goblin++
 library for data scientists and AI engineers to train models, distil teacher
-models into smaller students, and optimise models/training. Status: **QUEUED,
-NOT IMPLEMENTED**. No backend, release, builtin spelling or GPU guarantee has
-been selected; this note does not authorise immediate implementation.
+models into smaller students, and optimise models/training.
+
+**2026-11-05 / alpha.46:** first hardware/resource-planning stage implemented.
+See [AI_RESOURCES.md](AI_RESOURCES.md). Three GO_PRIVATE functions, CLI plans and
+verification, native CPU/RAM/disk/visible-GPU probes and checked conservative
+estimates are available. No training/model-loading backend or OS enforcement is
+implemented. CPU reference training and separately validated optional MLX tuning
+remain the next milestones; the user confirmed on 2026-11-05 that native
+implementation and Python-free user workflows are a requirement; GPU observation alone is not execution support.
 
 Proposed scope to specify before coding:
 

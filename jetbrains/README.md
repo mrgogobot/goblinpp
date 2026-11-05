@@ -1,3 +1,7 @@
+## 0.3.27 — AI resource planning
+
+Completion, highlighting and help for `ai_hardware`, `ai_plan` and `ai_plan_status` in alpha.46. These functions require `GO_PRIVATE`; they estimate resources and do not train or reserve system memory.
+
 # Alpha.43 callable encryption update
 
 Install/select Goblin++ alpha.43. Ordinary Run now supports `GO_PRIVATE` programs

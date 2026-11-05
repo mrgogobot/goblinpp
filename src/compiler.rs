@@ -202,6 +202,8 @@ fn build_data_program(
     directory.create(&project)?;
     fs::create_dir(project.join("src"))?;
     let modules = [
+        ("ai", include_str!("ai.rs")),
+        ("ai_hardware", include_str!("ai_hardware.rs")),
         ("networking", include_str!("networking.rs")),
         ("recipient_crypto", include_str!("recipient_crypto.rs")),
         ("confidential", include_str!("confidential.rs")),

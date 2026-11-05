@@ -1,3 +1,7 @@
+## 0.1.37 — AI resource planning
+
+Completion, highlighting and help for `ai_hardware`, `ai_plan` and `ai_plan_status` in alpha.46. These functions require `GO_PRIVATE`; they estimate resources and do not train or reserve system memory.
+
 ## 0.1.36
 
 Alpha.45 LAN pair setup completion and help; select the matching runtime.

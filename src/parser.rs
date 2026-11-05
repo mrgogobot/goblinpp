@@ -37,6 +37,8 @@ pub enum SyntaxMode {
     PreNetwork,
     /// Alpha.44 before LAN pair provisioning.
     PreLan,
+    /// Alpha.45 before AI hardware and resource-planning function names.
+    PreAi,
     PreMad,
     CompoundUnitsNoLoopBudget,
     LegacyQuantity,
@@ -59,6 +61,8 @@ pub fn evidence_mode(receipt: &serde_json::Value) -> Result<SyntaxMode> {
                 SyntaxMode::PreNetwork
             } else if alpha == Some(44) {
                 SyntaxMode::PreLan
+            } else if alpha == Some(45) {
+                SyntaxMode::PreAi
             } else {
                 SyntaxMode::Current
             })
@@ -499,20 +503,29 @@ impl Parser {
         &self.tokens[self.cursor]
     }
     fn name_reserved(&self, name: &str) -> bool {
-        if name == "net_pair_credentials" {
+        if crate::ai::is_function(name) {
             self.mode == SyntaxMode::Current
+        } else if name == "net_pair_credentials" {
+            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreAi)
         } else if crate::networking::is_function(name) || crate::recipient_crypto::is_function(name)
         {
-            matches!(self.mode, SyntaxMode::Current | SyntaxMode::PreLan)
+            matches!(
+                self.mode,
+                SyntaxMode::Current | SyntaxMode::PreAi | SyntaxMode::PreLan
+            )
         } else if name == "GO_PRIVATE" || crate::confidential::is_function(name) {
             matches!(
                 self.mode,
-                SyntaxMode::Current | SyntaxMode::PreLan | SyntaxMode::PreNetwork
+                SyntaxMode::Current
+                    | SyntaxMode::PreAi
+                    | SyntaxMode::PreLan
+                    | SyntaxMode::PreNetwork
             )
         } else if name == "GO_LOOP_BUDGET" {
             matches!(
                 self.mode,
                 SyntaxMode::Current
+                    | SyntaxMode::PreAi
                     | SyntaxMode::PreLan
                     | SyntaxMode::PreNetwork
                     | SyntaxMode::PrePrivate
@@ -522,6 +535,7 @@ impl Parser {
             matches!(
                 self.mode,
                 SyntaxMode::Current
+                    | SyntaxMode::PreAi
                     | SyntaxMode::PreLan
                     | SyntaxMode::PreNetwork
                     | SyntaxMode::PrePrivate
@@ -610,6 +624,7 @@ impl Parser {
         if matches!(
             self.mode,
             SyntaxMode::Current
+                | SyntaxMode::PreAi
                 | SyntaxMode::PreLan
                 | SyntaxMode::PreNetwork
                 | SyntaxMode::PrePrivate
@@ -867,6 +882,7 @@ impl Parser {
         if matches!(
             self.mode,
             SyntaxMode::Current
+                | SyntaxMode::PreAi
                 | SyntaxMode::PreLan
                 | SyntaxMode::PreNetwork
                 | SyntaxMode::PrePrivate
@@ -882,7 +898,7 @@ impl Parser {
         }
         if matches!(
             self.mode,
-            SyntaxMode::Current | SyntaxMode::PreLan | SyntaxMode::PreNetwork
+            SyntaxMode::Current | SyntaxMode::PreAi | SyntaxMode::PreLan | SyntaxMode::PreNetwork
         ) && self.ident_is("GO_PRIVATE")
         {
             if in_block || self.in_function {

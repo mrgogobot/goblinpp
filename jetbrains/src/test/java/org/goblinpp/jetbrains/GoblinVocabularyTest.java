@@ -9,6 +9,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class GoblinVocabularyTest {
     @Test
+    void aiPlanningCompletionStatesItsLimits() {
+        for (String name : new String[]{"ai_hardware", "ai_plan", "ai_plan_status"}) {
+            var entry = GoblinVocabulary.find(name);
+            assertNotNull(entry, name);
+            assertEquals("function", entry.kind());
+            assertTrue(entry.detail().contains("GO_PRIVATE"));
+            assertTrue(entry.snippet().startsWith(name + "("));
+        }
+        assertTrue(GoblinVocabulary.find("ai_plan").detail().contains("No training"));
+    }
+    @Test
     void scientificReaderCompletionKeepsContractsVisible() {
         for (String name : new String[]{"npy_read","npy_text","npy_shape","npy_dtype","npy_order","npz_keys","npz_read","npz_text","npz_shape","npz_dtype","npz_order","scipy_sparse_shape","scipy_sparse_format","scipy_sparse_nnz","scipy_sparse_dense","scipy_sparse_row","ecsv_rows","ecsv_columns","ecsv_headers","ecsv_column","ecsv_read","ecsv_numbers","ecsv_dtype","ecsv_unit"}) {
             var entry = GoblinVocabulary.find(name);

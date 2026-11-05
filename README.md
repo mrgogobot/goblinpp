@@ -1,3 +1,24 @@
+# Alpha.46 local — AI hardware and resource planning
+
+Adds offline `ai_hardware()`, `ai_plan(request_path)` and
+`ai_plan_status(plan_json)` functions, plus `goblin++ ai hardware`, `ai plan`
+and `ai verify-plan`. Native observations cover CPU, RAM, workspace disk and
+visible GPU information. Checked memory/disk estimates include Adam state,
+headroom, OS reserves, explicit workload budgets and two checkpoint generations.
+Shared Mac memory is counted once; unknown capacities never count as a fit.
+
+Start with [the five-minute tutorial](docs/AI_QUICKSTART.md),
+[AI_RESOURCES.md](docs/AI_RESOURCES.md) and
+`examples/ai_resources.gbl` / `examples/ai_resources.json`. Callable functions
+require `GO_PRIVATE`; explicit CLI bundles preserve hardware/request/plan hashes
+and reconstructable arithmetic. These are advisory plans, not model loading,
+training, MLX execution, a speed benchmark or OS memory enforcement. Future
+CPU/MLX backends must integrate measured allocation and execution limits.
+Rust stays 1.92.0 and external dependencies are unchanged. VS Code 0.1.37 and
+JetBrains 0.3.27 include completion, highlighting and help.
+
+Optional: [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
 # Alpha.45 local — two-computer LAN starter
 
 Adds `net_pair_credentials(new_directory, server_ipv4)` for a dedicated 90-day

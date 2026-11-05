@@ -755,7 +755,7 @@ dependencies = [
 
 [[package]]
 name = "goblinpp"
-version = "0.1.0-alpha.45"
+version = "0.1.0-alpha.46"
 dependencies = [
  "age",
  "base64 0.23.1",

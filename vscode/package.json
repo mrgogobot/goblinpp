@@ -2,7 +2,7 @@
   "name": "goblinpp",
   "displayName": "Goblin++",
   "description": "Editor support for the Goblin++ Rust scientific language and custody workflow.",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "publisher": "goblinpp-project",
   "license": "MIT",
   "repository": {
@@ -275,7 +275,7 @@
             "minLength": 1,
             "maxLength": 16
           },
-          "description": "Explicit identifier-to-icon display mappings, for example {\"energy\": \"⚡\"}. Mappings are visual only and do not assign scientific meaning."
+          "description": "Explicit identifier-to-icon display mappings, for example {\"energy\": \"\u26a1\"}. Mappings are visual only and do not assign scientific meaning."
         },
         "goblinpp.diagnostics.onSave": {
           "type": "boolean",

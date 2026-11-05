@@ -5,7 +5,8 @@ use crate::evaluator::Value;
 use std::path::{Path, PathBuf};
 
 pub fn is_function(name: &str) -> bool {
-    crate::networking::is_function(name)
+    crate::ai::is_function(name)
+        || crate::networking::is_function(name)
         || crate::recipient_crypto::is_function(name)
         || matches!(
             name,
@@ -44,6 +45,9 @@ pub fn declared(text: &str) -> bool {
     })
 }
 pub fn arity(name: &str, n: usize) -> Result<()> {
+    if crate::ai::is_function(name) {
+        return crate::ai::arity(name, n);
+    }
     if crate::networking::is_function(name) {
         return crate::networking::arity(name, n);
     }
@@ -238,6 +242,9 @@ fn path(base: &Path, text: &str) -> PathBuf {
 }
 pub fn call(base: &Path, name: &str, args: &[Value]) -> Result<Value> {
     arity(name, args.len())?;
+    if crate::ai::is_function(name) {
+        return crate::ai::code_call(base, name, args);
+    }
     let texts = args
         .iter()
         .map(|v| v.text(name))

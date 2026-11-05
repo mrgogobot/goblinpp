@@ -27,6 +27,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum CommandSet {
+    /// Offline AI hardware observations and resource estimates; no training execution.
+    Ai(goblinpp::ai_cli::AiArgs),
     /// Encrypt a file or text using the standard age format; separate from run evidence.
     Encrypt(goblinpp::crypto_cli::CryptoArgs),
     /// Authenticate and decrypt an age file before publishing any plaintext.
@@ -232,6 +234,7 @@ fn normalized_args() -> Vec<String> {
         "lineage",
         "doctor",
         "capabilities",
+        "ai",
         "fits-info",
         "evidence-report",
         "verify-report",
@@ -357,6 +360,7 @@ fn dispatch(command: CommandSet) -> Result<i32> {
         CommandSet::Lineage { file, json } => command_lineage(file, json),
         CommandSet::Doctor { project, json } => command_doctor(project, json),
         CommandSet::Capabilities { json } => command_capabilities(json),
+        CommandSet::Ai(args) => goblinpp::ai_cli::run(args),
         CommandSet::FitsInfo { file, json, quick } => command_fits_info(file, json, quick),
     }
 }
@@ -1137,13 +1141,14 @@ fn command_capabilities(json_output: bool) -> Result<i32> {
     let report = json!({
         "goblin_version": goblinpp::VERSION, "release_status": "ALPHA",
         "network_acquisition": network_acquisition,
+        "ai_resources": {"policy":goblinpp::ai::POLICY,"stage":"HARDWARE_AND_RESOURCE_PLANNING", "commands":["ai hardware","ai plan","ai verify-plan"], "functions":["ai_hardware","ai_plan","ai_plan_status"], "function_profile":"GO_PRIVATE", "model_loading":false, "training":false, "backend_execution_tested":false, "os_memory_reservation":false, "automatic_network":false, "plan_authentication":"CHECKSUM_ONLY", "max_json_bytes":goblinpp::ai::MAX_JSON},
         "completely_mad": {"policy":goblinpp::mad::POLICY, "stage":"BOUNDED_FINAL_STATE_EVIDENCE", "implies_go_paranoid":true, "max_variables":goblinpp::mad::MAX_VARIABLES, "max_bytes":goblinpp::mad::MAX_BYTES, "inline_rust":false, "standalone_native":false, "encryption":false, "scientific_validity_claim":false},
         "orbit": {"policy":goblinpp::orbit::POLICY,"commands":["orbit baseline", "orbit verify-baseline", "orbit check", "orbit verify"], "standalone":"goblin-orbit", "authentication":"CHECKSUM_ONLY", "scope":"EXPLICIT_LOCAL_DIRECTORY", "comparison":"FILE_BYTES_AND_ENTRY_KIND_ONLY", "symlinks":"NEVER_FOLLOWED", "platforms":"Unix descriptor traversal; locally tested macOS arm64", "repairs":false, "media_detection":false},
         "evidence_report": {"policy":goblinpp::evidence_report::POLICY,"commands":["evidence-report", "verify-report"],"case_max_bytes":goblinpp::evidence_report::CASE_BYTES,"evidence_file_max_bytes":goblinpp::evidence_report::FILE_BYTES,"evidence_total_max_bytes":goblinpp::evidence_report::TOTAL_BYTES,"authentication":"CHECKSUM_ONLY","network_requests":false,"findings":"ANALYST_DECLARATIONS_NOT_CERTIFIED"},
         "available": ["rust interpreter", "explicitly seeded PCG32 v1 scientific randomness in both engines with replayable evidence; not cryptographic", "optional GO_PARANOID postflight evidence and self-verification", "optional seal value snapshots", "bounded range and direct-array for loops, while loops, break/continue, if/else-if/else, switch/case/default, and short-circuit Boolean logic", "g_func user-defined functions with local copy-value arguments and explicit return in both engines", "interactive input and argc/argv program arguments with hashed evidence", "text concatenation, Unicode-scalar length, checked number/integer conversion and g_strings built-ins in both engines", "six-axis SI dimensional analysis including electric current", "dimension-aware scientific math built-ins in both engines", "astronomical distance conversion, homogeneous vector algebra, explicit coordinate conversion, linear kinematics, and rotational mechanics helpers in both engines", "versioned common-element chemistry registry, formula molar mass, moles/mass/concentration/dilution helpers, and laboratory units in both engines", "strict SI electrical units, Ohm and passive-component helpers, unit reporting, and explicit Kirchhoff residual checks in both engines", "copy-value arrays with indexing, half-open slices, append and len in both engines", "checked integer remainder in both engines", "native scalar and array compiler", "strict CSV and TSV reading with explicit text or numeric columns", "static local imports of reusable g_func libraries", "compiled FITS, tables and files with native/reference evidence parity", "exact-hash inline Rust authorization", "native streaming FITS multi-HDU discovery", "native FITS image access", "native FITS binary-table scalar access and numeric statistics", "checksum-addressed deduplicated FITS evidence", "audited TXT, Markdown, CSV, TSV, and JSON output in either mode", "deterministic SVG and PNG FITS plots", "run receipts", "freeze enforcement", "revision lineage", "run verification", "semantic diff", "checksum custody ledger"],
         "fluid_functions": goblinpp::fluids::FUNCTIONS,
         "confidential_file_commands": {"format": "age-v1", "commands": ["encrypt", "decrypt", "read-file"], "scientific_receipts": false},
-        "confidential_functions": ["input_secret", "encrypt_text", "encrypt_file", "decrypt_file", "decrypt_text", "read_text", "display_file", "net_demo_credentials", "net_pair_credentials", "net_allow", "net_timeout", "net_listen", "net_connect", "net_accept", "net_send", "net_receive", "net_close", "net_address", "net_peer_sha256", "e2e_keygen", "e2e_public_key", "e2e_encrypt", "e2e_decrypt"],
+        "confidential_functions": ["ai_hardware", "ai_plan", "ai_plan_status", "input_secret", "encrypt_text", "encrypt_file", "decrypt_file", "decrypt_text", "read_text", "display_file", "net_demo_credentials", "net_pair_credentials", "net_allow", "net_timeout", "net_listen", "net_connect", "net_accept", "net_send", "net_receive", "net_close", "net_address", "net_peer_sha256", "e2e_keygen", "e2e_public_key", "e2e_encrypt", "e2e_decrypt"],
         "secure_network": {"policy":"goblin.tls13-messages.v1", "profile":"GO_PRIVATE", "tls_versions":["TLS1.3"], "client_authentication":"REQUIRED", "loopback_default":true, "explicit_numeric_remote_permission":true, "max_message_bytes":1048576, "default_timeout_ms":30000, "max_timeout_ms":60000, "max_open_handles":32, "plaintext_fallback":false, "dns":false, "scientific_receipts":false},
         "recipient_encryption": {"format":"age-v1", "recipient":"X25519", "library":"age-0.11.5", "encoding":"RFC4648 padded Base64 of binary age", "max_plaintext_bytes":524288, "max_envelope_bytes":1048576, "sender_signatures":false, "replay_prevention":false, "forward_secrecy_ratchet":false},
         "confidential_code_profile": "GO_PRIVATE; no scientific receipts; both engines; updated IDE masked input",

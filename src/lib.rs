@@ -2,6 +2,9 @@
 pub mod acquisition;
 #[cfg(unix)]
 pub mod acquisition_cli;
+pub mod ai;
+pub mod ai_cli;
+pub mod ai_hardware;
 pub mod array_math;
 pub mod ast;
 pub mod audit;
