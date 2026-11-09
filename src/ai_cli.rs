@@ -1,4 +1,4 @@
-//! New-directory planning bundles with offline reconstruction; never train or fetch.
+//! Offline AI planning and CPU training commands.
 use crate::{
     ai::{self, Report},
     ai_hardware::{self, Hardware},
@@ -20,6 +20,8 @@ pub struct AiArgs {
 }
 #[derive(Debug, Subcommand)]
 pub enum AiAction {
+    /// Fit a small linear model to a local two-column CSV with enforced trainer budgets.
+    Train(crate::ai_train::TrainArgs),
     /// Observe local CPU/RAM/disk and available GPU metadata; do not allocate a model.
     Hardware {
         #[arg(long, default_value = ".")]
@@ -220,6 +222,7 @@ pub fn verify_bundle(directory: &Path, expected: Option<&str>) -> Result<Report>
 }
 pub fn run(args: AiArgs) -> Result<i32> {
     match args.action {
+        AiAction::Train(args) => crate::ai_train::run(args),
         AiAction::Hardware { workspace, json } => {
             let h = ai_hardware::probe(&workspace)?;
             if json {

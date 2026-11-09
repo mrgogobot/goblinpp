@@ -27,7 +27,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum CommandSet {
-    /// Offline AI hardware observations and resource estimates; no training execution.
+    /// Offline AI hardware observations, resource estimates and small CPU training.
     Ai(goblinpp::ai_cli::AiArgs),
     /// Encrypt a file or text using the standard age format; separate from run evidence.
     Encrypt(goblinpp::crypto_cli::CryptoArgs),

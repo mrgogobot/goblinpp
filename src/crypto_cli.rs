@@ -138,7 +138,7 @@ pub(crate) fn open_regular(path: &Path, limit: u64) -> Result<File> {
     }
     Ok(file)
 }
-fn destination(path: &Path) -> Result<PathBuf> {
+pub(crate) fn destination(path: &Path) -> Result<PathBuf> {
     match fs::symlink_metadata(path) {
         Ok(_) => return Err(error("Output already exists. Refusing to overwrite it.")),
         Err(e) if e.kind() == io::ErrorKind::NotFound => {}

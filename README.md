@@ -1,3 +1,10 @@
+# Alpha.47 — Native CPU trainer
+
+Use `goblin++ ai train` to fit a small linear model from a local CSV.
+The trainer runs offline on one CPU thread, enforces data-buffer and work
+budgets, and saves a checksummed JSON model. Start with the
+[offline CPU training tutorial](docs/AI_CPU_TRAINER.md).
+
 # Alpha.46 local — AI hardware and resource planning
 
 Adds offline `ai_hardware()`, `ai_plan(request_path)` and

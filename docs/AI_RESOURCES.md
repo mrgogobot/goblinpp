@@ -1,6 +1,7 @@
 # AI resources — alpha.46
 
 New here? Start with [the five-minute tutorial](AI_QUICKSTART.md).
+For actual fitting, see the separate [native CPU trainer](AI_CPU_TRAINER.md).
 
 This is the first AI-library stage: **local hardware observations and conservative
 resource planning**. It does not load, train, tune, distil or execute a model.
@@ -19,7 +20,7 @@ goblin++ ai hardware
 goblin++ run examples/ai_resources.gbl
 ```
 
-The version must be `0.1.0-alpha.46`. On shells without `rehash`, open a new
+Use alpha.46 or later. On shells without `rehash`, open a new
 terminal. The example uses a hypothetical configuration, not a supplied model;
 its memory coefficients are illustrative, not measured training requirements.
 
@@ -196,16 +197,15 @@ fragmentation, kernel scratch space, checkpoint serialization, CPU offloading
 and data loaders must be calibrated for a real backend before training admission.
 
 The Rust `ResourceGuard` provides checked cooperative byte reservations, releases,
-shared step counts, deadline and cancellation checks for future backend use.
-It is not yet connected to an allocator/trainer and cannot interrupt a blocked
-kernel. The CLI records the requested budgets; it does not enforce them on other
-Goblin++ code or processes. Real training must add measured peak usage, backend
-limits and process/OS containment before being offered as a supported operation.
+step counts, deadline and cancellation checks. The small CPU trainer uses it
+for its own explicit data and work budgets. The planner CLI records the requested
+budgets for the planned workload without applying them to other Goblin++ code or
+processes.
 
 ## Next: measured small-device training
 
-The next milestone should use a small local reference model and fixed held-out
-data, then measure time, peak memory and loss for a portable CPU path. Optimizations
+Beyond the CPU trainer, larger-model work should use a local reference model and
+fixed held-out data, then measure time, peak memory and loss for a portable CPU path. Optimizations
 can include small batches, accumulation, bounded streaming, checkpoint/resume and
 supported quantized kernels. No automatic model substitution or change of precision,
 context, dataset or RNG is permitted without an explicit recorded configuration.

@@ -17,9 +17,9 @@ rehash
 goblin++ --version
 ```
 
-The last line should say `goblin++ 0.1.0-alpha.46`. If `rehash` is unavailable in
-your shell, open a new terminal. An older version means your terminal or IDE is
-still selecting an older executable.
+The last line should report alpha.46 or later. If `rehash` is unavailable in your
+shell, open a new terminal. An older version means your terminal or IDE is still
+selecting an older executable.
 
 ## 2. Look at your computer
 
@@ -132,7 +132,7 @@ Open `examples/ai_resources.json`. These fields are easy to recognize:
 
 They describe one sequence per micro-batch, 256 tokens per sequence, accumulation
 over eight micro-batches and a requested two-thread ceiling. Effective batch is
-`1 * 8 = 8`. These are **planning inputs**; no training loop runs in alpha.46.
+`1 * 8 = 8`. These are **planning inputs**. Reading a plan starts no training.
 
 Try changing `sequence_length` to `512`, save, and run the detailed example again.
 The activation estimate increases; Goblin++ does not silently lower your context
@@ -145,11 +145,9 @@ Restore the file or keep your experiment in a separate copy when finished.
 
 ## Where we go next
 
-Next comes a small, measured **native CPU training backend**, followed by a
-separately validated optional Mac MLX adapter. We will measure memory, time and
-training behavior before making speed or compatibility claims. Python is not a
-dependency of the current hardware/planning functions, and no hidden Python
-fallback is used.
+Try the [native CPU trainer tutorial](AI_CPU_TRAINER.md) to fit a small model
+from local data. Training uses its own explicit limits. The hardware and
+planning functions remain available for inspecting larger workloads.
 
 For formulas, limits and every request field, see [the full AI resource reference](AI_RESOURCES.md).
 

@@ -1,3 +1,21 @@
+# Alpha.47 — Native CPU trainer
+
+`goblin++ ai train` fits a one-feature linear regression model on a single CPU
+thread. It reads a local two-column CSV and writes a JSON model with the input
+hash, configuration, completed steps and training error. The command prints the
+model SHA-256 and preserves any existing destination.
+
+The trainer enforces data-buffer, step and row-evaluation ceilings. It checks
+elapsed time cooperatively. Memory accounting covers the trainer's two data
+buffers, and time checks run between bounded units of work. The reported error
+describes the training data. Rust stays at 1.92.0 and dependency versions are
+unchanged.
+
+Start with the [offline tutorial](docs/AI_CPU_TRAINER.md) and
+[`examples/ai_linear.csv`](examples/ai_linear.csv). The workflow needs no Python.
+
+Optional: [Goblin++ merchandise](https://h4k3rl1f3.myspreadshop.co.uk).
+
 # Alpha.46 local — AI hardware and resource planning
 
 Adds offline `ai_hardware()`, `ai_plan(request_path)` and

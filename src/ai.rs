@@ -529,7 +529,7 @@ pub fn arity(name: &str, n: usize) -> Result<()> {
     }
 }
 
-/// Cooperative accounting for future native backends. The caller must integrate
+/// Cooperative accounting for native backends. The caller must integrate
 /// every allocation/step; this cannot preempt a blocked kernel or govern other code.
 #[derive(Debug)]
 pub struct ResourceGuard {
@@ -561,7 +561,7 @@ impl ResourceGuard {
             cancelled: false,
         })
     }
-    fn check(&self) -> Result<()> {
+    pub(crate) fn check(&self) -> Result<()> {
         if self.cancelled || self.started.elapsed() >= self.duration {
             Err(error("AI cooperative budget cancelled or expired."))
         } else {
